@@ -145,6 +145,34 @@ class BukkitNormalArenaController(
                     preflight.gameplay
                         .troopSpawnCadence
                 )
+        val stats=
+            MatchStatsRecorder()
+        val nextTransactionId=
+            AtomicLong(10_000L)
+        val rewards=
+            MobKillRewardService(
+                ledger,
+                RuntimeFallbackBindings
+                    .mobKillReward(
+                        fallback
+                    ),
+                PricingMode.NORMAL
+            )
+        val sentExpFinalizer=
+            PlayerSentMobDeathFinalizer(
+                SentMobExpRewardService(
+                    RecommendedMatureMobDefinitions,
+                    ledger,
+                    PricingMode.NORMAL
+                )
+            )
+        val deathFinalizer=
+            MatchMobDeathFinalizer(
+                sentExpFinalizer,
+                rewards,
+                stats,
+                nextTransactionId
+            )
         val entityAdapter=
             BukkitEntityRuntimeAdapter(
                 plugin.server
@@ -236,12 +264,13 @@ class BukkitNormalArenaController(
                             ),
                         mobRemovalPort=
                             entityAdapter,
+                        mobDeathFinalization=
+                            deathFinalizer,
                         resolved=
                             preflight.gameplay
                     )
                 )
 
-        val stats=MatchStatsRecorder()
         val bodyMutation=
             TowerBodyMutationService(
                 BukkitBlockWorldAdapter(
@@ -328,7 +357,7 @@ class BukkitNormalArenaController(
                 progressionService=
                     progressionService,
                 nextTransactionId=
-                    AtomicLong(10_000L)
+                    nextTransactionId
             )
         handles[arenaId]=handle
 
