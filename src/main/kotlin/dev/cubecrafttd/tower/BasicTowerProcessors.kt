@@ -84,7 +84,9 @@ object BasicTowerProcessors {
             "tower:${context.towerInstanceId}",
             fireDamage,
             context.gameTick,
-            context.gameTick + (durationSeconds * 20.0).toLong()
+            context.gameTick + (durationSeconds * 20.0).toLong(),
+            sourcePlayerUuid=context.ownerUuid,
+            sourceTowerInstanceId=context.towerInstanceId
         )
         return AttackBatch(
             targetUuid,
@@ -148,14 +150,27 @@ object BasicTowerProcessors {
         val poisonDamage = stage.stats.extras["poisonDamage"]
         val duration = stage.stats.extras["durationSeconds"]
             ?: stage.stats.extras["durationSecondsTable"]
-        val effects = if (poisonDamage != null && duration != null) {
+        val poisonTickSeconds =
+            stage.stats.extras["poisonTickSeconds"]
+        val effects = if (
+            poisonDamage != null &&
+            duration != null &&
+            poisonTickSeconds != null
+        ) {
+            val tickInterval=
+                (poisonTickSeconds * 20.0)
+                    .toLong()
+            require(tickInterval > 0L)
             listOf(
                 StatusEffectInstance(
                     StatusEffectType.POISON,
                     "tower:${context.towerInstanceId}",
                     poisonDamage,
                     context.gameTick,
-                    context.gameTick + (duration * 20.0).toLong()
+                    context.gameTick + (duration * 20.0).toLong(),
+                    tickIntervalTicks=tickInterval,
+                    sourcePlayerUuid=context.ownerUuid,
+                    sourceTowerInstanceId=context.towerInstanceId
                 )
             )
         } else emptyList()
