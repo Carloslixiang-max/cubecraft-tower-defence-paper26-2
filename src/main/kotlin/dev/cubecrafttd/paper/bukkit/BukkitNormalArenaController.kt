@@ -3,6 +3,7 @@ package dev.cubecrafttd.paper.bukkit
 import dev.cubecrafttd.arena.*
 import dev.cubecrafttd.economy.*
 import dev.cubecrafttd.match.*
+import dev.cubecrafttd.map.*
 import dev.cubecrafttd.mob.*
 import dev.cubecrafttd.player.*
 import dev.cubecrafttd.progression.*
