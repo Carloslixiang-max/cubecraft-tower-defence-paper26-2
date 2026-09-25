@@ -49,6 +49,7 @@ object DomainFixtureSuite {
         addAll(ResolvedGameplayAndAoEUseFixture.run())
         addAll(GameplayFallbackCompletenessFixture.run())
         addAll(PlayerSnapshotCodecV2Fixture.run())
+        addAll(PlayerSnapshotRoundTripFixture.run())
         addAll(MobLethalAndSupportRuntimeFixture.run())
         addAll(ResolvedSupportCompositionFixture.run())
         addAll(NormalRuntimeCompositionFixture.run())
