@@ -11,9 +11,9 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v32 → GitHub/CI v33**
-- Pure-domain baseline before publishing: **315/315 fixtures PASS**
-- Real Paper 26.2 live-server certification: **still pending**
+- Current shell lineage: **v34 engineering playtest shell**
+- Pure-domain baseline: **320/320 fixtures PASS**
+- Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
 
@@ -56,7 +56,7 @@ Every push to `main`, pull request, or manual workflow run executes:
 
 ```text
 Java 25
-Gradle 9.1.0
+Gradle 9.7.0
 clean
 DomainFixtureSuite via JUnit
 shadowJar
@@ -79,6 +79,23 @@ Output:
 build/libs/
 ```
 
+## Engineering playtest quick start
+
+Unknown original values remain unknown in the strict configuration. For actual testing, operators can explicitly opt into a separate engineering-only profile:
+
+1. Put the verified `ImprovedFarm.schem` in `plugins/CubeCraftTowerDefence/maps/ImprovedFarm.schem`. Expected SHA-256: `28d24136afe80358b89556d0fbe3b08d00e518af38c7c518819fa7fc225e613e`.
+2. Join as an operator and stand at the intended minimum X/Z map corner in a large clear area. Setup places the schematic origin 8 blocks above your feet.
+3. Run `/ctdplaytestsetup apply`.
+4. Restart the server. This is intentional so every live service receives one immutable configuration snapshot.
+5. Run `/ctdmapcheck`, then `/ctdpastefarm 28d24136afe8`. Safe paste aborts before mutation if any destination block is non-air.
+6. Run `/ctdpreflight`. All non-live blockers should be gone.
+7. With two online players, run `/ctdlivetest start test <redPlayer> <bluePlayer> wither`.
+8. End the test with `/ctdlivetest stop test`.
+
+The setup command creates `config.before-engineering-playtest.yml` before its first overwrite. Generated numbers, route choice, player spawns, and Guard anchors are explicitly tagged **ENGINEERING** and are never promoted to original CubeCraft truth.
+
+The Farm schematic is not bundled in this public repository because its redistribution rights have not been verified.
+
 ## Paper test commands
 
 The plugin currently exposes engineering/admin commands such as:
@@ -93,6 +110,7 @@ The plugin currently exposes engineering/admin commands such as:
 - `/ctdarmageddonfallbacks`
 - `/ctdlivetest`
 - `/ctdmenu`
+- `/ctdplaytestsetup apply`
 
 These are development/test interfaces and may change before a stable release.
 
