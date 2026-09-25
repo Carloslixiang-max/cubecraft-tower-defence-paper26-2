@@ -42,6 +42,9 @@ class BukkitEngineeringMenuRenderer :
             actionId.startsWith(
                 "path:"
             ) -> Material.PAPER
+            actionId.startsWith(
+                "nav:"
+            ) -> Material.NETHER_STAR
             else -> Material.PAPER
         }
 }
