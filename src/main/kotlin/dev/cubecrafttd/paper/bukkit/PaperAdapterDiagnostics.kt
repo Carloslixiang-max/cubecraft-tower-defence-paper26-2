@@ -38,7 +38,8 @@ data class PaperAdapterDiagnostics(
                 "live per-arena tick/phase profiler",
                 "same-world arena spatial/player reservation guard",
                 "cross-restart recovery verification path",
-                "route-facing live entity orientation"
+                "route-facing live entity orientation",
+                "tracked-mob vanilla side-effect shielding"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",

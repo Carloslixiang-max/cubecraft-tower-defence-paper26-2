@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v48 engineering playtest shell**
+- Current shell lineage: **v49 engineering playtest shell**
 - Pure-domain baseline: **368/368 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
@@ -48,7 +48,8 @@ The codebase already contains substantial runtime work, including:
 - a per-arena low-overhead tick profiler (`/ctdperf`) covering full Paper live ticks plus every core phase, with last/average/max timings, >=50 ms slow-tick counts and current tower/mob/guard/entity counts;
 - a same-world arena reservation guard that rejects shared players and overlapping spatial envelopes before any match snapshot/state mutation, while permitting non-overlapping arenas in the same world or identical coordinates in different worlds. The 16-block safety padding is explicitly Engineering-only;
 - a cross-restart recovery probe path: `/ctdsnapshotcheck restart-arm` durably captures the real player before mutation, a real server restart/rejoin triggers restore + recapture comparison, and the journal is deleted only after lossless verification. `/ctdsnapshotcheck restart-status` reports the durable evidence;
-- route-facing live mob orientation: AI-disabled living entities keep the deterministic core position but their Paper teleport yaw now follows the actual horizontal route delta, removing sideways/backwards sliding through turns without changing speed, routing or combat geometry.
+- route-facing live mob orientation: AI-disabled living entities keep the deterministic core position but their Paper teleport yaw now follows the actual horizontal route delta, removing sideways/backwards sliding through turns without changing speed, routing or combat geometry;
+- tracked-mob vanilla side-effect shielding: live TD mobs are non-collidable, cannot pick up items, ignore vanilla combustion visuals, and active-match arrows are cleaned after impact so deterministic core movement/combat is not visually polluted by ordinary survival mechanics.
 
 ## Build
 
