@@ -47,6 +47,8 @@ data class RuntimeFallbackConfigV1(
         Double? = null,
     val iceSlowMovementMultiplier:
         Double? = null,
+    val burnIntervalTicks:
+        Long? = null,
     val slimeMaxShrinkPhaseIndex:
         Int? = null,
 
@@ -166,6 +168,9 @@ data class RuntimeFallbackConfigV1(
         }
         iceSlowMovementMultiplier?.let {
             require(it in 0.0..1.0)
+        }
+        burnIntervalTicks?.let {
+            require(it > 0L)
         }
         slimeMaxShrinkPhaseIndex?.let {
             require(it >= 0)
@@ -304,6 +309,10 @@ data class RuntimeFallbackConfigV1(
         }
         iceSlowMovementMultiplier?.let {
             out["status.iceSlowMovementMultiplier"] =
+                it
+        }
+        burnIntervalTicks?.let {
+            out["status.burnIntervalTicks"] =
                 it
         }
         slimeMaxShrinkPhaseIndex?.let {
@@ -569,6 +578,12 @@ object RuntimeFallbackValidator {
             "status.iceSlowMovementMultiplier",
             FallbackRequirementLevel.BLOCKS_MECHANIC,
             "Ice slow exists in live tower combat but its exact movement multiplier is unresolved"
+        )
+        requireValue(
+            config.burnIntervalTicks!=null,
+            "status.burnIntervalTicks",
+            FallbackRequirementLevel.BLOCKS_MECHANIC,
+            "Burn damage exists in live tower combat but its periodic cadence is unresolved"
         )
         requireValue(
             config.slimeMaxShrinkPhaseIndex!=null,
