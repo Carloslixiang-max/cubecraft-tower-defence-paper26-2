@@ -73,5 +73,6 @@ object DomainFixtureSuite {
         addAll(DynamicMatchMenusFixture.run())
         addAll(SettingsAndHotbarRuntimeFixture.run())
         addAll(TowerPlacementAndRangefinderFixture.run())
+        addAll(EngineeringPlaytestProfileFixture.run())
     }
 }
