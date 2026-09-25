@@ -1,0 +1,275 @@
+
+# World binding is intentionally unset by default. No world/origin is guessed.
+map-binding:
+  world: null
+  origin:
+    x: null
+    y: null
+    z: null
+
+  # Original Farm branch-selection rule is unresolved.
+  # Use /ctdmapplan to inspect compiled route IDs, then set one explicit route
+  # per attacked team. There is no hidden first/random route fallback.
+  route-assignment:
+    red: null
+    blue: null
+
+  # Original Castle Guard positions are unresolved.
+  # Exactly two real-world x,y,z anchors are required per team.
+  guard-anchors:
+    red: []
+    blue: []
+
+  # Original player spawn markers are not recoverable from the verified
+  # schematic. Set real-world x,y,z explicitly.
+  player-spawn:
+    red: null
+    blue: null
+
+  # Safe default: OFF. When enabled, /ctdpastefarm still refuses any destination
+  # region containing a non-air block, and verifies the exact Farm SHA-256.
+  allow-farm-paste: false
+  paste-blocks-per-tick: 4000
+
+# CubeCraft TD engineering fallback configuration.
+# null means UNKNOWN / not configured. The plugin never silently turns null into
+# an original CubeCraft value.
+runtime-fallback:
+  match:
+    normal-starting-coins: null
+    normal-starting-exp: null
+
+  goldmine:
+    # Phase alignment of the first Goldmine payout is not recovered.
+    first-income-delay-ticks: null
+
+  troop-spawn-cadence-ticks: null
+
+  mob-speed-blocks-per-tick:
+    blaze.l1: null
+    blaze.l2: null
+    blaze.l3: null
+    blaze.l4: null
+    blaze.l5: null
+    creeper.l1: null
+    creeper.l2: null
+    creeper.l3: null
+    creeper.l4: null
+    creeper.l5: null
+    giant.l1: null
+    giant.l2: null
+    giant.l3: null
+    giant.l4: null
+    giant.l5: null
+    pigman.l1: null
+    pigman.l2: null
+    pigman.l3: null
+    pigman.l4: null
+    pigman.l5: null
+    silverfish.l1: null
+    silverfish.l2: null
+    silverfish.l3: null
+    silverfish.l4: null
+    silverfish.l5: null
+    skeleton.l1: null
+    skeleton.l2: null
+    skeleton.l3: null
+    skeleton.l4: null
+    skeleton.l5: null
+    slime.l1: null
+    slime.l2: null
+    slime.l3: null
+    slime.l4: null
+    slime.l5: null
+    spider.l1: null
+    spider.l2: null
+    spider.l3: null
+    spider.l4: null
+    spider.l5: null
+    witch.l1: null
+    witch.l2: null
+    witch.l3: null
+    witch.l4: null
+    witch.l5: null
+    zombie.l1: null
+    zombie.l2: null
+    zombie.l3: null
+    zombie.l4: null
+    zombie.l5: null
+
+  castle:
+    first-hit-delay-ticks: null
+    repeat-interval-ticks: null
+
+  guard:
+    damage-per-arrow: null
+    fire-interval-ticks: null
+    range-blocks: null
+    target-priority: null
+
+  witch:
+    # 2021-era gameplay evidence supports percentage-of-max-health healing,
+    # but the exact percentage/cadence/radius/target cap are unresolved.
+    heal-amount: null
+    heal-mode: null          # MAX_HEALTH_FRACTION or ABSOLUTE_HP
+    heal-target-cap: null
+    heal-interval-ticks: null
+    heal-radius-blocks: null
+
+  creeper:
+    regen-health-per-second: null
+
+  giant:
+    regen-health-per-second: null
+    # Official 2021 rule: starts running at 20% HP.
+    # Exact speed multiplier is still unresolved.
+    run-speed-multiplier: null
+
+  slime:
+    # Official 2021 rule: lethal trigger shrinks and loses 25% max HP.
+    # Exact number of continuing shrink phases is not published.
+    max-shrink-phase-index: null
+
+  leach:
+    max-charge: null
+    charge-per-target-tick: null
+
+  tower-attack-interval-seconds:
+    archer.none.l1: null
+    archer.top.l2: null
+    archer.top.l3: null
+    archer.top.l4: null
+    poison.none.l1: null
+    poison.none.l2: null
+    poison.top.l3: null
+    poison.top.l4: null
+
+  # Persistent Sorcerer child count is not fully recovered for these stages.
+  # Bottom IV is known to support up to 4 and does not need a fallback.
+  tower-summon-active-counts:
+    sorcerer.none.l1: null
+    sorcerer.none.l2: null
+    sorcerer.bottom.l3: null
+
+  # Original Zeus/Turret "next bounce" rule is not recovered.
+  # Explicit engineering choices only:
+  # ROUTE_PROGRESS_FORWARD_ENGINEERING
+  # NEAREST_FROM_PREVIOUS_ENGINEERING
+  tower-chain-target-policy: null
+
+
+  # Default tower target priority is not directly recovered for the Mature build.
+  # Explicit engineering choice only: FIRST / LAST / RANDOM / EXPLICIT_ENGINEERING
+  tower-default-target-priority: null
+
+  # LOS behavior is explicit per tower family; null means unresolved.
+  tower-requires-line-of-sight:
+    archer: null
+    artillery: null
+    ice: null
+    leach: null
+    mage: null
+    necromancer: null
+    poison: null
+    quake: null
+    sorcerer: null
+    turret: null
+    zeus: null
+
+  mob-kill-coins:
+    blaze.l1: null
+    blaze.l2: null
+    blaze.l3: null
+    blaze.l4: null
+    blaze.l5: null
+    creeper.l1: null
+    creeper.l2: null
+    creeper.l3: null
+    creeper.l4: null
+    creeper.l5: null
+    giant.l1: null
+    giant.l2: null
+    giant.l3: null
+    giant.l4: null
+    giant.l5: null
+    pigman.l1: null
+    pigman.l2: null
+    pigman.l3: null
+    pigman.l4: null
+    pigman.l5: null
+    silverfish.l1: null
+    silverfish.l2: null
+    silverfish.l3: null
+    silverfish.l4: null
+    silverfish.l5: null
+    skeleton.l1: null
+    skeleton.l2: null
+    skeleton.l3: null
+    skeleton.l4: null
+    skeleton.l5: null
+    slime.l1: null
+    slime.l2: null
+    slime.l3: null
+    slime.l4: null
+    slime.l5: null
+    spider.l1: null
+    spider.l2: null
+    spider.l3: null
+    spider.l4: null
+    spider.l5: null
+    witch.l1: null
+    witch.l2: null
+    witch.l3: null
+    witch.l4: null
+    witch.l5: null
+    zombie.l1: null
+    zombie.l2: null
+    zombie.l3: null
+    zombie.l4: null
+    zombie.l5: null
+  weapon-ability-required-hits: {}
+  aoe: {}
+
+  armageddon:
+    lightning:
+      first-strike-delay-ticks: null
+      strike-interval-ticks: null
+      towers-per-team-per-strike: null
+
+    wither:
+      # Direct recovered behavior:
+      # - one Wither per side
+      # - 5000 max HP
+      # - regeneration exists
+      # - extremely slow movement
+      # - nearby tower-destroying skulls
+      # - Wither Skeleton trail
+      # - Castle contact is instant defeat
+      #
+      # Exact numeric/tie-break values below remain unresolved.
+      speed-blocks-per-tick: null
+      regeneration-health-per-second: null
+
+      first-tower-skull-delay-ticks: null
+      tower-skull-interval-ticks: null
+      tower-skull-range-blocks: null
+      # NEAREST_IN_RANGE_ENGINEERING or RANDOM_IN_RANGE_ENGINEERING
+      tower-target-policy: null
+
+      first-trail-skeleton-delay-ticks: null
+      trail-skeleton-interval-ticks: null
+      trail-skeletons-per-event: null
+      # Engineering mapping only: Skeleton L4/L5 forms are Wither Skeletons.
+      trail-skeleton-level: null
+
+    horde:
+      first-wave-delay-ticks: null
+      wave-interval-ticks: null
+      # Complete original wave plan has not been recovered.
+      # Example schema only; leave empty until evidence/engineering values exist:
+      # waves:
+      #   - mob: giant
+      #     level: 3
+      #     quantity-per-team: 2
+      waves: []
+

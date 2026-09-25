@@ -1,0 +1,50 @@
+name: Java 25 / Paper 26.2 Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle 9.1.0
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.1.0'
+          cache-provider: basic
+
+      - name: Environment
+        run: |
+          java --version
+          gradle --version
+
+      - name: Compile, test, and build shaded plugin
+        run: gradle clean test shadowJar --stacktrace --warning-mode all
+
+      - name: Show build output
+        run: ls -lah build/libs
+
+      - name: Upload plugin JAR
+        uses: actions/upload-artifact@v7
+        with:
+          name: CubeCraftTowerDefence-Paper26.2-Java25
+          path: build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14

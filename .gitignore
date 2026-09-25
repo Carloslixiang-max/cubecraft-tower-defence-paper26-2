@@ -1,0 +1,17 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+*.log
+*.jar
+run/
+server/
+plugins/
+
+# Local CubeCraft TD runtime/test state
+stage4-live-gate.properties
+player-recovery/
+maps/*.schem

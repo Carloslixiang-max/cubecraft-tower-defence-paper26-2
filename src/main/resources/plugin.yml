@@ -1,0 +1,62 @@
+name: CubeCraftTowerDefence
+version: '${version}'
+main: dev.cubecrafttd.CubeCraftTowerDefencePlugin
+description: High-fidelity CubeCraft Tower Defence recreation runtime
+api-version: '26.2'
+load: POSTWORLD
+commands:
+  ctdstatus:
+    description: Show CubeCraft TD shell/runtime status
+    usage: /ctdstatus
+    permission: cubecrafttd.admin
+  ctdfixtures:
+    description: Run pure-domain regression fixtures
+    usage: /ctdfixtures
+    permission: cubecrafttd.admin
+  ctdmapcheck:
+    description: Validate maps/ImprovedFarm.schem through the raw-schematic Stage-5 pipeline
+    usage: /ctdmapcheck
+    permission: cubecrafttd.admin
+  ctdready:
+    description: Show blocking/warning readiness issues without starting gameplay
+    usage: /ctdready
+    permission: cubecrafttd.admin
+  ctdlivegate:
+    description: Show automatically recorded Stage-4 live evidence
+    usage: /ctdlivegate
+    permission: cubecrafttd.admin
+  ctdmapplan:
+    description: Validate configured Farm world/origin without mutating the world
+    usage: /ctdmapplan
+    permission: cubecrafttd.admin
+  ctdpreflight:
+    description: Construct the complete non-mutating live match composition and report unresolved blockers
+    usage: /ctdpreflight
+    permission: cubecrafttd.admin
+  ctdfallbacks:
+    description: List every missing runtime fallback required for a complete Normal arena
+    usage: /ctdfallbacks
+    permission: cubecrafttd.admin
+  ctdarmageddonfallbacks:
+    description: List only the missing fallback values for one selected Armageddon mode
+    usage: /ctdarmageddonfallbacks <wither|lightning|horde>
+    permission: cubecrafttd.admin
+  ctdpastefarm:
+    description: Paste the verified Farm asset only into a completely empty configured region
+    usage: /ctdpastefarm <verified-sha-prefix>
+    permission: cubecrafttd.admin
+  ctdtest:
+    description: CubeCraft TD admin/test intent gateway
+    usage: /ctdtest <fixtures|mapcheck|invariants|spawnmob|tower|armageddon|forceend> ...
+    permission: cubecrafttd.admin
+  ctdlivetest:
+    description: Start/stop a controlled Stage-4 1v1 live arena test
+    usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|stop <arenaId>|status>
+    permission: cubecrafttd.admin
+  ctdmenu:
+    description: Open Stage-4 CubeCraft TD menu projections
+    usage: /ctdmenu <builder3|builder5|summoner|progression|bazaar|settings>
+    permission: cubecrafttd.admin
+permissions:
+  cubecrafttd.admin:
+    default: op
