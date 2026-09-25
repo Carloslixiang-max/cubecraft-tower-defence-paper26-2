@@ -27,7 +27,7 @@ class BukkitEngineeringAoEPotionFeedback(
                 val entity=
                     server.getEntity(uuid)
                         ?: return@forEach
-                if(entity.world.uid!=context.worldUid)
+                if(entity.world.uid!=context.worldId)
                     return@forEach
 
                 entity.world.spawnParticle(
