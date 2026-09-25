@@ -29,6 +29,10 @@ commands:
     description: Validate a live player's capture/prepare/restore snapshot round-trip
     usage: /ctdsnapshotcheck
     permission: cubecrafttd.admin
+  ctdperf:
+    description: Show or reset per-arena live/core tick profiler metrics
+    usage: /ctdperf [arenaId|reset [arenaId]]
+    permission: cubecrafttd.admin
   ctdmapplan:
     description: Validate configured Farm world/origin without mutating the world
     usage: /ctdmapplan
