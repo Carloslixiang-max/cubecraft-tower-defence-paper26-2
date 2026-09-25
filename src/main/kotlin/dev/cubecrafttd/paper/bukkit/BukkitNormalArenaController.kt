@@ -972,7 +972,7 @@ class BukkitNormalArenaController(
                     if(
                         live.world.uid !=
                             handle.context
-                                .worldUid
+                                .worldId
                     ) return@mapNotNull null
 
                     val p=live.location
