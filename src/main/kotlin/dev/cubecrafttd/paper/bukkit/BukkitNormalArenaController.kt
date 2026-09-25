@@ -737,6 +737,57 @@ class BukkitNormalArenaController(
         )
     }
 
+    fun rangefinderViewsForPlayer(
+        playerUuid: UUID,
+        hoveredTower: TowerInstanceId?,
+        sneaking: Boolean,
+        playerX: Double,
+        playerY: Double,
+        playerZ: Double
+    ): List<BukkitTowerRangefinderView> {
+        val handle=
+            handleForPlayer(playerUuid)
+                ?: return emptyList()
+        val visible=
+            visibleRangefinderTowers(
+                playerUuid,
+                hoveredTower,
+                sneaking,
+                playerX,
+                playerY,
+                playerZ
+            )
+
+        return visible.mapNotNull { id ->
+            val tower=
+                handle.context.entityIndex
+                    .towersByInstanceId[id]
+                    ?: return@mapNotNull null
+            val path=
+                tower.upgrade.path
+                    ?: return@mapNotNull null
+            val stage=
+                TowerStageResolver.resolve(
+                    RecommendedMatureTowerDefinitions
+                        .get(
+                            tower.identity.towerId
+                        ),
+                    path,
+                    tower.upgrade.level
+                )
+            val radius=
+                stage.stats.rangeBlocks
+                    ?: return@mapNotNull null
+
+            BukkitTowerRangefinderView(
+                towerInstanceId=id,
+                centre=
+                    tower.geometry.rangeOrigin,
+                radiusBlocks=radius
+            )
+        }
+    }
+
     fun towerAt(
         playerUuid: UUID,
         clickedBlock:
