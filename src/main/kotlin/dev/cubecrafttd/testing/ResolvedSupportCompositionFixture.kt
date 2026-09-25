@@ -25,7 +25,7 @@ object ResolvedSupportCompositionFixture {
             FixtureResult(
                 "normal-support-phase-order",
                 phaseOrders ==
-                    listOf(20,30,40,50,55,57,60,70,80,90)
+                    listOf(20,30,40,50,55,57,60,65,70,80,90)
             ),
             FixtureResult(
                 "normal-support-config-resolved",
@@ -41,6 +41,8 @@ object ResolvedSupportCompositionFixture {
                         .healthPerSecond.value == 5.0 &&
                     resolved.giantRunSpeedMultiplier
                         .value == 1.2 &&
+                    resolved.statusDamage
+                        .burnIntervalTicks.value == 20L &&
                     resolved.slimeLethal
                         .maxShrinkPhaseIndex.value == 2
             ),
