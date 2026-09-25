@@ -68,6 +68,22 @@ object SettingsAndHotbarRuntimeFixture {
                 )
             )
 
+        val defaultLayoutValid=
+            playerState.interaction
+                .hotbarLayout
+                .let { layout ->
+                    layout.slot(
+                        HotbarAction.SUMMONER
+                    )==2 &&
+                    layout.slot(
+                        HotbarAction
+                            .CASTLE_BAZAAR
+                    )==3 &&
+                    layout.slot(
+                        HotbarAction.SETTINGS
+                    )==8
+                }
+
         val centre=
             router.handle(
                 MenuActionInvocation(
@@ -111,22 +127,7 @@ object SettingsAndHotbarRuntimeFixture {
         return listOf(
             FixtureResult(
                 "hotbar-default-2021-slots",
-                playerState.interaction
-                    .hotbarLayout
-                    .slot(
-                        HotbarAction.SUMMONER
-                    )==2 &&
-                    playerState.interaction
-                        .hotbarLayout
-                        .slot(
-                            HotbarAction
-                                .CASTLE_BAZAAR
-                        )==3 &&
-                    playerState.interaction
-                        .hotbarLayout
-                        .slot(
-                            HotbarAction.SETTINGS
-                        )==8
+                defaultLayoutValid
             ),
             FixtureResult(
                 "settings-router-auto-centre-unlock",
