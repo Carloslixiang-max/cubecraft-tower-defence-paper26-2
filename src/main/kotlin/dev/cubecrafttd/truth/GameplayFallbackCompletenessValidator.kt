@@ -156,6 +156,31 @@ object GameplayFallbackCompletenessValidator {
                 }
             }
 
+        listOf(
+            "freeze.effectLengthBlocks",
+            "freeze.slowMagnitude",
+            "freeze.durationTicks",
+            "inferno.damagePerSecond",
+            "inferno.pulseIntervalTicks",
+            "meteor.pulseIntervalTicks",
+            "zeus.damagePerBolt",
+            "zeus.boltCount",
+            "speed.speedMultiplier",
+            "speed.durationTicks",
+            "heal.healAmount"
+        ).forEach { key ->
+            if(key !in config.aoeNumericFallbacks) {
+                missing += MissingFallback(
+                    key="aoe.$key",
+                    level=
+                        FallbackRequirementLevel
+                            .BLOCKS_MECHANIC,
+                    reason=
+                        "AoE world execution requires an explicit fallback for $key"
+                )
+            }
+        }
+
         return missing.distinctBy {
             it.key
         }
