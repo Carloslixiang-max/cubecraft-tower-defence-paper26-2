@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v44 engineering playtest shell**
-- Pure-domain baseline: **352/352 fixtures PASS**
+- Current shell lineage: **v45 engineering playtest shell**
+- Pure-domain baseline: **355/355 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -44,7 +44,8 @@ The codebase already contains substantial runtime work, including:
 - status-aware live movement plus periodic Poison/Burn damage, with Poison cadence coming from stage data and unresolved Burn cadence remaining an explicit Engineering fallback;
 - world-targeted AoE potion execution for Engineering Playtest: Bazaar purchase → armed state → right-click target area → deterministic arena-tick pulses, including damage, heal, Freeze/Speed status effects, cooldowns, visual feedback, and idempotent final death economy settlement;
 - persistent player-custom hotbar layouts: Settings → Engineering hotbar editor → live reprojection, with layouts saved in `player-hotbars.yml` and reloaded on later matches/restarts;
-- a live player-state snapshot round-trip gate (`/ctdsnapshotcheck`) that verifies capture → match preparation → restore across inventory, armor, offhand, cursor, location, game mode, XP, health/food, potion effects, velocity, flight and related state before recording Stage-4 evidence.
+- a live player-state snapshot round-trip gate (`/ctdsnapshotcheck`) that verifies capture → match preparation → restore across inventory, armor, offhand, cursor, location, game mode, XP, health/food, potion effects, velocity, flight and related state before recording Stage-4 evidence;
+- a per-arena low-overhead tick profiler (`/ctdperf`) covering full Paper live ticks plus every core phase, with last/average/max timings, >=50 ms slow-tick counts and current tower/mob/guard/entity counts.
 
 ## Build
 
@@ -114,6 +115,8 @@ The plugin currently exposes engineering/admin commands such as:
 - `/ctdmapcheck`
 - `/ctdready`
 - `/ctdlivegate`
+- `/ctdsnapshotcheck`
+- `/ctdperf [arenaId|reset [arenaId]]`
 - `/ctdpreflight`
 - `/ctdfallbacks`
 - `/ctdarmageddonfallbacks`
