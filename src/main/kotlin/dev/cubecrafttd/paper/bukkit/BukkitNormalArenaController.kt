@@ -951,7 +951,10 @@ class BukkitNormalArenaController(
                     token.definition
                 )
         val radius=
-            length.value / 2.0
+            AoEEngineeringWorldGeometry
+                .radiusFromEffectLength(
+                    length.value
+                )
         check(radius>0.0)
 
         val candidates=
@@ -973,18 +976,15 @@ class BukkitNormalArenaController(
                     ) return@mapNotNull null
 
                     val p=live.location
-                    val dx=p.x-targetX
-                    val dz=p.z-targetZ
-                    val dy=
-                        kotlin.math.abs(
-                            p.y-targetY
-                        )
                     val inside=
-                        dx*dx + dz*dz <=
-                            radius*radius &&
-                        dy <=
-                            kotlin.math.max(
-                                3.0,
+                        AoEEngineeringWorldGeometry
+                            .inside(
+                                targetX,
+                                targetY,
+                                targetZ,
+                                p.x,
+                                p.y,
+                                p.z,
                                 radius
                             )
 
