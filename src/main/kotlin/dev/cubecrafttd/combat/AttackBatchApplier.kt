@@ -159,5 +159,7 @@ class AttackBatchApplier(
                 profile,
                 EffectKind.STUN
             )
+        StatusEffectType.SPEED_BOOST ->
+            true
     }
 }
