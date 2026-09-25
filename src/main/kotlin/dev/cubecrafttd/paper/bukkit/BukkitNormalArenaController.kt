@@ -323,6 +323,14 @@ class BukkitNormalArenaController(
         handles[arenaId]=handle
 
         try {
+            GuardBootstrapService()
+                .bootstrap(
+                    context,
+                    BukkitGuardAnchorSpawnPort(
+                        world
+                    )
+                )
+
             val preset=
                 MatchRulePreset(
                     mode=MatchMode.NORMAL,
