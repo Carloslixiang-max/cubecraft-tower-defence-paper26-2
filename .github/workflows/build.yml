@@ -51,10 +51,85 @@ jobs:
       - name: Show build output
         run: ls -lah build/libs
 
+      - name: Paper 26.2 live smoke boot #1
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf run
+          mkdir -p run
+          echo "eula=true" > run/eula.txt
+          mkfifo /tmp/ctd-server-in-1
+          gradle runServer --no-daemon < /tmp/ctd-server-in-1 > /tmp/ctd-server-1.log 2>&1 &
+          SERVER_PID=$!
+          exec 3>/tmp/ctd-server-in-1
+          READY=0
+          for i in $(seq 1 180); do
+            if grep -q "Done (" /tmp/ctd-server-1.log; then
+              READY=1
+              break
+            fi
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              cat /tmp/ctd-server-1.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/ctd-server-1.log
+            kill "$SERVER_PID" || true
+            exit 1
+          fi
+          grep -q "CubeCraftTowerDefence shell" /tmp/ctd-server-1.log
+          echo "ctdstatus" >&3
+          echo "ctdfixtures" >&3
+          sleep 4
+          echo "stop" >&3
+          exec 3>&-
+          wait "$SERVER_PID"
+          grep -q "CubeCraft TD domain fixtures:" /tmp/ctd-server-1.log
+          grep -q "CubeCraftTowerDefence shell v32 disabled; clean=true" /tmp/ctd-server-1.log
+          cp /tmp/ctd-server-1.log build/paper-smoke-1.log
+
+      - name: Paper 26.2 live smoke boot #2
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkfifo /tmp/ctd-server-in-2
+          gradle runServer --no-daemon < /tmp/ctd-server-in-2 > /tmp/ctd-server-2.log 2>&1 &
+          SERVER_PID=$!
+          exec 3>/tmp/ctd-server-in-2
+          READY=0
+          for i in $(seq 1 180); do
+            if grep -q "Done (" /tmp/ctd-server-2.log; then
+              READY=1
+              break
+            fi
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              cat /tmp/ctd-server-2.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/ctd-server-2.log
+            kill "$SERVER_PID" || true
+            exit 1
+          fi
+          grep -q "CubeCraftTowerDefence shell" /tmp/ctd-server-2.log
+          echo "ctdstatus" >&3
+          sleep 2
+          echo "stop" >&3
+          exec 3>&-
+          wait "$SERVER_PID"
+          grep -q "CubeCraftTowerDefence shell v32 disabled; clean=true" /tmp/ctd-server-2.log
+          cp /tmp/ctd-server-2.log build/paper-smoke-2.log
+
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v7
         with:
           name: CubeCraftTowerDefence-Paper26.2-Java25
-          path: build/libs/*.jar
+          path: |
+            build/libs/*.jar
+            build/paper-smoke-*.log
           if-no-files-found: error
           retention-days: 14
