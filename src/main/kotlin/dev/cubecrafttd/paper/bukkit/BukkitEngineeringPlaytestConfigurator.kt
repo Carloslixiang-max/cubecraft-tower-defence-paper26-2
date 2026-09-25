@@ -267,6 +267,7 @@ class BukkitEngineeringPlaytestConfigurator(
         set("creeper.regen-health-per-second",f.creeperRegenHealthPerSecond)
         set("giant.regen-health-per-second",f.giantRegenHealthPerSecond)
         set("giant.run-speed-multiplier",f.giantRunSpeedMultiplier)
+        set("status.ice-slow-movement-multiplier",f.iceSlowMovementMultiplier)
         set("slime.max-shrink-phase-index",f.slimeMaxShrinkPhaseIndex)
         set("leach.max-charge",f.leachMaxCharge)
         set("leach.charge-per-target-tick",f.leachChargePerTargetTick)
