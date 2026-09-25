@@ -14,6 +14,7 @@ data class PaperStage4GateStatus(
     val domainFixturesPassed: Boolean,
     val farmMapCheckPassed: Boolean,
     val adapterSmokePassed: Boolean,
+    val playerSnapshotRoundTripPassed: Boolean,
     val cleanRestartCycles: Int,
     val cleanArenaRoundTrips: Int,
     val previousBootWasUnclean: Boolean
@@ -23,6 +24,7 @@ data class PaperStage4GateStatus(
             domainFixturesPassed &&
             farmMapCheckPassed &&
             adapterSmokePassed &&
+            playerSnapshotRoundTripPassed &&
             cleanRestartCycles >= 2 &&
             cleanArenaRoundTrips >= 1 &&
             !previousBootWasUnclean
@@ -32,6 +34,7 @@ data class PaperStage4GateStatus(
             "fixtures=$domainFixturesPassed " +
             "farm=$farmMapCheckPassed " +
             "smoke=$adapterSmokePassed " +
+            "snapshotRoundTrip=$playerSnapshotRoundTripPassed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
             "previousUnclean=$previousBootWasUnclean"
@@ -188,6 +191,18 @@ class PaperStage4GateStore(
         return failures
     }
 
+    fun recordPlayerSnapshotRoundTrip(
+        passed: Boolean
+    ) {
+        if(passed) {
+            props.setProperty(
+                "playerSnapshotRoundTripPassed",
+                "true"
+            )
+            save()
+        }
+    }
+
     fun recordArenaRoundTrip(
         report: ArenaTeardownReport
     ) {
@@ -236,6 +251,10 @@ class PaperStage4GateStore(
             adapterSmokePassed=
                 bool(
                     "adapterSmokePassed"
+                ),
+            playerSnapshotRoundTripPassed=
+                bool(
+                    "playerSnapshotRoundTripPassed"
                 ),
             cleanRestartCycles=
                 int(
