@@ -1105,6 +1105,42 @@ class BukkitNormalArenaController(
                 ?.towerPlacement
                 ?.pending != null
 
+        if(
+            invocation.actionId
+                .startsWith(
+                    "bazaar:potion:use:"
+                )
+        ) {
+            val state=
+                playerState
+                    ?: error(
+                        "Player match session is missing"
+                    )
+            check(
+                state.interaction
+                    .armedAoEPotion==null
+            ) {
+                "Throw the currently armed AoE potion first"
+            }
+            val cooldown=
+                AoEPotionCooldownGate(
+                    handle.aoeCooldowns
+                )
+            check(
+                cooldown.isReady(
+                    invocation.playerUuid,
+                    handle.context.gameTick
+                )
+            ) {
+                "AoE potion cooldown active for " +
+                    cooldown.remainingTicks(
+                        invocation.playerUuid,
+                        handle.context.gameTick
+                    ) +
+                    " more ticks"
+            }
+        }
+
         if(placementPending && invocation.actionId.startsWith("tower:")) {
             val towerId=invocation.actionId.substringAfter("tower:")
             return handle.towerPlacement
