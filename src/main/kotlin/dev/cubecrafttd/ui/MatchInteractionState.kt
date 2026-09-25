@@ -16,6 +16,8 @@ data class PlayerMatchInteractionState(
         TowerPlacementFlowState(),
     val pinnedRangefinderTowers:
         MutableSet<Long> = linkedSetOf(),
+    var armedAoEPotion:
+        PotionUseToken? = null,
     var hotbarLayout:
         HotbarLayout =
         HotbarLayout.ENGINEERING_RUNTIME_DEFAULT
