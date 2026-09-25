@@ -71,6 +71,12 @@ class BukkitPlayerStateAdapter(
         p.fireTicks = 0
         p.fallDistance = 0f
         p.gameMode = GameMode.ADVENTURE
+        p.foodLevel = 20
+        p.saturation = 20f
+        p.exhaustion = 0f
+        p.isFlying = false
+        p.allowFlight = false
+        p.velocity = org.bukkit.util.Vector(0,0,0)
         p.level = 0
         p.exp = 0f
         p.totalExperience = 0
