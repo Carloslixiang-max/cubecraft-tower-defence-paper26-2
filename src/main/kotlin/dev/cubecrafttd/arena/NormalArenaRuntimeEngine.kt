@@ -8,6 +8,7 @@ package dev.cubecrafttd.arena
 object NormalArenaPhaseOrder {
     const val GOLDMINE = 20
     const val TROOP_SPAWN = 30
+    const val AOE_POTION = 35
     const val MOB_MOVEMENT = 40
     const val MOB_SUPPORT = 50
     const val LEACH_CHARGE = 55
