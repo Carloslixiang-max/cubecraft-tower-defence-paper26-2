@@ -89,13 +89,16 @@ class BukkitMenuBridge(
             )
         }
 
+        // Opening a replacement inventory closes the previous view and may fire
+        // InventoryCloseEvent synchronously. Register the NEW action map only
+        // after that transition so the old close cannot delete the refreshed map.
+        player.openInventory(
+            inventory
+        )
         openActions[playerUuid] =
             LinkedHashMap(
                 menu.slotActionIds
             )
-        player.openInventory(
-            inventory
-        )
     }
 
     @EventHandler
