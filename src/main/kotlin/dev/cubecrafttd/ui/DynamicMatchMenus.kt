@@ -53,6 +53,14 @@ object DynamicMatchMenus {
                     .ENGINEERING_FALLBACK,
             displayName="Send selected troops"
         )
+        slots += MenuSlot(
+            slot=26,
+            actionId="nav:progression",
+            evidenceStatus=
+                UiEvidenceStatus
+                    .ENGINEERING_FALLBACK,
+            displayName="Troop upgrades"
+        )
 
         return MenuDefinition(
             title="Mob Summoner",
@@ -108,6 +116,17 @@ object DynamicMatchMenus {
                         )
                     )
                 }
+                add(
+                    MenuSlot(
+                        slot=35,
+                        actionId="nav:summoner",
+                        evidenceStatus=
+                            UiEvidenceStatus
+                                .ENGINEERING_FALLBACK,
+                        displayName=
+                            "Back to Mob Summoner"
+                    )
+                )
             }
 
         return MenuDefinition(
