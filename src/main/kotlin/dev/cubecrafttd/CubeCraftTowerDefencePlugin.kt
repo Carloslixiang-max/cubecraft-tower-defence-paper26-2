@@ -247,7 +247,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v39 enabled; " +
+            "CubeCraftTowerDefence shell v40 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -295,7 +295,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v39 disabled; " +
+            "CubeCraftTowerDefence shell v40 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -308,7 +308,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ): Boolean = when (command.name.lowercase()) {
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v39, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v40, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
@@ -593,6 +593,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "creeperRegen=${r.gameplay.creeperRegen.healthPerSecond.value}/s, " +
                     "giantRegen=${r.gameplay.giantRegen.healthPerSecond.value}/s, " +
                     "giantRunX=${r.gameplay.giantRunSpeedMultiplier.value}, " +
+                    "iceSlowX=${r.gameplay.iceSlowMovementMultiplier?.value}, " +
                     "slimeMaxPhase=${r.gameplay.slimeLethal.maxShrinkPhaseIndex.value}, " +
                     "chainPolicy=${r.gameplay.chainTargetPolicy.value}, " +
                     "towerPriority=${r.gameplay.towerDefaultTargetPriority.value}"
