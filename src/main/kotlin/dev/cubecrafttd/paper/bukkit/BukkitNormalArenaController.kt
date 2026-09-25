@@ -1,6 +1,7 @@
 package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.arena.*
+import dev.cubecrafttd.castle.GuardBootstrapService
 import dev.cubecrafttd.economy.*
 import dev.cubecrafttd.match.*
 import dev.cubecrafttd.map.*
