@@ -44,7 +44,10 @@ data class LiveMenuView(
     val title: String,
     val size: Int,
     val slotActionIds:
-        Map<Int,String>
+        Map<Int,String>,
+    val slotDisplayNames:
+        Map<Int,String> =
+        emptyMap()
 )
 
 fun interface LiveMenuOpenPort {
