@@ -83,6 +83,31 @@ object SettingsAndHotbarRuntimeFixture {
             DynamicMatchMenus
                 .settings(playerState)
 
+        val hotbarChange=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "hotbar:move:SUMMONER:8",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .HotbarLayoutChanged
+
+        val hotbarMenu=
+            DynamicMatchMenus
+                .hotbarEditor(
+                    playerState
+                )
+        val roundTrip=
+            HotbarLayoutPersistenceCodec
+                .decode(
+                    HotbarLayoutPersistenceCodec
+                        .encode(
+                            hotbarChange.layout
+                        )
+                )
+
         return listOf(
             FixtureResult(
                 "hotbar-default-2021-slots",
@@ -113,6 +138,43 @@ object SettingsAndHotbarRuntimeFixture {
                 menu.evidenceStatus==
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK
+            ),
+            FixtureResult(
+                "hotbar-router-swap-and-custom-evidence",
+                hotbarChange.layout
+                    .slot(
+                        HotbarAction.SUMMONER
+                    )==8 &&
+                    hotbarChange.layout
+                        .slot(
+                            HotbarAction.SETTINGS
+                        )==2 &&
+                    hotbarChange.layout
+                        .evidence==
+                        HotbarLayoutEvidence
+                            .PLAYER_CUSTOM
+            ),
+            FixtureResult(
+                "hotbar-editor-marks-current-slot",
+                hotbarMenu.slots
+                    .firstOrNull {
+                        it.slot==26
+                    }?.let {
+                        it.actionId==
+                            "hotbar:move:SUMMONER:8" &&
+                            it.displayName
+                                ?.contains(
+                                    "(current)"
+                                )==true
+                    } == true
+            ),
+            FixtureResult(
+                "hotbar-persistence-codec-roundtrip",
+                roundTrip==
+                    hotbarChange.layout &&
+                    roundTrip?.evidence==
+                        HotbarLayoutEvidence
+                            .PLAYER_CUSTOM
             )
         )
     }
