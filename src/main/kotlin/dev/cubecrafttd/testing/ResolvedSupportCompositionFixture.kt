@@ -25,7 +25,7 @@ object ResolvedSupportCompositionFixture {
             FixtureResult(
                 "normal-support-phase-order",
                 phaseOrders ==
-                    listOf(20,30,40,50,55,57,60,65,70,80,90)
+                    listOf(20,30,35,40,50,55,57,60,65,70,80,90)
             ),
             FixtureResult(
                 "normal-support-config-resolved",
