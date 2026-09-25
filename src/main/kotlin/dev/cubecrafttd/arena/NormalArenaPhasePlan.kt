@@ -17,6 +17,10 @@ object RecommendedNormalArenaPhasePlan {
                 NormalArenaPhaseOrder.TROOP_SPAWN
             ),
             NormalArenaPhasePlanEntry(
+                "aoe-potion",
+                NormalArenaPhaseOrder.AOE_POTION
+            ),
+            NormalArenaPhasePlanEntry(
                 "mob-movement",
                 NormalArenaPhaseOrder.MOB_MOVEMENT
             ),
