@@ -416,6 +416,7 @@ class BukkitNormalArenaController(
 
             val placement=
                 BukkitMatchPlayerPlacementService(
+                    plugin.server,
                     world
                 ).placeTeams(
                     context.mapRuntime,
