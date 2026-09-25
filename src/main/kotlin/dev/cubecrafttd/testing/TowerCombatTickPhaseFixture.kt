@@ -91,6 +91,7 @@ object TowerCombatTickPhaseFixture {
 
         val geometryWith1000Unrelated =
             CountingGeometry(relevant,1000)
+        var feedbackCalls = 0
         val phase = TowerCombatTickPhase(
             geometryWith1000Unrelated,
             TowerRuntimeConfigProvider {
@@ -104,6 +105,15 @@ object TowerCombatTickPhaseFixture {
             TowerAttackPlannerProvider {
                 _,_ ->
                 DirectTowerAttackPlanners.archer()
+            },
+            TowerAttackFeedbackPort {
+                _,_,report ->
+                if(
+                    report.status ==
+                        TowerAttackCycleStatus.FIRED
+                ) {
+                    feedbackCalls++
+                }
             }
         )
 
@@ -135,6 +145,10 @@ object TowerCombatTickPhaseFixture {
                     .values
                     .maxBy { it.route.routeProgress }
                     .combat.health == 35.0
+            ),
+            FixtureResult(
+                "tower-combat-feedback-fires-once",
+                feedbackCalls == 1
             )
         )
     }
