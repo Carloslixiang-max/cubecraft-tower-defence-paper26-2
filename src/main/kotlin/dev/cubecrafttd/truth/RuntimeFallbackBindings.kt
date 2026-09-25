@@ -113,6 +113,21 @@ object RuntimeFallbackBindings {
                 .ENGINEERING_FALLBACK
         )
 
+    fun mobStatusDamage(
+        config: RuntimeFallbackConfigV1
+    ): dev.cubecrafttd.mob.MobStatusDamageResolvedConfig =
+        dev.cubecrafttd.mob.MobStatusDamageResolvedConfig(
+            burnIntervalTicks=
+                ResolvedTruth(
+                    config.burnIntervalTicks
+                        ?: error(
+                            "status.burnIntervalTicks unresolved"
+                        ),
+                    ResolutionSource
+                        .ENGINEERING_FALLBACK
+                )
+        )
+
     fun witchHeal(
         config: RuntimeFallbackConfigV1
     ): dev.cubecrafttd.mob.WitchHealConfig =
