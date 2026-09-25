@@ -45,6 +45,8 @@ data class RuntimeFallbackConfigV1(
         Double? = null,
     val giantRunSpeedMultiplier:
         Double? = null,
+    val iceSlowMovementMultiplier:
+        Double? = null,
     val slimeMaxShrinkPhaseIndex:
         Int? = null,
 
@@ -161,6 +163,9 @@ data class RuntimeFallbackConfigV1(
         }
         giantRunSpeedMultiplier?.let {
             require(it >= 1.0)
+        }
+        iceSlowMovementMultiplier?.let {
+            require(it in 0.0..1.0)
         }
         slimeMaxShrinkPhaseIndex?.let {
             require(it >= 0)
@@ -295,6 +300,10 @@ data class RuntimeFallbackConfigV1(
         }
         giantRunSpeedMultiplier?.let {
             out["giant.runSpeedMultiplier"] =
+                it
+        }
+        iceSlowMovementMultiplier?.let {
+            out["status.iceSlowMovementMultiplier"] =
                 it
         }
         slimeMaxShrinkPhaseIndex?.let {
@@ -554,6 +563,12 @@ object RuntimeFallbackValidator {
             "giant.runSpeedMultiplier",
             FallbackRequirementLevel.BLOCKS_MECHANIC,
             "Giant low-health run multiplier is not direct-official numeric truth"
+        )
+        requireValue(
+            config.iceSlowMovementMultiplier!=null,
+            "status.iceSlowMovementMultiplier",
+            FallbackRequirementLevel.BLOCKS_MECHANIC,
+            "Ice slow exists in live tower combat but its exact movement multiplier is unresolved"
         )
         requireValue(
             config.slimeMaxShrinkPhaseIndex!=null,
