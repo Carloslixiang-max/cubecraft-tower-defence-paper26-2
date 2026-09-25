@@ -33,7 +33,8 @@ data class PaperAdapterDiagnostics(
                 "readable refreshed live menu projection",
                 "status-aware mob movement",
                 "world-targeted AoE potion execution",
-                "durable player hotbar customization"
+                "durable player hotbar customization",
+                "live player snapshot roundtrip gate command"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
