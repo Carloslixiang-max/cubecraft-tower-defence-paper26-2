@@ -211,6 +211,10 @@ class BukkitNormalArenaController(
                             ),
                         towerPlannerProvider=
                             plannerProvider,
+                        towerAttackFeedback=
+                            BukkitEngineeringTowerAttackFeedback(
+                                plugin.server
+                            ),
                         summonCountResolver=
                             RuntimeFallbackBindings
                                 .towerSummonCounts(
