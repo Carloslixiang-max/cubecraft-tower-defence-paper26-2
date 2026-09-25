@@ -54,9 +54,37 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             PlayerSnapshotStore(),
             recoveryJournal
         )
-        recoveryListener = BukkitRecoveryListener(
-            this,recoveryCoordinator
-        )
+        recoveryListener =
+            BukkitRecoveryListener(
+                this,
+                recoveryCoordinator,
+                livePlayerState
+            ) { uuid,comparison ->
+                val passed=
+                    comparison?.passed==true
+                stage4Gate
+                    .recordRestartRecovery(
+                        passed
+                    )
+                if(passed) {
+                    logger.info(
+                        "Cross-restart recovery PASS for " +
+                            uuid
+                    )
+                } else {
+                    logger.warning(
+                        "Cross-restart recovery FAIL for " +
+                            uuid +
+                            ": " +
+                            (
+                                comparison
+                                    ?.mismatches
+                                    ?.joinToString()
+                                    ?: "live recapture error"
+                            )
+                    )
+                }
+            }
         recoveryListener.recoverAlreadyOnline()
         mapOperations = FarmMapOperationManager(
             this,mapBindingConfig
@@ -375,7 +403,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdsnapshotcheck" -> {
             runPlayerSnapshotRoundTripCheck(
-                sender
+                sender,
+                args.toList()
             )
             true
         }
@@ -603,8 +632,47 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
     private fun runPlayerSnapshotRoundTripCheck(
-        sender: CommandSender
+        sender: CommandSender,
+        args: List<String>
     ) {
+        if(args.size>1) {
+            sender.sendMessage(
+                "Usage: /ctdsnapshotcheck [restart-arm|restart-status]"
+            )
+            return
+        }
+
+        val mode=
+            args.firstOrNull()
+                ?.lowercase()
+                ?: "roundtrip"
+
+        if(mode=="restart-status") {
+            val status=
+                stage4Gate.status()
+            sender.sendMessage(
+                "Restart recovery evidence: passed=" +
+                    status.restartRecoveryPassed +
+                    ", pendingFromPreviousProcess=" +
+                    recoveryListener
+                        .pendingFromPreviousProcessCount() +
+                    ", pendingTotal=" +
+                    recoveryListener
+                        .pendingCount()
+            )
+            return
+        }
+
+        if(
+            mode!="roundtrip" &&
+            mode!="restart-arm"
+        ) {
+            sender.sendMessage(
+                "Usage: /ctdsnapshotcheck [restart-arm|restart-status]"
+            )
+            return
+        }
+
         val player=
             sender as?
                 org.bukkit.entity.Player
@@ -646,6 +714,33 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             sender.sendMessage(
                 "Snapshot check requires a living, awake player who is not inside a vehicle."
             )
+            return
+        }
+
+        if(mode=="restart-arm") {
+            runCatching {
+                recoveryCoordinator
+                    .captureBeforeMatch(
+                        uuid,
+                        47L
+                    )
+            }.onSuccess {
+                stage4Gate
+                    .beginRestartRecoveryProbe()
+                sender.sendMessage(
+                    "Restart recovery probe ARMED. Your exact state is durable in the TD recovery journal and you are now in temporary match-prepared state."
+                )
+                sender.sendMessage(
+                    "Restart the server now, then reconnect. The plugin restores and compares your state before deleting the journal. Check with /ctdsnapshotcheck restart-status."
+                )
+            }.onFailure { error ->
+                sender.sendMessage(
+                    "Restart recovery arm ERROR: " +
+                        error.javaClass.simpleName +
+                        ": " +
+                        error.message
+                )
+            }
             return
         }
 
