@@ -21,7 +21,9 @@ data class ResolvedNormalGameplayConfig(
     val chainTargetPolicy:
         ResolvedTruth<dev.cubecrafttd.tower.TowerChainTargetPolicy>,
     val towerDefaultTargetPriority:
-        ResolvedTruth<dev.cubecrafttd.tower.TargetPriorityPolicy>
+        ResolvedTruth<dev.cubecrafttd.tower.TargetPriorityPolicy>,
+    val iceSlowMovementMultiplier:
+        ResolvedTruth<Double>? = null
 )
 
 object NormalGameplayConfigResolver {
@@ -179,7 +181,10 @@ object NormalGameplayConfigResolver {
                     .towerChainTargetPolicy(config),
             towerDefaultTargetPriority =
                 RuntimeFallbackBindings
-                    .towerDefaultTargetPriority(config)
+                    .towerDefaultTargetPriority(config),
+            iceSlowMovementMultiplier =
+                RuntimeFallbackBindings
+                    .iceSlowMovementMultiplier(config)
         )
     }
 }
