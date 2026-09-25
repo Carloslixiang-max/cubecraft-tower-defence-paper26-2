@@ -140,7 +140,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v32 enabled; " +
+            "CubeCraftTowerDefence shell v34 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -188,7 +188,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v32 disabled; " +
+            "CubeCraftTowerDefence shell v34 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -201,7 +201,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ): Boolean = when (command.name.lowercase()) {
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=4-live-adapter-shell-v27, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v34, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
@@ -276,6 +276,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdmenu" -> {
             runLiveMenuTest(
+                sender,args.toList()
+            )
+            true
+        }
+
+        "ctdplaytestsetup" -> {
+            runEngineeringPlaytestSetup(
                 sender,args.toList()
             )
             true
@@ -596,6 +603,76 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
 
+
+    private fun runEngineeringPlaytestSetup(
+        sender: CommandSender,
+        args: List<String>
+    ) {
+        if(
+            args.size!=1 ||
+            args[0].lowercase()!="apply"
+        ) {
+            sender.sendMessage(
+                "Usage: /ctdplaytestsetup apply"
+            )
+            sender.sendMessage(
+                "This writes explicit ENGINEERING values to config.yml; they are not original CubeCraft truth."
+            )
+            return
+        }
+
+        val player=
+            sender as?
+                org.bukkit.entity.Player
+                ?: run {
+                    sender.sendMessage(
+                        "ctdplaytestsetup must be run by a player standing at the intended map minimum corner."
+                    )
+                    return
+                }
+
+        if(arenaService.contexts().isNotEmpty()) {
+            sender.sendMessage(
+                "Stop all TD arenas before changing the playtest profile."
+            )
+            return
+        }
+
+        try {
+            val r=
+                BukkitEngineeringPlaytestConfigurator(
+                    this
+                ).apply(player)
+            sender.sendMessage(
+                "Engineering playtest profile saved: " +
+                    r.profileId
+            )
+            sender.sendMessage(
+                "world=" + r.worldName +
+                    " origin=" + r.origin +
+                    " redRoute=" + r.redRoute +
+                    " blueRoute=" + r.blueRoute
+            )
+            r.configBackup?.let {
+                sender.sendMessage(
+                    "Strict config backup: " + it
+                )
+            }
+            sender.sendMessage(
+                "RESTART THE SERVER now. Then run /ctdmapcheck, /ctdpastefarm 28d24136afe8, /ctdpreflight, and /ctdlivetest start <arenaId> <redPlayer> <bluePlayer> wither."
+            )
+        } catch(t:Throwable) {
+            sender.sendMessage(
+                "ctdplaytestsetup ERROR: " +
+                    t.javaClass.simpleName +
+                    ": " + t.message
+            )
+            logger.warning(
+                "Engineering playtest setup failed: " +
+                    t.stackTraceToString()
+            )
+        }
+    }
 
     private fun runLiveMenuTest(
         sender: CommandSender,
