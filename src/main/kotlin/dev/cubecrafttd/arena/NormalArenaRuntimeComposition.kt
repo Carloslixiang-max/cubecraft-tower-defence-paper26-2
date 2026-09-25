@@ -4,6 +4,7 @@ import dev.cubecrafttd.castle.*
 import dev.cubecrafttd.economy.*
 import dev.cubecrafttd.match.ResolvedNormalGameplayConfig
 import dev.cubecrafttd.mob.*
+import dev.cubecrafttd.player.*
 import dev.cubecrafttd.tower.*
 import dev.cubecrafttd.troop.*
 
@@ -21,6 +22,9 @@ data class NormalArenaRuntimeDependencies(
     val towerAttackFeedback:
         TowerAttackFeedbackPort =
         NoOpTowerAttackFeedbackPort,
+    val aoePotionFeedback:
+        AoEPotionFeedbackPort =
+        NoOpAoEPotionFeedbackPort,
     val summonCountResolver:
         TowerSummonCountResolver,
     val summonSpawnPort:
@@ -73,6 +77,15 @@ object NormalArenaRuntimeCompositionFactory {
                         deps.mobSpawnPort,
                     idAllocator=
                         deps.mobIdAllocator
+                ),
+                AoEPotionTickPhase(
+                    queue=
+                        deps.runtimeState
+                            .aoePulses,
+                    lethalResolver=
+                        combat.lethalResolver,
+                    feedback=
+                        deps.aoePotionFeedback
                 ),
                 MobMovementTickPhase(
                     movementRate=
