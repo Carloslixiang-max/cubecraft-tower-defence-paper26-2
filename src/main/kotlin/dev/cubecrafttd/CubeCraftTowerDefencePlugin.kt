@@ -26,6 +26,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var readinessService: PaperGameplayReadinessService
     private lateinit var stage4Gate: PaperStage4GateStore
     private lateinit var liveArenaController: BukkitNormalArenaController
+    private lateinit var hotbarPreferences: BukkitHotbarPreferenceStore
     private lateinit var trackedDamageListener: BukkitTrackedMobDamageListener
     private lateinit var menuBridge: BukkitMenuBridge
     private lateinit var aoePotionTargetListener: BukkitAoEPotionTargetListener
@@ -66,13 +67,21 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             { recoveryListener.pendingCount() },
             stage4Gate
         )
+        hotbarPreferences =
+            BukkitHotbarPreferenceStore(
+                File(
+                    dataFolder,
+                    "player-hotbars.yml"
+                )
+            )
         liveArenaController = BukkitNormalArenaController(
             this,
             arenaService,
             recoveryCoordinator,
             mapBindingConfig,
             fallbackConfig,
-            stage4Gate
+            stage4Gate,
+            hotbarPreferences
         )
         trackedDamageListener = BukkitTrackedMobDamageListener(
             this,
@@ -176,6 +185,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                                 "settings:"
                                             ) ->
                                             "settings"
+                                        invocation.actionId
+                                            .startsWith(
+                                                "hotbar:"
+                                            ) ->
+                                            "hotbar"
                                         else -> null
                                     }
 
