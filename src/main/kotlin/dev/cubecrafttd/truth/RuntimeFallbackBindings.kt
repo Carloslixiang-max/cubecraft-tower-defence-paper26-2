@@ -101,6 +101,18 @@ object RuntimeFallbackBindings {
                 .ENGINEERING_FALLBACK
         )
 
+    fun iceSlowMovementMultiplier(
+        config: RuntimeFallbackConfigV1
+    ): ResolvedTruth<Double> =
+        ResolvedTruth(
+            config.iceSlowMovementMultiplier
+                ?: error(
+                    "status.iceSlowMovementMultiplier unresolved"
+                ),
+            ResolutionSource
+                .ENGINEERING_FALLBACK
+        )
+
     fun witchHeal(
         config: RuntimeFallbackConfigV1
     ): dev.cubecrafttd.mob.WitchHealConfig =
