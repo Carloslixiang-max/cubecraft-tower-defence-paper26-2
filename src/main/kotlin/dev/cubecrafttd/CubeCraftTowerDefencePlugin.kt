@@ -4,6 +4,7 @@ import dev.cubecrafttd.arena.ArenaService
 import dev.cubecrafttd.recovery.FilePlayerRecoveryJournal
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import dev.cubecrafttd.player.PlayerSnapshotStore
+import dev.cubecrafttd.player.PlayerSnapshotRoundTripService
 import dev.cubecrafttd.testing.*
 import dev.cubecrafttd.admin.*
 import dev.cubecrafttd.truth.*
@@ -372,6 +373,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             true
         }
 
+        "ctdsnapshotcheck" -> {
+            runPlayerSnapshotRoundTripCheck(
+                sender
+            )
+            true
+        }
+
         "ctdmapplan" -> {
             runFarmMapPlan(sender)
             true
@@ -462,6 +470,94 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
 
+
+    private fun runPlayerSnapshotRoundTripCheck(
+        sender: CommandSender
+    ) {
+        val player=
+            sender as?
+                org.bukkit.entity.Player
+        if(player==null) {
+            sender.sendMessage(
+                "This live snapshot check must be run by an online player."
+            )
+            return
+        }
+
+        val uuid=
+            player.uniqueId
+        if(
+            ::liveArenaController
+                .isInitialized &&
+            liveArenaController
+                .isActivePlayer(uuid)
+        ) {
+            sender.sendMessage(
+                "Snapshot check refused while you are in an active TD arena."
+            )
+            return
+        }
+        if(
+            uuid in
+                recoveryCoordinator
+                    .pending()
+        ) {
+            sender.sendMessage(
+                "Snapshot check refused because you already have a pending recovery snapshot."
+            )
+            return
+        }
+        if(
+            player.isDead ||
+            player.isInsideVehicle ||
+            player.isSleeping
+        ) {
+            sender.sendMessage(
+                "Snapshot check requires a living, awake player who is not inside a vehicle."
+            )
+            return
+        }
+
+        runCatching {
+            PlayerSnapshotRoundTripService(
+                livePlayerState
+            ).run(
+                uuid,
+                0L
+            )
+        }.onSuccess { report ->
+            stage4Gate
+                .recordPlayerSnapshotRoundTrip(
+                    report.passed
+                )
+            if(report.passed) {
+                sender.sendMessage(
+                    "Player snapshot round-trip PASS: all captured fields restored losslessly."
+                )
+            } else {
+                sender.sendMessage(
+                    "Player snapshot round-trip FAIL: " +
+                        report.mismatches
+                            .joinToString()
+                )
+            }
+        }.onFailure { error ->
+            stage4Gate
+                .recordPlayerSnapshotRoundTrip(
+                    false
+                )
+            sender.sendMessage(
+                "Player snapshot round-trip ERROR: " +
+                    error.javaClass.simpleName +
+                    ": " +
+                    error.message
+            )
+            logger.warning(
+                "Player snapshot round-trip check failed: " +
+                    error.stackTraceToString()
+            )
+        }
+    }
 
     private fun reportReadiness(
         sender: CommandSender
