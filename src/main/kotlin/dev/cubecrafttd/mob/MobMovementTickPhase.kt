@@ -115,6 +115,18 @@ class MobMovementTickPhase(
                         multiplier.value
                 }
 
+                mob.statusEffects
+                    .get(
+                        StatusEffectType.SPEED_BOOST
+                    )
+                    ?.let { boost ->
+                        require(
+                            boost.magnitude>=0.0
+                        )
+                        distance *=
+                            boost.magnitude
+                    }
+
                 if(
                     mob.identity.mobId=="giant" &&
                     GiantPhaseService
