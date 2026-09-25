@@ -55,6 +55,11 @@ sealed interface MatchMenuActionResult {
         val settings:
             SettingsMenuModel
     ) : MatchMenuActionResult
+
+    data class HotbarLayoutChanged(
+        val layout:
+            HotbarLayout
+    ) : MatchMenuActionResult
 }
 
 class MatchMenuActionRouter(
@@ -151,6 +156,12 @@ class MatchMenuActionRouter(
 
             "settings" ->
                 handleSettings(
+                    playerState,
+                    parts
+                )
+
+            "hotbar" ->
+                handleHotbar(
                     playerState,
                     parts
                 )
@@ -542,6 +553,39 @@ class MatchMenuActionRouter(
             .SettingsChanged(
                 SettingsMenuProjector
                     .project(settings)
+            )
+    }
+
+    private fun handleHotbar(
+        playerState:
+            PlayerMatchSessionState,
+        parts: List<String>
+    ): MatchMenuActionResult {
+        check(
+            parts.size==4 &&
+                parts[1]=="move"
+        ) {
+            "hotbar:move:<action>:<slot>"
+        }
+        val action=
+            HotbarAction.valueOf(
+                parts[2]
+                    .uppercase()
+            )
+        val slot=
+            parts[3].toInt()
+        val next=
+            playerState.interaction
+                .hotbarLayout
+                .move(
+                    action,
+                    slot
+                )
+        playerState.interaction
+            .hotbarLayout=next
+        return MatchMenuActionResult
+            .HotbarLayoutChanged(
+                next
             )
     }
 
