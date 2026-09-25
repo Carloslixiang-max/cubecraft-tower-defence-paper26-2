@@ -18,6 +18,9 @@ data class NormalArenaRuntimeDependencies(
     val towerGeometry: MobGeometryProvider,
     val towerConfigProvider: TowerRuntimeConfigProvider,
     val towerPlannerProvider: TowerAttackPlannerProvider,
+    val towerAttackFeedback:
+        TowerAttackFeedbackPort =
+        NoOpTowerAttackFeedbackPort,
     val summonCountResolver:
         TowerSummonCountResolver,
     val summonSpawnPort:
@@ -115,6 +118,8 @@ object NormalArenaRuntimeCompositionFactory {
                         deps.towerConfigProvider,
                     plannerProvider=
                         deps.towerPlannerProvider,
+                    feedbackPort=
+                        deps.towerAttackFeedback,
                     lethalResolver=
                         combat.lethalResolver
                 ),
