@@ -284,7 +284,27 @@ object AoEPotionRuntimePlanner {
                 )
                 listOf(
                     AoEPotionPulse(
-                        0L,uuids,
+                        tickOffset=0L,
+                        targetMobUuids=uuids,
+                        effect=
+                            StatusEffectInstance(
+                                type=
+                                    StatusEffectType
+                                        .SPEED_BOOST,
+                                sourceId=
+                                    "potion:$ownerUuid",
+                                magnitude=
+                                    config.value
+                                        .speedMultiplier
+                                        .value,
+                                appliedTick=
+                                    gameTick,
+                                expireTick=
+                                    gameTick +
+                                        config.value
+                                            .durationTicks
+                                            .value
+                            ),
                         speedMultiplier =
                             config.value
                                 .speedMultiplier.value
