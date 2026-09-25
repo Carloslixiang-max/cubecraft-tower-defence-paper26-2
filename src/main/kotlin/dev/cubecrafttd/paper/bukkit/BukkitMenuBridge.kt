@@ -70,9 +70,22 @@ class BukkitMenuBridge(
             require(
                 slot in 0 until menu.size
             )
+            val item=
+                renderer.render(action)
+            menu.slotDisplayNames[slot]
+                ?.let { displayName ->
+                    item.editMeta {
+                        meta ->
+                        meta.displayName(
+                            Component.text(
+                                displayName
+                            )
+                        )
+                    }
+                }
             inventory.setItem(
                 slot,
-                renderer.render(action)
+                item
             )
         }
 
