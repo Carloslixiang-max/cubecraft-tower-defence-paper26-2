@@ -4,6 +4,7 @@ import dev.cubecrafttd.arena.*
 import dev.cubecrafttd.castle.CastleCombatService
 import dev.cubecrafttd.map.Vec3
 import dev.cubecrafttd.truth.ResolvedTruth
+import dev.cubecrafttd.status.StatusEffectType
 import java.util.UUID
 
 fun interface MobMovementRateResolver {
@@ -38,6 +39,8 @@ class MobMovementTickPhase(
     private val livePosition:
         MobPositionUpdatePort,
     private val giantRunSpeedMultiplier:
+        ResolvedTruth<Double>? = null,
+    private val iceSlowMovementMultiplier:
         ResolvedTruth<Double>? = null
 ) : ArenaTickPhase {
     override val order: Int = 40
@@ -67,6 +70,10 @@ class MobMovementTickPhase(
                 ) return@forEach
 
                 metrics.movingVisited++
+                mob.statusEffects
+                    .removeExpired(
+                        context.gameTick
+                    )
                 val route=
                     context.mapRuntime
                         .routesById[
@@ -81,6 +88,32 @@ class MobMovementTickPhase(
                         mob.form.formId
                     ).value
                 require(distance>=0.0)
+
+                if(
+                    mob.statusEffects
+                        .get(
+                            StatusEffectType.STUN
+                        ) != null
+                ) {
+                    distance=0.0
+                } else if(
+                    mob.statusEffects
+                        .get(
+                            StatusEffectType.ICE_SLOW
+                        ) != null
+                ) {
+                    val multiplier=
+                        iceSlowMovementMultiplier
+                            ?: error(
+                                "Ice slow movement multiplier unresolved"
+                            )
+                    require(
+                        multiplier.value in
+                            0.0..1.0
+                    )
+                    distance *=
+                        multiplier.value
+                }
 
                 if(
                     mob.identity.mobId=="giant" &&
