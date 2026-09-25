@@ -25,6 +25,10 @@ commands:
     description: Show automatically recorded Stage-4 live evidence
     usage: /ctdlivegate
     permission: cubecrafttd.admin
+  ctdsnapshotcheck:
+    description: Validate a live player's capture/prepare/restore snapshot round-trip
+    usage: /ctdsnapshotcheck
+    permission: cubecrafttd.admin
   ctdmapplan:
     description: Validate configured Farm world/origin without mutating the world
     usage: /ctdmapplan
