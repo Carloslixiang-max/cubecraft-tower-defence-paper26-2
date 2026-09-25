@@ -37,6 +37,7 @@ object DomainFixtureSuite {
         addAll(NormalArenaLoopFixture.run())
         addAll(MatchModePresetFixture.run())
         addAll(GuardIndexFixture.run())
+        addAll(GuardBootstrapFixture.run())
         addAll(ArenaStressFixture.run())
         addAll(MatchBootstrapFixture.run())
         addAll(FallbackAdminFixture.run())
