@@ -48,6 +48,11 @@ sealed interface DamageSourceIdentity {
     data class PlayerTower(val ownerUuid: UUID, val towerInstanceId: Long) : DamageSourceIdentity
     data class PlayerSword(val playerUuid: UUID) : DamageSourceIdentity
     data class PlayerBow(val playerUuid: UUID) : DamageSourceIdentity
+    data class PlayerPotion(
+        val playerUuid: UUID,
+        val potionId: String,
+        val awardsPlayerKillCoins: Boolean
+    ) : DamageSourceIdentity
     data class CastleGuard(val defendingTeam: TeamId) : DamageSourceIdentity
     data class System(val reason: String) : DamageSourceIdentity
 }
