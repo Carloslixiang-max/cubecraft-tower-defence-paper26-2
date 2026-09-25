@@ -34,6 +34,7 @@ object BukkitRuntimeFallbackLoader {
             creeperRegenHealthPerSecond = doubleOrNull(config,"runtime-fallback.creeper.regen-health-per-second"),
             giantRegenHealthPerSecond = doubleOrNull(config,"runtime-fallback.giant.regen-health-per-second"),
             giantRunSpeedMultiplier = doubleOrNull(config,"runtime-fallback.giant.run-speed-multiplier"),
+            iceSlowMovementMultiplier = doubleOrNull(config,"runtime-fallback.status.ice-slow-movement-multiplier"),
             slimeMaxShrinkPhaseIndex = intOrNull(config,"runtime-fallback.slime.max-shrink-phase-index"),
             leachMaxCharge = doubleOrNull(config,"runtime-fallback.leach.max-charge"),
             leachChargePerTargetTick = doubleOrNull(config,"runtime-fallback.leach.charge-per-target-tick"),
