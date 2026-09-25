@@ -3,6 +3,7 @@ package dev.cubecrafttd.paper.bukkit
 import dev.cubecrafttd.arena.TeamId
 import dev.cubecrafttd.map.MapRuntimeDefinition
 import org.bukkit.Location
+import org.bukkit.Server
 import org.bukkit.World
 import java.util.UUID
 
@@ -28,6 +29,7 @@ data class PlayerPlacementReport(
  * MatchEnd/ArenaTeardown recovery path exactly once.
  */
 class BukkitMatchPlayerPlacementService(
+    private val server: Server,
     private val world: World
 ) {
     fun placeTeams(
@@ -44,7 +46,7 @@ class BukkitMatchPlayerPlacementService(
             uuid: UUID
         ) {
             val player=
-                world.server.getPlayer(uuid)
+                server.getPlayer(uuid)
             if(
                 player==null ||
                 !player.isOnline
