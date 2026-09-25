@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v46 engineering playtest shell**
-- Pure-domain baseline: **360/360 fixtures PASS**
+- Current shell lineage: **v47 engineering playtest shell**
+- Pure-domain baseline: **363/363 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -46,7 +46,8 @@ The codebase already contains substantial runtime work, including:
 - persistent player-custom hotbar layouts: Settings → Engineering hotbar editor → live reprojection, with layouts saved in `player-hotbars.yml` and reloaded on later matches/restarts;
 - a live player-state snapshot round-trip gate (`/ctdsnapshotcheck`) that verifies capture → match preparation → restore across inventory, armor, offhand, cursor, location, game mode, XP, health/food, potion effects, velocity, flight and related state before recording Stage-4 evidence;
 - a per-arena low-overhead tick profiler (`/ctdperf`) covering full Paper live ticks plus every core phase, with last/average/max timings, >=50 ms slow-tick counts and current tower/mob/guard/entity counts;
-- a same-world arena reservation guard that rejects shared players and overlapping spatial envelopes before any match snapshot/state mutation, while permitting non-overlapping arenas in the same world or identical coordinates in different worlds. The 16-block safety padding is explicitly Engineering-only.
+- a same-world arena reservation guard that rejects shared players and overlapping spatial envelopes before any match snapshot/state mutation, while permitting non-overlapping arenas in the same world or identical coordinates in different worlds. The 16-block safety padding is explicitly Engineering-only;
+- a cross-restart recovery probe path: `/ctdsnapshotcheck restart-arm` durably captures the real player before mutation, a real server restart/rejoin triggers restore + recapture comparison, and the journal is deleted only after lossless verification. `/ctdsnapshotcheck restart-status` reports the durable evidence.
 
 ## Build
 
@@ -105,6 +106,8 @@ Unknown original values remain unknown in the strict configuration. For actual t
 
 The setup command creates `config.before-engineering-playtest.yml` before its first overwrite. Generated numbers, route choice, player spawns, and Guard anchors are explicitly tagged **ENGINEERING** and are never promoted to original CubeCraft truth.
 
+For cross-restart recovery certification, run `/ctdsnapshotcheck restart-arm` as an online OP who is not in a TD arena, then perform a real server restart and reconnect. The command intentionally puts that player into temporary match-prepared state after the durable snapshot is written. On the next process, the plugin restores and re-captures the player before deleting the journal; verify the result with `/ctdsnapshotcheck restart-status`.
+
 The Farm schematic is not bundled in this public repository because its redistribution rights have not been verified. The community author publicly shared the adjusted Farm schematic in the CubeCraft forum thread [Farm Improvements](https://www.cubecraft.net/threads/%F0%9F%8C%BE-farm-improvements-%E2%9A%92%EF%B8%8F.309871/); obtain it from the original post rather than redistributing it through this repository.
 
 ## Paper test commands
@@ -116,7 +119,7 @@ The plugin currently exposes engineering/admin commands such as:
 - `/ctdmapcheck`
 - `/ctdready`
 - `/ctdlivegate`
-- `/ctdsnapshotcheck`
+- `/ctdsnapshotcheck [restart-arm|restart-status]`
 - `/ctdperf [arenaId|reset [arenaId]]`
 - `/ctdpreflight`
 - `/ctdfallbacks`

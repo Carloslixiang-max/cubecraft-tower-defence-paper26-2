@@ -36,7 +36,8 @@ data class PaperAdapterDiagnostics(
                 "durable player hotbar customization",
                 "live player snapshot roundtrip gate command",
                 "live per-arena tick/phase profiler",
-                "same-world arena spatial/player reservation guard"
+                "same-world arena spatial/player reservation guard",
+                "cross-restart recovery verification path"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",

@@ -26,8 +26,8 @@ commands:
     usage: /ctdlivegate
     permission: cubecrafttd.admin
   ctdsnapshotcheck:
-    description: Validate a live player's capture/prepare/restore snapshot round-trip
-    usage: /ctdsnapshotcheck
+    description: Validate live snapshot round-trip or arm/check a real cross-restart recovery probe
+    usage: /ctdsnapshotcheck [restart-arm|restart-status]
     permission: cubecrafttd.admin
   ctdperf:
     description: Show or reset per-arena live/core tick profiler metrics
