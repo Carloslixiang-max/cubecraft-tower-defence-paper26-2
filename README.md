@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v43 engineering playtest shell**
-- Pure-domain baseline: **349/349 fixtures PASS**
+- Current shell lineage: **v44 engineering playtest shell**
+- Pure-domain baseline: **352/352 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -43,7 +43,8 @@ The codebase already contains substantial runtime work, including:
 - a live particle rangefinder projection for hovered, shift-nearest and permanently pinned tower ranges, while keeping particle style explicitly Engineering-only;
 - status-aware live movement plus periodic Poison/Burn damage, with Poison cadence coming from stage data and unresolved Burn cadence remaining an explicit Engineering fallback;
 - world-targeted AoE potion execution for Engineering Playtest: Bazaar purchase → armed state → right-click target area → deterministic arena-tick pulses, including damage, heal, Freeze/Speed status effects, cooldowns, visual feedback, and idempotent final death economy settlement;
-- persistent player-custom hotbar layouts: Settings → Engineering hotbar editor → live reprojection, with layouts saved in `player-hotbars.yml` and reloaded on later matches/restarts.
+- persistent player-custom hotbar layouts: Settings → Engineering hotbar editor → live reprojection, with layouts saved in `player-hotbars.yml` and reloaded on later matches/restarts;
+- a live player-state snapshot round-trip gate (`/ctdsnapshotcheck`) that verifies capture → match preparation → restore across inventory, armor, offhand, cursor, location, game mode, XP, health/food, potion effects, velocity, flight and related state before recording Stage-4 evidence.
 
 ## Build
 
@@ -94,10 +95,11 @@ Unknown original values remain unknown in the strict configuration. For actual t
 2. Join as an operator and stand at the intended minimum X/Z map corner in a large clear area. Setup places the schematic origin 8 blocks above your feet.
 3. Run `/ctdplaytestsetup apply`.
 4. Restart the server. This is intentional so every live service receives one immutable configuration snapshot.
-5. Run `/ctdmapcheck`, then `/ctdpastefarm 28d24136afe8`. Safe paste aborts before mutation if any destination block is non-air.
-6. Run `/ctdpreflight`. All non-live blockers should be gone.
-7. With two online players, run `/ctdlivetest start test <redPlayer> <bluePlayer> wither`.
-8. End the test with `/ctdlivetest stop test`.
+5. As an online OP who is not inside a TD arena, run `/ctdsnapshotcheck` once to certify the live capture/restore adapter on the actual server.
+6. Run `/ctdmapcheck`, then `/ctdpastefarm 28d24136afe8`. Safe paste aborts before mutation if any destination block is non-air.
+7. Run `/ctdpreflight`. All non-live blockers should be gone.
+8. With two online players, run `/ctdlivetest start test <redPlayer> <bluePlayer> wither`.
+9. End the test with `/ctdlivetest stop test`.
 
 The setup command creates `config.before-engineering-playtest.yml` before its first overwrite. Generated numbers, route choice, player spawns, and Guard anchors are explicitly tagged **ENGINEERING** and are never promoted to original CubeCraft truth.
 
