@@ -35,6 +35,12 @@ class BukkitMatchHotbarListener(
         ) return
 
         val player=event.player
+        if(
+            controller.hasArmedAoEPotion(
+                player.uniqueId
+            )
+        ) return
+
         val action=
             controller.hotbarActionAt(
                 player.uniqueId,
