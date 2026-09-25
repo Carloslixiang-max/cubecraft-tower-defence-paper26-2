@@ -57,6 +57,10 @@ commands:
     description: Open Stage-4 CubeCraft TD menu projections
     usage: /ctdmenu <builder3|builder5|summoner|progression|bazaar|settings>
     permission: cubecrafttd.admin
+  ctdplaytestsetup:
+    description: Write explicit engineering-only playable defaults and Farm map binding
+    usage: /ctdplaytestsetup apply
+    permission: cubecrafttd.admin
 permissions:
   cubecrafttd.admin:
     default: op
