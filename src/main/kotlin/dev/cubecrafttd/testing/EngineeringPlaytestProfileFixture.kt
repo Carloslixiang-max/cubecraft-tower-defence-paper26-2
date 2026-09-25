@@ -22,6 +22,10 @@ object EngineeringPlaytestProfileFixture {
                     .isEmpty()
             ),
             FixtureResult(
+                "engineering-playtest-burn-cadence-explicit",
+                config.burnIntervalTicks==20L
+            ),
+            FixtureResult(
                 "engineering-playtest-wither-complete",
                 ArmageddonFallbackValidator
                     .validate(
