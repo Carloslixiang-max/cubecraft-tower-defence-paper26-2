@@ -30,7 +30,8 @@ data class PaperAdapterDiagnostics(
                 "engineering playtest hotbar projection",
                 "live engineering rangefinder projection",
                 "live tower-attack feedback projection",
-                "readable refreshed live menu projection"
+                "readable refreshed live menu projection",
+                "status-aware mob movement"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
