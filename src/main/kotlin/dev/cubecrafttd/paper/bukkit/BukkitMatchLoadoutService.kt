@@ -29,6 +29,15 @@ class BukkitMatchLoadoutService(
                     "Player $playerUuid is not online"
                 )
 
+        // Reprojection is idempotent: clear the hotbar first so a future
+        // layout change cannot leave stale match controls behind.
+        repeat(9) { slot ->
+            player.inventory.setItem(
+                slot,
+                ItemStack.empty()
+            )
+        }
+
         val projection=
             MatchHotbarProjector
                 .project(state)
