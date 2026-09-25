@@ -432,10 +432,10 @@ object AoEPotionWorldExecutionFixture {
                 redCoinsAfterFirst==1L &&
                     blueExpAfterFirst==
                         expectedExp &&
-                    finalStats
-                        ?.troopsKilled==1 &&
-                    finalStats
-                        .coinsEarned==1L
+                    finalStats?.let {
+                        it.troopsKilled==1 &&
+                            it.coinsEarned==1L
+                    } == true
             ),
             FixtureResult(
                 "aoe-finalizer-is-idempotent-on-repeat",
