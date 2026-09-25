@@ -1,5 +1,7 @@
 package dev.cubecrafttd.status
 
+import java.util.UUID
+
 enum class StatusEffectType {
     POISON,
     BURN,
@@ -19,10 +21,16 @@ data class StatusEffectInstance(
     val sourceId: String,
     val magnitude: Double,
     val appliedTick: Long,
-    val expireTick: Long
+    val expireTick: Long,
+    val tickIntervalTicks: Long? = null,
+    val sourcePlayerUuid: UUID? = null,
+    val sourceTowerInstanceId: Long? = null
 ) {
     init {
         require(expireTick >= appliedTick)
+        tickIntervalTicks?.let {
+            require(it > 0L)
+        }
     }
 }
 
