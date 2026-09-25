@@ -35,7 +35,8 @@ data class PaperAdapterDiagnostics(
                 "world-targeted AoE potion execution",
                 "durable player hotbar customization",
                 "live player snapshot roundtrip gate command",
-                "live per-arena tick/phase profiler"
+                "live per-arena tick/phase profiler",
+                "same-world arena spatial/player reservation guard"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
@@ -43,7 +44,7 @@ data class PaperAdapterDiagnostics(
                 "raytrace fidelity vs original firing origins",
                 "production GUI icon/lore fidelity",
                 "restart recovery",
-                "same-world multi-arena isolation",
+                "same-world non-overlap multi-arena real-server certification",
                 "60+ tower real-server performance certification"
             )
         )

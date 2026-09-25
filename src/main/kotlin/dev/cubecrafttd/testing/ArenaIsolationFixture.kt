@@ -47,9 +47,229 @@ object ArenaIsolationFixture {
         a.entityIndex.unregisterMob(mobA.identity.entityUuid)
         val bUnaffected = b.entityIndex.mobsByUuid.size == 1
 
+        val world=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000046100"
+            )
+        val otherWorld=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000046200"
+            )
+        val playerA=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000046001"
+            )
+        val playerB=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000046002"
+            )
+        val playerC=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000046003"
+            )
+        val baseMap=
+            TestingMapFactory.minimal()
+        val farMap=
+            MapRuntimeWorldTranslator
+                .translate(
+                    baseMap,
+                    MapWorldTranslation(
+                        1_000,0,0
+                    )
+                )
+
+        fun reservation(
+            id: String,
+            targetWorld: UUID,
+            players: Set<UUID>,
+            map:
+                MapRuntimeDefinition
+        ) =
+            ArenaSpatialReservation
+                .fromMap(
+                    ArenaId(id),
+                    targetWorld,
+                    players,
+                    map
+                )
+
+        val overlapRegistry=
+            ArenaIsolationRegistry()
+        check(
+            overlapRegistry.reserve(
+                reservation(
+                    "overlap-a",
+                    world,
+                    setOf(playerA),
+                    baseMap
+                )
+            ) is
+                ArenaReservationResult
+                    .Accepted
+        )
+        val overlapRejected=
+            overlapRegistry.reserve(
+                reservation(
+                    "overlap-b",
+                    world,
+                    setOf(playerB),
+                    baseMap
+                )
+            ) is
+                ArenaReservationResult
+                    .Rejected
+
+        val separatedRegistry=
+            ArenaIsolationRegistry()
+        val separatedA=
+            separatedRegistry.reserve(
+                reservation(
+                    "separated-a",
+                    world,
+                    setOf(playerA),
+                    baseMap
+                )
+            )
+        val separatedB=
+            separatedRegistry.reserve(
+                reservation(
+                    "separated-b",
+                    world,
+                    setOf(playerB),
+                    farMap
+                )
+            )
+
+        val differentWorldRegistry=
+            ArenaIsolationRegistry()
+        val differentWorldA=
+            differentWorldRegistry
+                .reserve(
+                    reservation(
+                        "world-a",
+                        world,
+                        setOf(playerA),
+                        baseMap
+                    )
+                )
+        val differentWorldB=
+            differentWorldRegistry
+                .reserve(
+                    reservation(
+                        "world-b",
+                        otherWorld,
+                        setOf(playerB),
+                        baseMap
+                    )
+                )
+
+        val playerRegistry=
+            ArenaIsolationRegistry()
+        check(
+            playerRegistry.reserve(
+                reservation(
+                    "player-a",
+                    world,
+                    setOf(
+                        playerA,
+                        playerB
+                    ),
+                    baseMap
+                )
+            ) is
+                ArenaReservationResult
+                    .Accepted
+        )
+        val playerRejected=
+            playerRegistry.reserve(
+                reservation(
+                    "player-b",
+                    otherWorld,
+                    setOf(
+                        playerA,
+                        playerC
+                    ),
+                    farMap
+                )
+            ) as
+                ArenaReservationResult
+                    .Rejected
+
+        val releaseRegistry=
+            ArenaIsolationRegistry()
+        val releaseId=
+            ArenaId("release-a")
+        check(
+            releaseRegistry.reserve(
+                reservation(
+                    releaseId.value,
+                    world,
+                    setOf(playerA),
+                    baseMap
+                )
+            ) is
+                ArenaReservationResult
+                    .Accepted
+        )
+        val released=
+            releaseRegistry.release(
+                releaseId
+            )
+        val reserveAfterRelease=
+            releaseRegistry.reserve(
+                reservation(
+                    "release-b",
+                    world,
+                    setOf(playerB),
+                    baseMap
+                )
+            )
+
         return listOf(
             FixtureResult("arena-two-context-index-isolation", isolated),
-            FixtureResult("arena-unregister-does-not-cross-context", bUnaffected)
+            FixtureResult("arena-unregister-does-not-cross-context", bUnaffected),
+            FixtureResult(
+                "arena-reservation-overlap-same-world-rejected",
+                overlapRejected
+            ),
+            FixtureResult(
+                "arena-reservation-nonoverlap-same-world-accepted",
+                separatedA is
+                    ArenaReservationResult
+                        .Accepted &&
+                    separatedB is
+                        ArenaReservationResult
+                            .Accepted
+            ),
+            FixtureResult(
+                "arena-reservation-same-space-different-world-accepted",
+                differentWorldA is
+                    ArenaReservationResult
+                        .Accepted &&
+                    differentWorldB is
+                        ArenaReservationResult
+                            .Accepted
+            ),
+            FixtureResult(
+                "arena-reservation-shared-player-rejected-cross-world",
+                playerRejected.conflicts
+                    .any {
+                        it is
+                            ArenaIsolationConflict
+                                .PlayerAlreadyReserved &&
+                            it.playerUuid==
+                                playerA
+                    }
+            ),
+            FixtureResult(
+                "arena-reservation-release-frees-space",
+                released &&
+                    releaseRegistry
+                        .activeCount()==1 &&
+                    reserveAfterRelease is
+                        ArenaReservationResult
+                            .Accepted
+            )
         )
     }
 }

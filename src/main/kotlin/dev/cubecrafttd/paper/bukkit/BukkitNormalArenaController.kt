@@ -100,6 +100,9 @@ class BukkitNormalArenaController(
             plugin.server
         )
 
+    private val isolationRegistry=
+        ArenaIsolationRegistry()
+
     private val handles=
         linkedMapOf<
             ArenaId,
@@ -164,8 +167,6 @@ class BukkitNormalArenaController(
             world.uid,
             preflight.mapRuntime
         )
-        arenaService.register(context)
-
         val ledger=EconomyLedger()
         val runtimeState=
             NormalArenaRuntimeState
@@ -387,9 +388,41 @@ class BukkitNormalArenaController(
                 nextTransactionId=
                     nextTransactionId
             )
-        handles[arenaId]=handle
+        val reservation=
+            ArenaSpatialReservation
+                .fromMap(
+                    arenaId,
+                    world.uid,
+                    setOf(
+                        redPlayer,
+                        bluePlayer
+                    ),
+                    preflight.mapRuntime
+                )
+        val reservationResult=
+            isolationRegistry
+                .reserve(
+                    reservation
+                )
+        check(
+            reservationResult is
+                ArenaReservationResult
+                    .Accepted
+        ) {
+            val rejected=
+                reservationResult as
+                    ArenaReservationResult
+                        .Rejected
+            "Arena isolation blocked: " +
+                rejected.summary()
+        }
 
         try {
+            arenaService.register(
+                context
+            )
+            handles[arenaId]=handle
+
             GuardBootstrapService()
                 .bootstrap(
                     context,
@@ -565,6 +598,9 @@ class BukkitNormalArenaController(
             }
             arenaService.close(arenaId) {}
             handles.remove(arenaId)
+            isolationRegistry.release(
+                arenaId
+            )
             throw t
         }
     }
@@ -1484,20 +1520,27 @@ class BukkitNormalArenaController(
             handles.remove(arenaId)
                 ?: return null
 
-        val report=
-            handle.endCoordinator
-                .finish(
-                    handle.context,
-                    outcome
+        return try {
+            val report=
+                handle.endCoordinator
+                    .finish(
+                        handle.context,
+                        outcome
+                    )
+
+            stage4Gate
+                .recordArenaRoundTrip(
+                    report.teardown
                 )
-
-        stage4Gate
-            .recordArenaRoundTrip(
-                report.teardown
+            report
+        } finally {
+            arenaService.close(
+                arenaId
+            ) {}
+            isolationRegistry.release(
+                arenaId
             )
-
-        arenaService.close(arenaId) {}
-        return report
+        }
     }
 
     fun stopAll() {
