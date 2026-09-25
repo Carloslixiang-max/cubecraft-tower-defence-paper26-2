@@ -77,5 +77,6 @@ object DomainFixtureSuite {
         addAll(TowerPlacementAndRangefinderFixture.run())
         addAll(EngineeringPlaytestProfileFixture.run())
         addAll(EngineeringMatchHudFixture.run())
+        addAll(LiveMenuProjectionFixture.run())
     }
 }
