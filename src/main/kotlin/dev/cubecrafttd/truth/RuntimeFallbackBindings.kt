@@ -278,4 +278,193 @@ object RuntimeFallbackBindings {
         )
 
 
+    private fun aoeNumber(
+        config: RuntimeFallbackConfigV1,
+        key: String
+    ): Number =
+        config.aoeNumericFallbacks[key]
+            ?: error(
+                "aoe." + key + " unresolved"
+            )
+
+    fun aoePotionConfig(
+        config: RuntimeFallbackConfigV1,
+        potionId: String
+    ): dev.cubecrafttd.player.AoEPotionRuntimeConfig =
+        when(potionId) {
+            "freeze" ->
+                dev.cubecrafttd.player
+                    .AoEPotionRuntimeConfig.Freeze(
+                        dev.cubecrafttd.player
+                            .FreezePotionResolvedConfig(
+                                slowMagnitude=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "freeze.slowMagnitude"
+                                        ).toDouble(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    ),
+                                durationTicks=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "freeze.durationTicks"
+                                        ).toLong(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    )
+                            )
+                    )
+            "inferno" ->
+                dev.cubecrafttd.player
+                    .AoEPotionRuntimeConfig.Inferno(
+                        dev.cubecrafttd.player
+                            .InfernoPotionResolvedConfig(
+                                damagePerSecond=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "inferno.damagePerSecond"
+                                        ).toDouble(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    ),
+                                pulseIntervalTicks=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "inferno.pulseIntervalTicks"
+                                        ).toLong(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    )
+                            )
+                    )
+            "meteor" ->
+                dev.cubecrafttd.player
+                    .AoEPotionRuntimeConfig.Meteor(
+                        dev.cubecrafttd.player
+                            .MeteorPotionResolvedConfig(
+                                ResolvedTruth(
+                                    aoeNumber(
+                                        config,
+                                        "meteor.pulseIntervalTicks"
+                                    ).toLong(),
+                                    ResolutionSource
+                                        .ENGINEERING_FALLBACK
+                                )
+                            )
+                    )
+            "zeus" ->
+                dev.cubecrafttd.player
+                    .AoEPotionRuntimeConfig.Zeus(
+                        dev.cubecrafttd.player
+                            .ZeusPotionResolvedConfig(
+                                damagePerBolt=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "zeus.damagePerBolt"
+                                        ).toDouble(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    ),
+                                boltCount=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "zeus.boltCount"
+                                        ).toInt(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    )
+                            )
+                    )
+            "speed" ->
+                dev.cubecrafttd.player
+                    .AoEPotionRuntimeConfig.Speed(
+                        dev.cubecrafttd.player
+                            .SpeedPotionResolvedConfig(
+                                speedMultiplier=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "speed.speedMultiplier"
+                                        ).toDouble(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    ),
+                                durationTicks=
+                                    ResolvedTruth(
+                                        aoeNumber(
+                                            config,
+                                            "speed.durationTicks"
+                                        ).toLong(),
+                                        ResolutionSource
+                                            .ENGINEERING_FALLBACK
+                                    )
+                            )
+                    )
+            "heal" ->
+                dev.cubecrafttd.player
+                    .AoEPotionRuntimeConfig.Heal(
+                        dev.cubecrafttd.player
+                            .HealPotionResolvedConfig(
+                                ResolvedTruth(
+                                    aoeNumber(
+                                        config,
+                                        "heal.healAmount"
+                                    ).toDouble(),
+                                    ResolutionSource
+                                        .ENGINEERING_FALLBACK
+                                )
+                            )
+                    )
+            else ->
+                error(
+                    "Unknown AoE potion " + potionId
+                )
+        }
+
+    fun aoeEffectLengthBlocks(
+        config: RuntimeFallbackConfigV1,
+        definition:
+            dev.cubecrafttd.ui.AoEPotionDefinition
+    ): ResolvedTruth<Double> {
+        val observed=
+            definition.effectLengthBlocks
+        return if(observed!=null) {
+            ResolvedTruth(
+                observed.toDouble(),
+                ResolutionSource
+                    .OBSERVED_ORIGINAL
+            )
+        } else {
+            ResolvedTruth(
+                aoeNumber(
+                    config,
+                    definition.potionId +
+                        ".effectLengthBlocks"
+                ).toDouble(),
+                ResolutionSource
+                    .ENGINEERING_FALLBACK
+            )
+        }
+    }
+
+    fun aoeKillAwardsCoins(
+        config: RuntimeFallbackConfigV1
+    ): ResolvedTruth<Boolean> =
+        ResolvedTruth(
+            config.aoeKillAwardsCoins
+                ?: error(
+                    "aoe.killAwardsCoins unresolved"
+                ),
+            ResolutionSource
+                .ENGINEERING_FALLBACK
+        )
+
+
 }
