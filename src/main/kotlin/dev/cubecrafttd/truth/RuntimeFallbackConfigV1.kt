@@ -76,6 +76,8 @@ data class RuntimeFallbackConfigV1(
 
     val aoeNumericFallbacks:
         Map<String,Number> = emptyMap(),
+    val aoeKillAwardsCoins:
+        Boolean? = null,
 
     val lightningFirstStrikeDelayTicks:
         Long? = null,
@@ -366,6 +368,9 @@ data class RuntimeFallbackConfigV1(
             (key,value) ->
             out["aoe.$key"] = value
         }
+        aoeKillAwardsCoins?.let {
+            out["aoe.killAwardsCoins"] = it
+        }
 
         lightningFirstStrikeDelayTicks?.let {
             out[
@@ -614,6 +619,13 @@ object RuntimeFallbackValidator {
             FallbackRequirementLevel
                 .BLOCKS_MECHANIC,
             "Default tower target-priority rule is not directly recovered for the Mature build"
+        )
+        requireValue(
+            config.aoeKillAwardsCoins!=null,
+            "aoe.killAwardsCoins",
+            FallbackRequirementLevel
+                .BLOCKS_MECHANIC,
+            "AoE potion kill-Coin credit is not recovered and requires an explicit playtest policy"
         )
 
         return missing
