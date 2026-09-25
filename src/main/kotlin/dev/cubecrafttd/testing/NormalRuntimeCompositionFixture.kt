@@ -197,7 +197,7 @@ object NormalRuntimeCompositionFixture {
 
         return listOf(
             FixtureResult(
-                "normal-composition-seven-phases",
+                "normal-composition-eleven-phases",
                 composition.phaseIds() ==
                     listOf(
                         "goldmine",
@@ -207,6 +207,7 @@ object NormalRuntimeCompositionFixture {
                         "leach-charge",
                         "tower-summons",
                         "tower-combat",
+                        "status-damage",
                         "castle-guards",
                         "castle-attacks",
                         "mob-cleanup"
