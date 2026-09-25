@@ -6,6 +6,7 @@ import dev.cubecrafttd.truth.ArmageddonHordeFallbackWave
 import dev.cubecrafttd.mob.WitchHealMode
 import dev.cubecrafttd.match.WitherTowerTargetPolicy
 import dev.cubecrafttd.tower.TowerChainTargetPolicy
+import dev.cubecrafttd.tower.TargetPriorityPolicy
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.FileConfiguration
 
