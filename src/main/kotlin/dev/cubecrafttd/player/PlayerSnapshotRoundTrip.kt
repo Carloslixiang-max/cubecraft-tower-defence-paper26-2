@@ -187,11 +187,18 @@ class PlayerSnapshotRoundTripService(
                     playerUuid,
                     markerTick
                 )
-            return PlayerSnapshotComparator
-                .compare(
-                    before,
-                    after
-                )
+            val comparison=
+                PlayerSnapshotComparator
+                    .compare(
+                        before,
+                        after
+                    )
+            if(!comparison.passed) {
+                // A failed validation must not intentionally leave the observed
+                // drift in place. Re-apply the authoritative pre-test snapshot.
+                adapter.restore(before)
+            }
+            return comparison
         } catch(t:Throwable) {
             if(!restored) {
                 runCatching {
