@@ -31,6 +31,20 @@ data class BukkitAoEPotionCommitReport(
     val cooldownReadyAtTick: Long
 )
 
+data class BukkitArenaPerformanceSnapshot(
+    val arenaId: String,
+    val gameTick: Long,
+    val towerCount: Int,
+    val mobCount: Int,
+    val guardCount: Int,
+    val transientDisplayCount: Int,
+    val projectileCount: Int,
+    val liveTick:
+        ArenaTickProfileSnapshot,
+    val coreTick:
+        ArenaTickProfileSnapshot
+)
+
 data class BukkitLiveArenaHandle(
     val context: ArenaContext,
     val ledger: EconomyLedger,
@@ -51,6 +65,8 @@ data class BukkitLiveArenaHandle(
         TroopProgressionService,
     val aoeCooldowns:
         DeterministicCooldownTracker,
+    val liveTickProfiler:
+        ArenaTickProfiler,
     var session:
         MatchSessionState? = null,
     var menuRouter:
@@ -366,6 +382,8 @@ class BukkitNormalArenaController(
                 progressionService=
                     progressionService,
                 aoeCooldowns=aoeCooldowns,
+                liveTickProfiler=
+                    ArenaTickProfiler(),
                 nextTransactionId=
                     nextTransactionId
             )
@@ -562,6 +580,8 @@ class BukkitNormalArenaController(
                 ArenaState.RUNNING
         ) return
 
+        val liveTickStart=
+            System.nanoTime()
         try {
             handle.composition.engine
                 .tick(context)
@@ -641,6 +661,12 @@ class BukkitNormalArenaController(
                     "stage4_runtime_failure"
                 )
             )
+        } finally {
+            handle.liveTickProfiler
+                .recordTick(
+                    System.nanoTime() -
+                        liveTickStart
+                )
         }
     }
 
@@ -1085,6 +1111,90 @@ class BukkitNormalArenaController(
             cooldownReadyAtTick=
                 receipt.cooldownReadyAtTick
         )
+    }
+
+    fun performanceSnapshots(
+        arenaIdText: String? = null
+    ): List<BukkitArenaPerformanceSnapshot> {
+        val selected=
+            if(arenaIdText==null) {
+                handles.values
+                    .toList()
+            } else {
+                handles[
+                    ArenaId(
+                        arenaIdText
+                    )
+                ]?.let(::listOf)
+                    ?: emptyList()
+            }
+
+        return selected
+            .sortedBy {
+                it.context
+                    .arenaId.value
+            }
+            .map { handle ->
+                val index=
+                    handle.context
+                        .entityIndex
+                BukkitArenaPerformanceSnapshot(
+                    arenaId=
+                        handle.context
+                            .arenaId.value,
+                    gameTick=
+                        handle.context
+                            .gameTick,
+                    towerCount=
+                        index.towersByInstanceId
+                            .size,
+                    mobCount=
+                        index.mobsByUuid
+                            .size,
+                    guardCount=
+                        index.guardsByUuid
+                            .size,
+                    transientDisplayCount=
+                        index.transientDisplays
+                            .size,
+                    projectileCount=
+                        index.projectiles
+                            .size,
+                    liveTick=
+                        handle.liveTickProfiler
+                            .snapshot(),
+                    coreTick=
+                        handle.composition
+                            .engine
+                            .profileSnapshot()
+                )
+            }
+    }
+
+    fun resetPerformance(
+        arenaIdText: String? = null
+    ): Int {
+        val selected=
+            if(arenaIdText==null) {
+                handles.values
+                    .toList()
+            } else {
+                handles[
+                    ArenaId(
+                        arenaIdText
+                    )
+                ]?.let(::listOf)
+                    ?: emptyList()
+            }
+
+        selected.forEach { handle ->
+            handle.liveTickProfiler
+                .reset()
+            handle.composition
+                .engine
+                .resetProfile()
+        }
+        return selected.size
     }
 
     fun isActivePlayer(
