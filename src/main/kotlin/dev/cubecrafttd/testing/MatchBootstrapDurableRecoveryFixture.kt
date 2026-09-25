@@ -184,6 +184,75 @@ object MatchBootstrapDurableRecoveryFixture {
             events.indexOf("journal-delete") >
                 events.indexOf("restore")
 
+        val restartJournal=
+            RecordingRecoveryJournal()
+        restartJournal.save(
+            snapshot(player)
+        )
+        var restartCurrent=
+            snapshot(player)
+        val restartAdapter=
+            object: PlayerStateAdapter {
+                override fun capture(
+                    playerUuid: UUID,
+                    arenaTick: Long
+                ): PlayerSnapshot =
+                    restartCurrent.copy(
+                        capturedAtArenaTick=
+                            arenaTick
+                    )
+
+                override fun prepareForMatch(
+                    playerUuid: UUID
+                ) = Unit
+
+                override fun restore(
+                    snapshot: PlayerSnapshot
+                ) {
+                    restartCurrent=snapshot
+                }
+
+                override fun isOnline(
+                    playerUuid: UUID
+                )=true
+            }
+        val restartRecovery=
+            JournaledPlayerRecoveryOrchestrator(
+                restartAdapter,
+                PlayerSnapshotStore(),
+                restartJournal
+            )
+        val loadedFromJournal=
+            restartRecovery
+                .recoverJournalIntoMemory()
+
+        var verifierSawSnapshot=false
+        val rejectedByVerifier=
+            !restartRecovery
+                .restoreIfPossible(
+                    player
+                ) { expected ->
+                    verifierSawSnapshot=
+                        expected.playerUuid==
+                            player
+                    false
+                }
+        val journalRetained=
+            player in
+                restartJournal.saved &&
+                player in
+                    restartRecovery
+                        .pending()
+
+        val acceptedByVerifier=
+            restartRecovery
+                .restoreIfPossible(
+                    player
+                ) { expected ->
+                    expected.playerUuid==
+                        player
+                }
+
         return listOf(
             FixtureResult(
                 "bootstrap-durable-save-before-player-mutation",
@@ -198,6 +267,26 @@ object MatchBootstrapDurableRecoveryFixture {
                 restored &&
                     deleteAfterRestore &&
                     recovery.pending()
+                        .isEmpty()
+            ),
+            FixtureResult(
+                "restart-recovery-load-reports-previous-process-snapshot",
+                loadedFromJournal==
+                    setOf(player)
+            ),
+            FixtureResult(
+                "restart-recovery-failed-verification-keeps-journal",
+                verifierSawSnapshot &&
+                    rejectedByVerifier &&
+                    journalRetained
+            ),
+            FixtureResult(
+                "restart-recovery-success-verification-deletes-journal",
+                acceptedByVerifier &&
+                    player !in
+                        restartJournal.saved &&
+                    restartRecovery
+                        .pending()
                         .isEmpty()
             )
         )
