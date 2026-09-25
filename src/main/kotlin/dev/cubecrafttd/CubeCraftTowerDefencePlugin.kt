@@ -370,16 +370,17 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             return
         }
 
-        val type=runCatching {
-            ArmageddonType.valueOf(
-                args[0].uppercase()
-            )
-        }.getOrElse {
-            sender.sendMessage(
-                "Armageddon type must be wither/lightning/horde"
-            )
-            return
-        }
+        val type: ArmageddonType =
+            try {
+                ArmageddonType.valueOf(
+                    args[0].uppercase()
+                )
+            } catch(_: IllegalArgumentException) {
+                sender.sendMessage(
+                    "Armageddon type must be wither/lightning/horde"
+                )
+                return
+            }
 
         val missing=
             ArmageddonFallbackValidator
