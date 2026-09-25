@@ -287,6 +287,10 @@ class BukkitEngineeringPlaytestConfigurator(
         f.mobKillCoins.forEach { (key,value) ->
             set("mob-kill-coins." + key,value)
         }
+        f.aoeNumericFallbacks.forEach { (key,value) ->
+            set("aoe." + key,value)
+        }
+        set("aoe.kill-awards-coins",f.aoeKillAwardsCoins)
 
         set("armageddon.lightning.first-strike-delay-ticks",f.lightningFirstStrikeDelayTicks)
         set("armageddon.lightning.strike-interval-ticks",f.lightningStrikeIntervalTicks)
