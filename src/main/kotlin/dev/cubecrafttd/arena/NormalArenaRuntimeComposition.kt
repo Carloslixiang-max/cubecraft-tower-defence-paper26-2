@@ -81,7 +81,10 @@ object NormalArenaRuntimeCompositionFactory {
                         deps.positionUpdate,
                     giantRunSpeedMultiplier=
                         deps.resolved
-                            .giantRunSpeedMultiplier
+                            .giantRunSpeedMultiplier,
+                    iceSlowMovementMultiplier=
+                        deps.resolved
+                            .iceSlowMovementMultiplier
                 ),
                 MobSupportTickPhase(
                     witch=
