@@ -380,6 +380,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             true
         }
 
+        "ctdperf" -> {
+            runPerformanceReport(
+                sender,
+                args.toList()
+            )
+            true
+        }
+
         "ctdmapplan" -> {
             runFarmMapPlan(sender)
             true
@@ -470,6 +478,129 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
 
+
+    private fun runPerformanceReport(
+        sender: CommandSender,
+        args: List<String>
+    ) {
+        if(
+            args.firstOrNull()
+                ?.equals(
+                    "reset",
+                    ignoreCase=true
+                ) == true
+        ) {
+            if(args.size>2) {
+                sender.sendMessage(
+                    "Usage: /ctdperf reset [arenaId]"
+                )
+                return
+            }
+            val arenaId=
+                args.getOrNull(1)
+            val count=
+                liveArenaController
+                    .resetPerformance(
+                        arenaId
+                    )
+            sender.sendMessage(
+                "CubeCraft TD profiler reset: arenas=" +
+                    count
+            )
+            return
+        }
+
+        if(args.size>1) {
+            sender.sendMessage(
+                "Usage: /ctdperf [arenaId|reset [arenaId]]"
+            )
+            return
+        }
+
+        val snapshots=
+            liveArenaController
+                .performanceSnapshots(
+                    args.firstOrNull()
+                )
+        if(snapshots.isEmpty()) {
+            sender.sendMessage(
+                "CubeCraft TD profiler: no matching active arena."
+            )
+            return
+        }
+
+        fun micros(
+            nanos: Long
+        ): Long =
+            nanos / 1_000L
+
+        snapshots.forEach { snapshot ->
+            val live=
+                snapshot.liveTick
+            val core=
+                snapshot.coreTick
+            sender.sendMessage(
+                "TD perf " +
+                    snapshot.arenaId +
+                    ": tick=" +
+                    snapshot.gameTick +
+                    " towers=" +
+                    snapshot.towerCount +
+                    " mobs=" +
+                    snapshot.mobCount +
+                    " guards=" +
+                    snapshot.guardCount +
+                    " displays=" +
+                    snapshot.transientDisplayCount +
+                    " projectiles=" +
+                    snapshot.projectileCount
+            )
+            sender.sendMessage(
+                " live us last/avg/max=" +
+                    micros(live.lastNanos) +
+                    "/" +
+                    micros(live.averageNanos) +
+                    "/" +
+                    micros(live.maxNanos) +
+                    " slow>=50ms=" +
+                    live.slowTicksOver50ms +
+                    "/" +
+                    live.ticks
+            )
+            sender.sendMessage(
+                " core us last/avg/max=" +
+                    micros(core.lastNanos) +
+                    "/" +
+                    micros(core.averageNanos) +
+                    "/" +
+                    micros(core.maxNanos) +
+                    " slow>=50ms=" +
+                    core.slowTicksOver50ms +
+                    "/" +
+                    core.ticks
+            )
+            core.phases.forEach {
+                (id,phase) ->
+                sender.sendMessage(
+                    "  " + id +
+                        " us last/avg/max=" +
+                        micros(
+                            phase.lastNanos
+                        ) +
+                        "/" +
+                        micros(
+                            phase.averageNanos
+                        ) +
+                        "/" +
+                        micros(
+                            phase.maxNanos
+                        ) +
+                        " calls=" +
+                        phase.calls
+                )
+            }
+        }
+    }
 
     private fun runPlayerSnapshotRoundTripCheck(
         sender: CommandSender
