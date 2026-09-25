@@ -100,6 +100,21 @@ object EngineeringPlaytestProfile {
                     .associateWith { true },
             mobKillCoins=
                 mobKeys.associateWith { 1L },
+            aoeNumericFallbacks=
+                mapOf(
+                    "freeze.effectLengthBlocks" to 11,
+                    "freeze.slowMagnitude" to 1.0,
+                    "freeze.durationTicks" to 100L,
+                    "inferno.damagePerSecond" to 42.18,
+                    "inferno.pulseIntervalTicks" to 20L,
+                    "meteor.pulseIntervalTicks" to 5L,
+                    "zeus.damagePerBolt" to 70.0,
+                    "zeus.boltCount" to 8,
+                    "speed.speedMultiplier" to 1.5,
+                    "speed.durationTicks" to 100L,
+                    "heal.healAmount" to 20.0
+                ),
+            aoeKillAwardsCoins=true,
             lightningFirstStrikeDelayTicks=100,
             lightningStrikeIntervalTicks=200,
             lightningTowersPerTeamPerStrike=1,
