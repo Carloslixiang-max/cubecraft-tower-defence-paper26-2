@@ -1,3 +1,8 @@
+# Strict-evidence defaults intentionally leave unresolved values as null.
+# For an explicit playable engineering profile, put the verified ImprovedFarm.schem
+# in plugins/CubeCraftTowerDefence/maps/ and run /ctdplaytestsetup apply as OP.
+# The command backs up this strict config and requires a full server restart.
+
 
 # World binding is intentionally unset by default. No world/origin is guessed.
 map-binding:
