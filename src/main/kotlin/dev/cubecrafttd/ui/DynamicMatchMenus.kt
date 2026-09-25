@@ -235,8 +235,81 @@ object DynamicMatchMenus {
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
                     "In-game Point purchases: ${model.allowInGamePointPurchases}"
+                ),
+                MenuSlot(
+                    22,
+                    "nav:hotbar",
+                    UiEvidenceStatus
+                        .ENGINEERING_FALLBACK,
+                    "Edit hotbar layout"
                 )
             )
+        )
+    }
+
+
+    fun hotbarEditor(
+        player:
+            PlayerMatchSessionState
+    ): MenuDefinition {
+        val layout=
+            player.interaction
+                .hotbarLayout
+        val slots=
+            buildList {
+                HotbarAction.entries
+                    .forEachIndexed {
+                        row,action ->
+                        repeat(9) { slot ->
+                            val current=
+                                layout.slot(action)==
+                                    slot
+                            add(
+                                MenuSlot(
+                                    slot=
+                                        row*9 +
+                                            slot,
+                                    actionId=
+                                        "hotbar:move:" +
+                                            action.name +
+                                            ":" +
+                                            slot,
+                                    evidenceStatus=
+                                        UiEvidenceStatus
+                                            .ENGINEERING_FALLBACK,
+                                    displayName=
+                                        action.name
+                                            .lowercase()
+                                            .replace(
+                                                '_',' '
+                                            ) +
+                                            " -> slot " +
+                                            (slot+1) +
+                                            if(current)
+                                                " (current)"
+                                            else ""
+                                )
+                            )
+                        }
+                    }
+                add(
+                    MenuSlot(
+                        53,
+                        "nav:settings",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Back to Settings"
+                    )
+                )
+            }
+
+        return MenuDefinition(
+            title="Hotbar editor",
+            size=54,
+            slots=slots,
+            evidenceStatus=
+                UiEvidenceStatus
+                    .ENGINEERING_FALLBACK
         )
     }
 
