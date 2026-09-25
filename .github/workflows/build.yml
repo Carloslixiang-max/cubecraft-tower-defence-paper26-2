@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ctd-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,8 +39,14 @@ jobs:
           java --version
           gradle --version
 
-      - name: Compile, test, and build shaded plugin
-        run: gradle clean test shadowJar --stacktrace --warning-mode all
+      - name: Compile Paper plugin
+        run: gradle clean compileKotlin --stacktrace --warning-mode all
+
+      - name: Run domain fixture tests
+        run: gradle test --stacktrace --warning-mode all
+
+      - name: Build shaded plugin JAR
+        run: gradle shadowJar --stacktrace --warning-mode all
 
       - name: Show build output
         run: ls -lah build/libs
