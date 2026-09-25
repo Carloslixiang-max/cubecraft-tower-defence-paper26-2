@@ -13,6 +13,8 @@ import dev.cubecrafttd.tower.*
 import dev.cubecrafttd.tower.lifecycle.*
 import dev.cubecrafttd.tower.visual
     .RotationCache
+import dev.cubecrafttd.tower.visual
+    .EngineeringPlaceholderTowerBodyProvider
 import dev.cubecrafttd.truth.*
 import dev.cubecrafttd.ui.*
 import org.bukkit.plugin.java.JavaPlugin
