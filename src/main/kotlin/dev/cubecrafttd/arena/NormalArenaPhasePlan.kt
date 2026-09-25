@@ -37,6 +37,10 @@ object RecommendedNormalArenaPhasePlan {
                 NormalArenaPhaseOrder.TOWER_COMBAT
             ),
             NormalArenaPhasePlanEntry(
+                "status-damage",
+                NormalArenaPhaseOrder.STATUS_DAMAGE
+            ),
+            NormalArenaPhasePlanEntry(
                 "castle-guards",
                 NormalArenaPhaseOrder.CASTLE_GUARDS
             ),
