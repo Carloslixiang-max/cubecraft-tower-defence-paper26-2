@@ -79,5 +79,6 @@ object DomainFixtureSuite {
         addAll(EngineeringMatchHudFixture.run())
         addAll(LiveMenuProjectionFixture.run())
         addAll(MobStatusMovementFixture.run())
+        addAll(MobStatusDamageFixture.run())
     }
 }
