@@ -311,15 +311,6 @@ class BukkitNormalArenaController(
             MatchEndCoordinator(
                 stats,teardown
             )
-        val rewards=
-            MobKillRewardService(
-                ledger,
-                RuntimeFallbackBindings
-                    .mobKillReward(
-                        fallback
-                    ),
-                PricingMode.NORMAL
-            )
 
         val progressionService=
             TroopProgressionService(
