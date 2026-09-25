@@ -75,7 +75,9 @@ class BukkitNormalArenaController(
     private val fallback:
         RuntimeFallbackConfigV1,
     private val stage4Gate:
-        PaperStage4GateStore
+        PaperStage4GateStore,
+    private val hotbarPreferences:
+        BukkitHotbarPreferenceStore
 ) {
     private val matchHud=
         BukkitMatchHudService(
@@ -422,6 +424,21 @@ class BukkitNormalArenaController(
                 )
             )
 
+            bootstrapReport.session
+                .players
+                .values
+                .forEach { state ->
+                    hotbarPreferences
+                        .load(
+                            state.playerUuid
+                        )
+                        ?.let { saved ->
+                            state.interaction
+                                .hotbarLayout=
+                                saved
+                        }
+                }
+
             handle.session=
                 bootstrapReport.session
             handle.menuRouter=
@@ -712,6 +729,9 @@ class BukkitNormalArenaController(
             "settings" ->
                 DynamicMatchMenus
                     .settings(player)
+            "hotbar" ->
+                DynamicMatchMenus
+                    .hotbarEditor(player)
             else ->
                 error(
                     "Unknown dynamic menu $kind"
@@ -1201,6 +1221,31 @@ class BukkitNormalArenaController(
                 )
             state.interaction
                 .armedAoEPotion=result.token
+        }
+
+        if(
+            result is
+                MatchMenuActionResult
+                    .HotbarLayoutChanged
+        ) {
+            val state=
+                handle.session
+                    ?.players
+                    ?.get(
+                        invocation.playerUuid
+                    ) ?: error(
+                    "Player match session is missing"
+                )
+            hotbarPreferences.save(
+                invocation.playerUuid,
+                result.layout
+            )
+            BukkitMatchLoadoutService(
+                plugin.server
+            ).apply(
+                invocation.playerUuid,
+                state
+            )
         }
 
         if(
