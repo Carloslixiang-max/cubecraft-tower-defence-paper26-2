@@ -6,7 +6,8 @@ enum class StatusEffectType {
     POISON,
     BURN,
     ICE_SLOW,
-    STUN
+    STUN,
+    SPEED_BOOST
 }
 
 enum class StatusStackPolicy {
@@ -86,6 +87,7 @@ object RecommendedMatureStatusPolicies {
         StatusEffectType.POISON to StatusStackPolicy.NON_STACKING,
         StatusEffectType.BURN to StatusStackPolicy.NON_STACKING,
         StatusEffectType.ICE_SLOW to StatusStackPolicy.NON_STACKING,
-        StatusEffectType.STUN to StatusStackPolicy.NON_STACKING
+        StatusEffectType.STUN to StatusStackPolicy.NON_STACKING,
+        StatusEffectType.SPEED_BOOST to StatusStackPolicy.REFRESH_DURATION
     )
 }
