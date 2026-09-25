@@ -47,6 +47,15 @@ class BukkitEntityRuntimeAdapter(
         val entity = server.getEntity(entityUuid)
             ?: error("Entity $entityUuid is not live")
         val current = entity.location
+        val yaw=
+            BukkitMovementFacingResolver
+                .yawDegrees(
+                    current.x,
+                    current.z,
+                    position.x,
+                    position.z,
+                    current.yaw
+                )
         check(
             entity.teleport(
                 Location(
@@ -54,7 +63,7 @@ class BukkitEntityRuntimeAdapter(
                     position.x,
                     position.y,
                     position.z,
-                    current.yaw,
+                    yaw,
                     current.pitch
                 )
             )

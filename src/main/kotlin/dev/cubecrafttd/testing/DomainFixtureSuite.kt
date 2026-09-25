@@ -15,6 +15,7 @@ object DomainFixtureSuite {
         addAll(MobDefinitionAndEconomyFixture.run())
         addAll(TickAndTruthGateFixture.run())
         addAll(ArenaTickProfilerFixture.run())
+        addAll(BukkitMovementFacingFixture.run())
         addAll(TroopSendAndCombatProfileFixture.run())
         addAll(MobPhaseSupportAndTowerFixture.run())
         addAll(TowerNumericRepositoryFixture.run())
