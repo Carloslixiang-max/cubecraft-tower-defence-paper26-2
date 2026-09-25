@@ -136,6 +136,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         check(failed.isEmpty()) {
             "Pure-domain fixture gate failed: ${failed.joinToString { it.id }}"
         }
+        stage4Gate.recordDomainFixtures(true)
+
+        val adapterSmokeFailures =
+            stage4Gate.runAndRecordAdapterSmoke()
+        check(adapterSmokeFailures.isEmpty()) {
+            "Paper adapter smoke gate failed: " +
+                adapterSmokeFailures.joinToString()
+        }
 
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
@@ -146,7 +154,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 "activeArenas=${arenaService.contexts().size}; " +
                 "fallbackMissing=${fallbackMissing.size}; " +
                 "readiness=${readiness.summary()}; " +
-                "paperAdapters=SOURCE_READY_LIVE_UNVERIFIED"
+                "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED"
         )
 
         if (fallbackMissing.isNotEmpty()) {
