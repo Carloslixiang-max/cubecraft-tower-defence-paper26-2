@@ -75,6 +75,7 @@ object EngineeringPlaytestProfile {
             giantRegenHealthPerSecond=5.0,
             giantRunSpeedMultiplier=1.20,
             iceSlowMovementMultiplier=0.50,
+            burnIntervalTicks=20,
             slimeMaxShrinkPhaseIndex=2,
             leachMaxCharge=100.0,
             leachChargePerTargetTick=1.0,
