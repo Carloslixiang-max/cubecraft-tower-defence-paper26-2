@@ -87,30 +87,117 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             BukkitEngineeringMenuRenderer(),
             BukkitMenuActionSink {
                 invocation ->
-                runCatching {
-                    liveArenaController
-                        .handleMenuAction(
-                            invocation
+                val navKind=
+                    invocation.actionId
+                        .takeIf {
+                            it.startsWith(
+                                "nav:"
+                            )
+                        }
+                        ?.substringAfter(
+                            "nav:"
                         )
-                }.onSuccess { result ->
-                    val player=server.getPlayer(invocation.playerUuid)
-                    when(result) {
-                        is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.OpenBuilder ->
-                            menuBridge.open(invocation.playerUuid,result.menu.toLiveView())
-                        is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.OpenPathSelector ->
-                            menuBridge.open(invocation.playerUuid,result.menu.toLiveView())
-                        is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.Placed ->
-                            player?.sendMessage("Tower placed: ${result.result.selection.towerId}")
-                        else -> player?.sendMessage("TD action: $result")
+
+                if(navKind!=null) {
+                    runCatching {
+                        liveArenaController
+                            .dynamicMenuForPlayer(
+                                invocation.playerUuid,
+                                navKind
+                            )
+                    }.onSuccess { menu ->
+                        menuBridge.open(
+                            invocation.playerUuid,
+                            menu.toLiveView()
+                        )
+                    }.onFailure { error ->
+                        server.getPlayer(
+                            invocation.playerUuid
+                        )?.sendMessage(
+                            "TD navigation ERROR: " +
+                                "${error.javaClass.simpleName}: ${error.message}"
+                        )
                     }
-                }.onFailure {
-                    error ->
-                    server.getPlayer(
-                        invocation.playerUuid
-                    )?.sendMessage(
-                        "TD action ERROR: " +
-                            "${error.javaClass.simpleName}: ${error.message}"
-                    )
+                } else {
+                    runCatching {
+                        liveArenaController
+                            .handleMenuAction(
+                                invocation
+                            )
+                    }.onSuccess { result ->
+                        val player=
+                            server.getPlayer(
+                                invocation.playerUuid
+                            )
+                        when(result) {
+                            is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.OpenBuilder ->
+                                menuBridge.open(
+                                    invocation.playerUuid,
+                                    result.menu.toLiveView()
+                                )
+                            is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.OpenPathSelector ->
+                                menuBridge.open(
+                                    invocation.playerUuid,
+                                    result.menu.toLiveView()
+                                )
+                            is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.Placed ->
+                                player?.sendMessage(
+                                    "Tower placed: ${result.result.selection.towerId}"
+                                )
+                            else -> {
+                                val refreshKind=
+                                    when {
+                                        invocation.actionId
+                                            .startsWith(
+                                                "summoner:"
+                                            ) ->
+                                            "summoner"
+                                        invocation.actionId
+                                            .startsWith(
+                                                "progression:"
+                                            ) ->
+                                            "progression"
+                                        invocation.actionId
+                                            .startsWith(
+                                                "bazaar:"
+                                            ) ->
+                                            "bazaar"
+                                        invocation.actionId
+                                            .startsWith(
+                                                "settings:"
+                                            ) ->
+                                            "settings"
+                                        else -> null
+                                    }
+
+                                if(refreshKind!=null) {
+                                    runCatching {
+                                        liveArenaController
+                                            .dynamicMenuForPlayer(
+                                                invocation.playerUuid,
+                                                refreshKind
+                                            )
+                                    }.onSuccess { menu ->
+                                        menuBridge.open(
+                                            invocation.playerUuid,
+                                            menu.toLiveView()
+                                        )
+                                    }
+                                }
+                                player?.sendMessage(
+                                    "TD action: $result"
+                                )
+                            }
+                        }
+                    }.onFailure {
+                        error ->
+                        server.getPlayer(
+                            invocation.playerUuid
+                        )?.sendMessage(
+                            "TD action ERROR: " +
+                                "${error.javaClass.simpleName}: ${error.message}"
+                        )
+                    }
                 }
             }
         )
