@@ -80,5 +80,6 @@ object DomainFixtureSuite {
         addAll(LiveMenuProjectionFixture.run())
         addAll(MobStatusMovementFixture.run())
         addAll(MobStatusDamageFixture.run())
+        addAll(AoEPotionWorldExecutionFixture.run())
     }
 }
