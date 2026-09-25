@@ -64,6 +64,23 @@ fun interface TowerAttackPlannerProvider {
     ): TowerAttackPlanner
 }
 
+fun interface TowerAttackFeedbackPort {
+    fun onAttack(
+        context: ArenaContext,
+        tower: TowerRuntimeState,
+        report: TowerAttackCycleReport
+    )
+}
+
+object NoOpTowerAttackFeedbackPort :
+    TowerAttackFeedbackPort {
+    override fun onAttack(
+        context: ArenaContext,
+        tower: TowerRuntimeState,
+        report: TowerAttackCycleReport
+    ) = Unit
+}
+
 data class TowerCombatTickMetrics(
     var towersVisited: Int = 0,
     var candidatesBuilt: Int = 0,
@@ -77,6 +94,9 @@ class TowerCombatTickPhase(
     private val geometryProvider: MobGeometryProvider,
     private val configProvider: TowerRuntimeConfigProvider,
     private val plannerProvider: TowerAttackPlannerProvider,
+    private val feedbackPort:
+        TowerAttackFeedbackPort =
+        NoOpTowerAttackFeedbackPort,
     private val lethalResolver:
         dev.cubecrafttd.mob.MobLethalHitResolver =
         dev.cubecrafttd.mob.MobLethalHitResolver(),
@@ -129,8 +149,16 @@ class TowerCombatTickPhase(
             )
 
             when (report.status) {
-                TowerAttackCycleStatus.FIRED ->
+                TowerAttackCycleStatus.FIRED -> {
                     metrics.attacksFired++
+                    runCatching {
+                        feedbackPort.onAttack(
+                            context,
+                            tower,
+                            report
+                        )
+                    }
+                }
                 TowerAttackCycleStatus.NO_TARGET ->
                     metrics.noTarget++
                 TowerAttackCycleStatus.COOLDOWN ->
