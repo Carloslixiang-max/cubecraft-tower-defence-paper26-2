@@ -23,6 +23,14 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 
+data class BukkitAoEPotionCommitReport(
+    val potionId: String,
+    val radiusBlocks: Double,
+    val candidateCount: Int,
+    val scheduledPulseCount: Int,
+    val cooldownReadyAtTick: Long
+)
+
 data class BukkitLiveArenaHandle(
     val context: ArenaContext,
     val ledger: EconomyLedger,
@@ -870,6 +878,189 @@ class BukkitNormalArenaController(
             ?: error(
                 "Tower world action service is not initialized"
             )
+    }
+
+    fun hasArmedAoEPotion(
+        playerUuid: UUID
+    ): Boolean =
+        handleForPlayer(playerUuid)
+            ?.session
+            ?.players
+            ?.get(playerUuid)
+            ?.interaction
+            ?.armedAoEPotion != null
+
+    fun commitArmedAoEPotion(
+        playerUuid: UUID,
+        targetX: Double,
+        targetY: Double,
+        targetZ: Double
+    ): BukkitAoEPotionCommitReport {
+        val handle=
+            handleForPlayer(playerUuid)
+                ?: error(
+                    "Player is not in an active live arena"
+                )
+        val session=
+            handle.session
+                ?: error(
+                    "Arena session is not initialized"
+                )
+        val playerState=
+            session.players[playerUuid]
+                ?: error(
+                    "Player match session is missing"
+                )
+        val token=
+            playerState.interaction
+                .armedAoEPotion
+                ?: error(
+                    "No AoE potion is armed"
+                )
+        check(
+            token.buyerUuid==
+                playerUuid
+        ) {
+            "Armed potion owner mismatch"
+        }
+
+        val team=
+            when {
+                playerUuid in
+                    handle.context
+                        .redTeam.players ->
+                    TeamId.RED
+                playerUuid in
+                    handle.context
+                        .blueTeam.players ->
+                    TeamId.BLUE
+                else ->
+                    error(
+                        "Player is not on an arena team"
+                    )
+            }
+
+        val length=
+            RuntimeFallbackBindings
+                .aoeEffectLengthBlocks(
+                    fallback,
+                    token.definition
+                )
+        val radius=
+            length.value / 2.0
+        check(radius>0.0)
+
+        val candidates=
+            handle.context.entityIndex
+                .mobsByUuid
+                .values
+                .mapNotNull { mob ->
+                    val live=
+                        plugin.server
+                            .getEntity(
+                                mob.identity
+                                    .entityUuid
+                            )
+                            ?: return@mapNotNull null
+                    if(
+                        live.world.uid !=
+                            handle.context
+                                .worldUid
+                    ) return@mapNotNull null
+
+                    val p=live.location
+                    val dx=p.x-targetX
+                    val dz=p.z-targetZ
+                    val dy=
+                        kotlin.math.abs(
+                            p.y-targetY
+                        )
+                    val inside=
+                        dx*dx + dz*dz <=
+                            radius*radius &&
+                        dy <=
+                            kotlin.math.max(
+                                3.0,
+                                radius
+                            )
+
+                    AoEPotionTargetCandidate(
+                        mobUuid=
+                            mob.identity
+                                .entityUuid,
+                        relation=
+                            if(
+                                mob.identity
+                                    .attackedTeam==
+                                    team
+                            ) {
+                                AoEPotionTargetRelation
+                                    .ENEMY_TROOPS
+                            } else {
+                                AoEPotionTargetRelation
+                                    .FRIENDLY_TROOPS
+                            },
+                        insideEffectArea=
+                            inside
+                    )
+                }
+
+        val service=
+            AoEPotionUseService(
+                AoEPotionCooldownGate(
+                    handle.aoeCooldowns
+                )
+            )
+        val receipt=
+            service.commit(
+                definition=
+                    token.definition,
+                config=
+                    RuntimeFallbackBindings
+                        .aoePotionConfig(
+                            fallback,
+                            token.potionId
+                        ),
+                ownerUuid=
+                    playerUuid,
+                gameTick=
+                    handle.context
+                        .gameTick,
+                candidates=
+                    candidates,
+                index=
+                    handle.context
+                        .entityIndex
+            )
+
+        handle.runtimeState
+            .aoePulses
+            .schedule(
+                receipt.actionPlan,
+                handle.context.gameTick,
+                RuntimeFallbackBindings
+                    .aoeKillAwardsCoins(
+                        fallback
+                    ).value
+            )
+        playerState.interaction
+            .armedAoEPotion=null
+
+        return BukkitAoEPotionCommitReport(
+            potionId=
+                token.potionId,
+            radiusBlocks=
+                radius,
+            candidateCount=
+                candidates.count {
+                    it.insideEffectArea
+                },
+            scheduledPulseCount=
+                receipt.actionPlan
+                    .pulses.size,
+            cooldownReadyAtTick=
+                receipt.cooldownReadyAtTick
+        )
     }
 
     fun isActivePlayer(
