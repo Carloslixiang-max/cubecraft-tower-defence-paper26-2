@@ -27,13 +27,16 @@ data class PaperAdapterDiagnostics(
                 "Java25/Paper26.2 compile + shaded JAR CI",
                 "Paper26.2 double live-boot smoke CI",
                 "Castle Guard live geometry anchors",
-                "engineering playtest hotbar projection"
+                "engineering playtest hotbar projection",
+                "live engineering rangefinder projection",
+                "live tower-attack feedback projection",
+                "readable refreshed live menu projection"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
                 "entity movement visual smoothness",
                 "raytrace fidelity vs original firing origins",
-                "GUI item renderer/final icons",
+                "production GUI icon/lore fidelity",
                 "restart recovery",
                 "same-world multi-arena isolation",
                 "60+ tower live profiler"
