@@ -442,6 +442,20 @@ class BukkitNormalArenaController(
                         }
             }
 
+            val loadout=
+                BukkitMatchLoadoutService(
+                    plugin.server
+                )
+            bootstrapReport.session
+                .players
+                .values
+                .forEach { state ->
+                    loadout.apply(
+                        state.playerUuid,
+                        state
+                    )
+                }
+
             bootstrap.start(context)
 
             val task=
@@ -832,9 +846,34 @@ class BukkitNormalArenaController(
                     "Arena menu router is not initialized"
                 )
 
-        return router.handle(
-            invocation
-        )
+        val result=
+            router.handle(
+                invocation
+            )
+
+        if(
+            result is
+                MatchMenuActionResult
+                    .WeaponTierUpgraded
+        ) {
+            val state=
+                handle.session
+                    ?.players
+                    ?.get(
+                        invocation
+                            .playerUuid
+                    ) ?: error(
+                    "Player match session is missing"
+                )
+            BukkitMatchLoadoutService(
+                plugin.server
+            ).apply(
+                invocation.playerUuid,
+                state
+            )
+        }
+
+        return result
     }
 
     fun handlePlayerHit(
