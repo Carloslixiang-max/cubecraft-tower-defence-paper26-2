@@ -2,6 +2,7 @@ package dev.cubecrafttd.arena
 
 import dev.cubecrafttd.economy.GoldmineRuntime
 import dev.cubecrafttd.troop.*
+import dev.cubecrafttd.player.AoEPotionRuntimeQueue
 import java.util.UUID
 
 data class NormalArenaRuntimeState(
@@ -21,7 +22,10 @@ data class NormalArenaRuntimeState(
         MutableMap<TeamId,TroopQueueSpawnClock>,
     val goldmines:
         MutableMap<UUID,GoldmineRuntime> =
-        linkedMapOf()
+        linkedMapOf(),
+    val aoePulses:
+        AoEPotionRuntimeQueue =
+        AoEPotionRuntimeQueue()
 ) {
     companion object {
         fun withCadence(
