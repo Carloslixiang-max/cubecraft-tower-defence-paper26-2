@@ -64,5 +64,9 @@ class BukkitTrackedMobDamageListener(
                 event.finalDamage
             )
         )
+
+        if(direct is AbstractArrow) {
+            direct.remove()
+        }
     }
 }

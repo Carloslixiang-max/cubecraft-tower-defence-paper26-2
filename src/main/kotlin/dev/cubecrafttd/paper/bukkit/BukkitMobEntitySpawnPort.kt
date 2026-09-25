@@ -120,6 +120,12 @@ class BukkitMobEntitySpawnPort(
             spawned.setRemoveWhenFarAway(
                 false
             )
+            spawned.setCollidable(
+                false
+            )
+            spawned.setCanPickupItems(
+                false
+            )
             (spawned as? Mob)
                 ?.setAI(false)
         }

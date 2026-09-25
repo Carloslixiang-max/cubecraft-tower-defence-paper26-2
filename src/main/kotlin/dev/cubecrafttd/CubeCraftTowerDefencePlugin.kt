@@ -29,6 +29,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var liveArenaController: BukkitNormalArenaController
     private lateinit var hotbarPreferences: BukkitHotbarPreferenceStore
     private lateinit var trackedDamageListener: BukkitTrackedMobDamageListener
+    private lateinit var trackedMobEnvironmentListener: BukkitTrackedMobEnvironmentListener
     private lateinit var menuBridge: BukkitMenuBridge
     private lateinit var aoePotionTargetListener: BukkitAoEPotionTargetListener
     private lateinit var towerInteractionListener: BukkitTowerInteractionListener
@@ -121,6 +122,15 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 liveArenaController.handlePlayerHit(it)
             }
         )
+        trackedMobEnvironmentListener =
+            BukkitTrackedMobEnvironmentListener(
+                this,
+                TrackedMobPredicate {
+                    liveArenaController
+                        .trackedMob(it)
+                },
+                liveArenaController::isActivePlayer
+            )
         menuBridge = BukkitMenuBridge(
             this,
             BukkitEngineeringMenuRenderer(),
