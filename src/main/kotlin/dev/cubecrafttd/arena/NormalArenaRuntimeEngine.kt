@@ -37,4 +37,12 @@ class NormalArenaRuntimeEngine(
 
     fun phaseIds(): List<String> =
         engine.phaseIds()
+
+    fun profileSnapshot():
+        ArenaTickProfileSnapshot =
+        engine.profileSnapshot()
+
+    fun resetProfile() {
+        engine.resetProfile()
+    }
 }
