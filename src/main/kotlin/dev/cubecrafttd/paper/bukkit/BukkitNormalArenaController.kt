@@ -255,6 +255,10 @@ class BukkitNormalArenaController(
                             BukkitEngineeringTowerAttackFeedback(
                                 plugin.server
                             ),
+                        aoePotionFeedback=
+                            BukkitEngineeringAoEPotionFeedback(
+                                plugin.server
+                            ),
                         summonCountResolver=
                             RuntimeFallbackBindings
                                 .towerSummonCounts(
