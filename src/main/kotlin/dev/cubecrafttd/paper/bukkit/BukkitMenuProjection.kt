@@ -11,5 +11,12 @@ fun MenuDefinition.toLiveView():
         slotActionIds=
             slots.associate {
                 it.slot to it.actionId
-            }
+            },
+        slotDisplayNames=
+            slots.mapNotNull {
+                slot ->
+                slot.displayName?.let {
+                    slot.slot to it
+                }
+            }.toMap()
     )
