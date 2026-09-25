@@ -41,6 +41,8 @@ data class BukkitLiveArenaHandle(
         BukkitArenaArmageddonRuntime,
     val progressionService:
         TroopProgressionService,
+    val aoeCooldowns:
+        DeterministicCooldownTracker,
     var session:
         MatchSessionState? = null,
     var menuRouter:
@@ -145,6 +147,8 @@ class BukkitNormalArenaController(
                     preflight.gameplay
                         .troopSpawnCadence
                 )
+        val aoeCooldowns=
+            DeterministicCooldownTracker()
         val stats=
             MatchStatsRecorder()
         val nextTransactionId=
@@ -347,6 +351,7 @@ class BukkitNormalArenaController(
                     armageddonRuntime,
                 progressionService=
                     progressionService,
+                aoeCooldowns=aoeCooldowns,
                 nextTransactionId=
                     nextTransactionId
             )
@@ -949,6 +954,23 @@ class BukkitNormalArenaController(
             router.handle(
                 invocation
             )
+
+        if(
+            result is
+                MatchMenuActionResult
+                    .PotionUsePurchased
+        ) {
+            val state=
+                handle.session
+                    ?.players
+                    ?.get(
+                        invocation.playerUuid
+                    ) ?: error(
+                    "Player match session is missing"
+                )
+            state.interaction
+                .armedAoEPotion=result.token
+        }
 
         if(
             result is
