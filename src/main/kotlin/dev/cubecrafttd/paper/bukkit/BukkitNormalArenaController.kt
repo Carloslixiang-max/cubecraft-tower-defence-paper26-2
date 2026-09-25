@@ -67,6 +67,11 @@ class BukkitNormalArenaController(
     private val stage4Gate:
         PaperStage4GateStore
 ) {
+    private val matchHud=
+        BukkitMatchHudService(
+            plugin.server
+        )
+
     private val handles=
         linkedMapOf<
             ArenaId,
@@ -552,6 +557,19 @@ class BukkitNormalArenaController(
                     return
                 }
             }
+            if(
+                context.gameTick % 10L == 0L
+            ) {
+                val session=handle.session
+                if(session!=null) {
+                    matchHud.push(
+                        context,
+                        handle.ledger,
+                        session,
+                        handle.matchClock
+                    )
+                }
+            }
         } catch(t:Throwable) {
             plugin.logger.severe(
                 "Arena ${arenaId.value} tick failed: " +
@@ -773,6 +791,11 @@ class BukkitNormalArenaController(
                 "Tower world action service is not initialized"
             )
     }
+
+    fun isActivePlayer(
+        playerUuid: UUID
+    ): Boolean =
+        handleForPlayer(playerUuid) != null
 
     private fun handleForPlayer(
         playerUuid: UUID
