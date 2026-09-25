@@ -45,6 +45,9 @@ class BukkitEngineeringMenuRenderer :
             actionId.startsWith(
                 "nav:"
             ) -> Material.NETHER_STAR
+            actionId.startsWith(
+                "hotbar:"
+            ) -> Material.ITEM_FRAME
             else -> Material.PAPER
         }
 }
