@@ -7,6 +7,7 @@ enum class MatureKillCreditKind {
     PLAYER_TOWER,
     PLAYER_SWORD,
     PLAYER_BOW,
+    PLAYER_POTION,
     CASTLE_GUARD,
     SYSTEM_OR_UNATTRIBUTED
 }
@@ -31,6 +32,11 @@ object KillAttributionService {
         )
         is DamageSourceIdentity.PlayerBow -> KillAttributionDecision(
             MatureKillCreditKind.PLAYER_BOW, source.playerUuid, true
+        )
+        is DamageSourceIdentity.PlayerPotion -> KillAttributionDecision(
+            MatureKillCreditKind.PLAYER_POTION,
+            source.playerUuid,
+            source.awardsPlayerKillCoins
         )
         is DamageSourceIdentity.CastleGuard -> KillAttributionDecision(
             MatureKillCreditKind.CASTLE_GUARD, null, false
