@@ -197,11 +197,12 @@ object NormalRuntimeCompositionFixture {
 
         return listOf(
             FixtureResult(
-                "normal-composition-eleven-phases",
+                "normal-composition-twelve-phases",
                 composition.phaseIds() ==
                     listOf(
                         "goldmine",
                         "troop-spawn",
+                        "aoe-potion",
                         "mob-movement",
                         "mob-support",
                         "leach-charge",
