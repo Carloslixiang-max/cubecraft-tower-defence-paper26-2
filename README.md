@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v42 engineering playtest shell**
-- Pure-domain baseline: **346/346 fixtures PASS**
+- Current shell lineage: **v43 engineering playtest shell**
+- Pure-domain baseline: **349/349 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -42,7 +42,8 @@ The codebase already contains substantial runtime work, including:
 - Engineering match-safety guards that keep the temporary playtest inventory intact and suppress unrelated vanilla damage/hunger during controlled 1v1 testing;
 - a live particle rangefinder projection for hovered, shift-nearest and permanently pinned tower ranges, while keeping particle style explicitly Engineering-only;
 - status-aware live movement plus periodic Poison/Burn damage, with Poison cadence coming from stage data and unresolved Burn cadence remaining an explicit Engineering fallback;
-- world-targeted AoE potion execution for Engineering Playtest: Bazaar purchase → armed state → right-click target area → deterministic arena-tick pulses, including damage, heal, Freeze/Speed status effects, cooldowns, visual feedback, and idempotent final death economy settlement.
+- world-targeted AoE potion execution for Engineering Playtest: Bazaar purchase → armed state → right-click target area → deterministic arena-tick pulses, including damage, heal, Freeze/Speed status effects, cooldowns, visual feedback, and idempotent final death economy settlement;
+- persistent player-custom hotbar layouts: Settings → Engineering hotbar editor → live reprojection, with layouts saved in `player-hotbars.yml` and reloaded on later matches/restarts.
 
 ## Build
 
