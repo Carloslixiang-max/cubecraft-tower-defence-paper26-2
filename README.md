@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v34 engineering playtest shell**
-- Pure-domain baseline: **320/320 fixtures PASS**
+- Current shell lineage: **v35 engineering playtest shell**
+- Pure-domain baseline: **326/326 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -36,7 +36,8 @@ The codebase already contains substantial runtime work, including:
 - Summoner, Bazaar, progression and settings menu projections;
 - player snapshot/recovery journal;
 - Normal match timing and Armageddon runtime scaffolding;
-- Paper-side adapters for entities, LOS, menus, map binding and Stage-4 live tests.
+- Paper-side adapters for entities, LOS, menus, map binding and Stage-4 live tests;
+- live Castle Guard geometry anchors and an operable Engineering Playtest hotbar/loadout.
 
 ## Build
 
