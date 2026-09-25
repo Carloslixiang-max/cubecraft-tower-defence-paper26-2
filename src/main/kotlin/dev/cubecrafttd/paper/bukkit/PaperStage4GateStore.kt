@@ -194,13 +194,11 @@ class PaperStage4GateStore(
     fun recordPlayerSnapshotRoundTrip(
         passed: Boolean
     ) {
-        if(passed) {
-            props.setProperty(
-                "playerSnapshotRoundTripPassed",
-                "true"
-            )
-            save()
-        }
+        props.setProperty(
+            "playerSnapshotRoundTripPassed",
+            passed.toString()
+        )
+        save()
     }
 
     fun recordArenaRoundTrip(
