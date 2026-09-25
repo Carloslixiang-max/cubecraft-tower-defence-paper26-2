@@ -2,6 +2,7 @@ package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.arena.TrackedEntityRemovalPort
 import dev.cubecrafttd.map.Vec3
+import dev.cubecrafttd.mob.MobPositionUpdatePort
 import dev.cubecrafttd.paper.*
 import org.bukkit.Location
 import org.bukkit.Server
@@ -12,6 +13,7 @@ class BukkitEntityRuntimeAdapter(
 ) : PaperEntityAdapter,
     LiveEntityPositionPort,
     LiveEntityTeleportPort,
+    MobPositionUpdatePort,
     TrackedEntityRemovalPort {
 
     override fun remove(uuid: UUID): Boolean {
