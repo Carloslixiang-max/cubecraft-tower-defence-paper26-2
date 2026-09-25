@@ -32,6 +32,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var matchHotbarListener: BukkitMatchHotbarListener
     private lateinit var towerPlacementListener: BukkitTowerPlacementListener
     private lateinit var matchSafetyListener: BukkitMatchSafetyListener
+    private lateinit var rangefinderService: BukkitEngineeringRangefinderService
     private var fallbackMissing: List<MissingFallback> = emptyList()
 
     override fun onEnable() {
@@ -136,6 +137,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 this,
                 liveArenaController
             )
+        rangefinderService =
+            BukkitEngineeringRangefinderService(
+                this,
+                liveArenaController
+            )
 
         val domain = DomainFixtureSuite.runAll()
         val failed = domain.filterNot { it.passed }
@@ -154,7 +160,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v36 enabled; " +
+            "CubeCraftTowerDefence shell v37 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -202,7 +208,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v36 disabled; " +
+            "CubeCraftTowerDefence shell v37 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -215,7 +221,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ): Boolean = when (command.name.lowercase()) {
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v36, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v37, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
