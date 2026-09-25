@@ -126,6 +126,12 @@ object NormalArenaRuntimeCompositionFactory {
                     lethalResolver=
                         combat.lethalResolver
                 ),
+                MobStatusDamageTickPhase(
+                    config=
+                        deps.resolved.statusDamage,
+                    lethalResolver=
+                        combat.lethalResolver
+                ),
                 GuardCombatTickPhase(
                     config=
                         deps.resolved.guardCombat,
