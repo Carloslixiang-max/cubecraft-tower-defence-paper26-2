@@ -145,6 +145,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 player?.sendMessage(
                                     "Tower placed: ${result.result.selection.towerId}"
                                 )
+                            is dev.cubecrafttd.ui.MatchMenuActionResult.PotionUsePurchased -> {
+                                player?.closeInventory()
+                                player?.sendMessage(
+                                    "AoE " +
+                                        result.token.potionId +
+                                        " armed. Right-click the world to choose its target area."
+                                )
+                            }
                             else -> {
                                 val refreshKind=
                                     when {
