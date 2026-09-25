@@ -23,10 +23,13 @@ data class PaperAdapterDiagnostics(
                 "mob support/lethal resolved composition",
                 "summon-count/chain-policy fallback binding",
                 "target-priority/per-tower-LOS fallback binding",
-                "Wither boss/trail/skull live runtime"
+                "Wither boss/trail/skull live runtime",
+                "Java25/Paper26.2 compile + shaded JAR CI",
+                "Paper26.2 double live-boot smoke CI",
+                "Castle Guard live geometry anchors",
+                "engineering playtest hotbar projection"
             ),
             stillLiveGateRequired = linkedSetOf(
-                "Java25/Paper26.2 compile",
                 "player snapshot lossless roundtrip on real server",
                 "entity movement visual smoothness",
                 "raytrace fidelity vs original firing origins",
