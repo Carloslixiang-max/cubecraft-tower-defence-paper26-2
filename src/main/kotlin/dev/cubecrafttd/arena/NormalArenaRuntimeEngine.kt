@@ -13,6 +13,7 @@ object NormalArenaPhaseOrder {
     const val LEACH_CHARGE = 55
     const val SUMMON_MAINTENANCE = 57
     const val TOWER_COMBAT = 60
+    const val STATUS_DAMAGE = 65
     const val CASTLE_GUARDS = 70
     const val CASTLE_ATTACKS = 80
     const val MOB_CLEANUP = 90
