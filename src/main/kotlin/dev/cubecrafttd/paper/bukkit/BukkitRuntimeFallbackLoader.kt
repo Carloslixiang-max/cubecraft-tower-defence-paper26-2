@@ -49,6 +49,7 @@ object BukkitRuntimeFallbackLoader {
             mobKillCoins = longs(config.getConfigurationSection("runtime-fallback.mob-kill-coins")),
             weaponAbilityRequiredHits = ints(config.getConfigurationSection("runtime-fallback.weapon-ability-required-hits")),
             aoeNumericFallbacks = numbers(config.getConfigurationSection("runtime-fallback.aoe")),
+            aoeKillAwardsCoins = booleanOrNull(config,"runtime-fallback.aoe.kill-awards-coins"),
 
             lightningFirstStrikeDelayTicks = longOrNull(config,"runtime-fallback.armageddon.lightning.first-strike-delay-ticks"),
             lightningStrikeIntervalTicks = longOrNull(config,"runtime-fallback.armageddon.lightning.strike-interval-ticks"),
@@ -97,6 +98,8 @@ object BukkitRuntimeFallbackLoader {
 
     private fun intOrNull(c:FileConfiguration,p:String):Int? =
         if(c.isSet(p) && c.get(p) is Number) c.getInt(p) else null
+    private fun booleanOrNull(c:FileConfiguration,p:String):Boolean? =
+        if(c.isSet(p) && c.get(p) is Boolean) c.getBoolean(p) else null
 
     private fun doubles(s:ConfigurationSection?):Map<String,Double> =
         numericEntries(s).mapValues { it.value.toDouble() }
