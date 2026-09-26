@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v60 engineering playtest shell**
-- Pure-domain baseline: **428/428 fixtures PASS**
+- Current shell lineage: **v61 engineering playtest shell**
+- Pure-domain baseline: **430/430 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -59,7 +59,8 @@ The codebase already contains substantial runtime work, including:
 - a safe pregame voting GUI: queued/countdown players can now run `/ctdvote` with no arguments and click Armageddon/Pricing choices directly. The menu refreshes immediately and marks the player's current choices. It hides concrete Armageddon choices whose fallback composition is not runnable, while Random remains available over the runnable set. Historical evidence confirms an End Crystal inventory entry point in the original game, but the exact internal slot/icon layout is not recovered strongly enough, so this current GUI layout is explicitly Engineering-only and does not mutate the player's pre-queue inventory;
 - a non-invasive Engineering queue HUD in the action bar: waiting players see their current FIFO position plus their Armageddon/Pricing choices (or the historically recovered no-vote defaults), while matched players see the 3 → 2 → 1 start countdown and the same vote state. The HUD is cleared on leave, removal, shutdown handoff, or live arena start and never occupies an inventory slot;
 - stronger round teardown verification for repeated Farm reuse: after tower bodies are restored and all tracked mobs/guards/displays/projectiles receive their removal calls, teardown performs a second independent Paper-world presence scan over the original tracked UUID set. A tracked entity that still exists is reported separately as world residue and forces the teardown report out of `fullyCleanNow`, preventing a successful remove return from being treated as proof of a clean round;
-- a persistent Farm reuse interlock backed by `farm-reuse-gate.yml`. New admin-started or queued matches are refused after tracked entity residue or tower-body restore conflicts. Tracked entity UUIDs are rechecked against the live server and automatically disappear from the gate once the entities are truly gone. Tower-body conflicts are hard residue and survive restarts; v60 intentionally provides only `/ctdreuse status`, not an unsafe force-clear. A verified reset/repair flow remains a separate live gate before hard residue can be cleared.
+- a persistent Farm reuse interlock backed by `farm-reuse-gate.yml`. New admin-started or queued matches are refused after tracked entity residue or tower-body restore conflicts. Tracked entity UUIDs are rechecked against the live server and automatically disappear from the gate once the entities are truly gone. Tower-body conflicts are hard residue and survive restarts;
+- a crash-conscious verified Farm repair/reset path through `/ctdresetfarm <verified-sha-prefix>`. It is available only while the reuse gate is blocked, with no active TD arena/map operation and no still-live tracked entity residue. Before scheduling it persists a reset-in-progress maintenance lock; the reset scans the full verified schematic volume without mutation, snapshots only differing blocks, applies differences in bounded batches, then verifies the complete volume. APPLY/VERIFY failures attempt to roll back captured BlockState snapshots and keep the persistent gate locked. Only a fully verified completion clears tower-body residue and the maintenance lock.
 
 ## Build
 
@@ -144,6 +145,7 @@ Administrative/test commands include:
 - `/ctdready`
 - `/ctdlivegate`
 - `/ctdreuse status`
+- `/ctdresetfarm <verified-sha-prefix>`
 - `/ctdsnapshotcheck [restart-arm|restart-status]`
 - `/ctdperf [arenaId|reset [arenaId]]`
 - `/ctdpreflight`

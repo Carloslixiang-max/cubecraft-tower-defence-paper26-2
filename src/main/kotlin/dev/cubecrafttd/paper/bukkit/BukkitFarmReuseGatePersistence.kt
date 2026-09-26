@@ -37,7 +37,12 @@ class BukkitFarmReuseGatePersistence(
         return FarmReuseGatePersistentState(
             hardTowerConflictKeys=hard,
             suspectTrackedEntities=
-                entities
+                entities,
+            verifiedResetInProgress=
+                yaml.getBoolean(
+                    "verified-reset-in-progress",
+                    false
+                )
         )
     }
 
@@ -58,6 +63,10 @@ class BukkitFarmReuseGatePersistence(
             state.suspectTrackedEntities
                 .map(UUID::toString)
                 .sorted()
+        )
+        yaml.set(
+            "verified-reset-in-progress",
+            state.verifiedResetInProgress
         )
         yaml.save(file)
     }

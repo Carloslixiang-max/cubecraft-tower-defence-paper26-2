@@ -77,6 +77,23 @@ object FarmReuseGateFixture {
                     }
             ).snapshot()
 
+        gate.beginVerifiedWorldReset()
+        gate.abortVerifiedWorldResetBeforeMutation()
+        val resetAborted=
+            gate.snapshot()
+
+        gate.beginVerifiedWorldReset()
+        val resetStarted=
+            gate.snapshot()
+        val resetReloaded=
+            FarmReuseGate(
+                initial=persisted,
+                entityPresence=
+                    TrackedEntityPresencePort {
+                        false
+                    }
+            ).snapshot()
+
         gate.clearAfterVerifiedWorldReset()
         val cleared=
             gate.snapshot()
@@ -112,12 +129,33 @@ object FarmReuseGateFixture {
                         .isEmpty()
             ),
             FixtureResult(
+                "farm-reuse-gate-abort-before-mutation-keeps-hard-residue",
+                resetAborted.blocked &&
+                    !resetAborted
+                        .verifiedResetInProgress &&
+                    resetAborted
+                        .hardTowerConflictKeys
+                        .isNotEmpty()
+            ),
+            FixtureResult(
+                "farm-reuse-gate-reset-maintenance-lock-persists",
+                resetStarted.blocked &&
+                    resetStarted
+                        .verifiedResetInProgress &&
+                    resetReloaded
+                        .verifiedResetInProgress
+            ),
+            FixtureResult(
                 "farm-reuse-gate-clears-only-after-verified-reset",
                 !cleared.blocked &&
+                    !cleared
+                        .verifiedResetInProgress &&
                     persisted.hardTowerConflictKeys
                         .isEmpty() &&
                     persisted.suspectTrackedEntities
-                        .isEmpty()
+                        .isEmpty() &&
+                    !persisted
+                        .verifiedResetInProgress
             )
         )
     }

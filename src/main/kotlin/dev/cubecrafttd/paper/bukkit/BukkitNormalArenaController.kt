@@ -169,6 +169,22 @@ class BukkitNormalArenaController(
         FarmReuseGateSnapshot =
         farmReuseGate.snapshot()
 
+    fun beginFarmVerifiedReset() {
+        check(handles.isEmpty()) {
+            "Cannot begin Farm reset while an arena is active"
+        }
+        farmReuseGate
+            .beginVerifiedWorldReset()
+    }
+
+    fun abortFarmVerifiedResetBeforeMutation() {
+        check(handles.isEmpty()) {
+            "Cannot abort Farm reset maintenance while an arena is active"
+        }
+        farmReuseGate
+            .abortVerifiedWorldResetBeforeMutation()
+    }
+
     fun clearFarmReuseAfterVerifiedWorldReset() {
         check(handles.isEmpty()) {
             "Cannot clear Farm reuse gate while an arena is active"

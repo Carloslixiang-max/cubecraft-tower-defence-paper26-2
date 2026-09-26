@@ -69,6 +69,10 @@ commands:
     description: Paste the verified Farm asset only into a completely empty configured region
     usage: /ctdpastefarm <verified-sha-prefix>
     permission: cubecrafttd.admin
+  ctdresetfarm:
+    description: Repair/reset a reuse-blocked Farm from the verified schematic with rollback
+    usage: /ctdresetfarm <verified-sha-prefix>
+    permission: cubecrafttd.admin
   ctdtest:
     description: CubeCraft TD admin/test intent gateway
     usage: /ctdtest <fixtures|mapcheck|invariants|spawnmob|tower|armageddon|forceend> ...

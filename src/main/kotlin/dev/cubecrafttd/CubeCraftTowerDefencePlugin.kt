@@ -406,7 +406,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v60 enabled; " +
+            "CubeCraftTowerDefence shell v61 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -457,7 +457,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v60 disabled; " +
+            "CubeCraftTowerDefence shell v61 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -491,7 +491,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v60, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v61, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -614,6 +614,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdpastefarm" -> {
             runFarmPaste(sender,args.toList())
+            true
+        }
+
+        "ctdresetfarm" -> {
+            runFarmReset(
+                sender,
+                args.toList()
+            )
             true
         }
 
@@ -1478,6 +1486,136 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         } catch(t:Throwable) {
             sender.sendMessage(
                 "Farm paste ERROR: ${t.javaClass.simpleName}: ${t.message}"
+            )
+        }
+    }
+
+    private fun runFarmReset(
+        sender: CommandSender,
+        args: List<String>
+    ) {
+        val expectedPrefix=
+            PaperGameplayReadinessService
+                .EXPECTED_FARM_SHA256
+                .take(12)
+
+        if(
+            args.size!=1 ||
+            args[0].lowercase()!=
+                expectedPrefix
+        ) {
+            sender.sendMessage(
+                "Verified reset requires the Farm SHA prefix: /ctdresetfarm " +
+                    expectedPrefix
+            )
+            return
+        }
+
+        if(
+            arenaService.contexts()
+                .isNotEmpty()
+        ) {
+            sender.sendMessage(
+                "Refusing Farm reset while any TD arena context exists."
+            )
+            return
+        }
+
+        if(
+            mapOperations
+                .hasActivePaste()
+        ) {
+            sender.sendMessage(
+                "Refusing Farm reset while another Farm map operation is active."
+            )
+            return
+        }
+
+        val before=
+            liveArenaController
+                .farmReuseStatus()
+
+        if(!before.blocked) {
+            sender.sendMessage(
+                "Farm reuse gate is already clean; refusing an unnecessary overwrite reset."
+            )
+            return
+        }
+
+        if(
+            before.liveTrackedEntityResidue
+                .isNotEmpty()
+        ) {
+            sender.sendMessage(
+                "Farm reset cannot clear live tracked entities. Wait for/remove residue first; remaining=" +
+                    before.liveTrackedEntityResidue.size
+            )
+            return
+        }
+
+        val wasAlreadyResetLocked=
+            before.verifiedResetInProgress
+
+        liveArenaController
+            .beginFarmVerifiedReset()
+
+        try {
+            mapOperations
+                .startVerifiedReset(
+                    onProgress={ progress ->
+                        if(
+                            progress.phase=="COMPLETE" ||
+                            progress.phase=="FAILED"
+                        ) {
+                            logger.info(
+                                "Farm verified reset " +
+                                    progress.phase +
+                                    ": scanned=" +
+                                    progress.scannedBlocks +
+                                    " written=" +
+                                    progress.writtenBlocks +
+                                    "/" +
+                                    progress.totalBlocks
+                            )
+                        }
+                    },
+                    onComplete={
+                        liveArenaController
+                            .clearFarmReuseAfterVerifiedWorldReset()
+                        logger.info(
+                            "Farm verified reset complete; reuse gate cleared"
+                        )
+                        sender.sendMessage(
+                            "Farm verified reset COMPLETE; reuse gate is clean."
+                        )
+                    },
+                    onFailure={ error ->
+                        logger.warning(
+                            "Farm verified reset FAILED; rollback was attempted and the persistent reuse gate remains locked: " +
+                                error.javaClass.simpleName +
+                                ": " +
+                                error.message
+                        )
+                        sender.sendMessage(
+                            "Farm verified reset FAILED; reuse gate remains locked. Retry /ctdresetfarm after checking the server log."
+                        )
+                    }
+                )
+
+            sender.sendMessage(
+                "Farm verified reset started: full scan -> apply differences -> full verify. " +
+                    "The persistent reuse gate stays locked until verification completes."
+            )
+        } catch(t:Throwable) {
+            if(!wasAlreadyResetLocked) {
+                liveArenaController
+                    .abortFarmVerifiedResetBeforeMutation()
+            }
+            sender.sendMessage(
+                "Farm reset ERROR before scheduling: " +
+                    t.javaClass.simpleName +
+                    ": " +
+                    t.message
             )
         }
     }

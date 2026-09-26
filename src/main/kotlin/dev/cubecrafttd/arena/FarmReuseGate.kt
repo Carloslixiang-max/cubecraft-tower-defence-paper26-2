@@ -6,22 +6,29 @@ data class FarmReuseGatePersistentState(
     val hardTowerConflictKeys:
         Set<String> = emptySet(),
     val suspectTrackedEntities:
-        Set<UUID> = emptySet()
+        Set<UUID> = emptySet(),
+    val verifiedResetInProgress:
+        Boolean = false
 )
 
 data class FarmReuseGateSnapshot(
     val hardTowerConflictKeys:
         Set<String>,
     val liveTrackedEntityResidue:
-        Set<UUID>
+        Set<UUID>,
+    val verifiedResetInProgress:
+        Boolean
 ) {
     val blocked: Boolean
         get() =
-            hardTowerConflictKeys.isNotEmpty() ||
+            verifiedResetInProgress ||
+                hardTowerConflictKeys.isNotEmpty() ||
                 liveTrackedEntityResidue.isNotEmpty()
 
     fun summary(): String =
         "blocked=" + blocked +
+            ", resetInProgress=" +
+            verifiedResetInProgress +
             ", towerConflicts=" +
             hardTowerConflictKeys.size +
             ", liveEntityResidue=" +
@@ -64,6 +71,19 @@ class FarmReuseGate(
                 )
             }
 
+    private var verifiedResetInProgress=
+        initial.verifiedResetInProgress
+
+    fun beginVerifiedWorldReset() {
+        verifiedResetInProgress=true
+        save()
+    }
+
+    fun abortVerifiedWorldResetBeforeMutation() {
+        verifiedResetInProgress=false
+        save()
+    }
+
     fun record(
         report: ArenaTeardownReport
     ): FarmReuseGateSnapshot {
@@ -99,6 +119,7 @@ class FarmReuseGate(
     fun clearAfterVerifiedWorldReset() {
         hardTowerConflictKeys.clear()
         suspectTrackedEntities.clear()
+        verifiedResetInProgress=false
         save()
     }
 
@@ -126,7 +147,9 @@ class FarmReuseGate(
                     .toSet(),
             liveTrackedEntityResidue=
                 suspectTrackedEntities
-                    .toSet()
+                    .toSet(),
+            verifiedResetInProgress=
+                verifiedResetInProgress
         )
 
     private fun save() {
@@ -137,7 +160,9 @@ class FarmReuseGate(
                         .toSet(),
                 suspectTrackedEntities=
                     suspectTrackedEntities
-                        .toSet()
+                        .toSet(),
+                verifiedResetInProgress=
+                    verifiedResetInProgress
             )
         )
     }

@@ -165,6 +165,81 @@ class FarmMapOperationManager(
             )
     }
 
+    fun startVerifiedReset(
+        onProgress:
+            (SchematicPasteProgress)->Unit,
+        onComplete:()->Unit,
+        onFailure:(Throwable)->Unit
+    ) {
+        check(binding.allowFarmPaste) {
+            "Farm reset is disabled because Farm paste is disabled in config"
+        }
+        check(
+            activePaste?.isCancelled != false
+        ) {
+            "A Farm map operation is already active"
+        }
+
+        val world=binding.resolveWorld(
+            plugin.server
+        ) ?: error(
+            "Configured map world is missing/not loaded"
+        )
+        val origin=binding.origin
+            ?: error(
+                "map-binding.origin is incomplete"
+            )
+        val file=File(
+            plugin.dataFolder,
+            "maps/ImprovedFarm.schem"
+        )
+        check(file.isFile) {
+            "Missing " + file.path
+        }
+        val bytes=file.readBytes()
+        val sha=
+            java.security.MessageDigest
+                .getInstance("SHA-256")
+                .digest(bytes)
+                .joinToString("") {
+                    "%02x".format(it)
+                }
+        check(
+            sha ==
+                PaperGameplayReadinessService
+                    .EXPECTED_FARM_SHA256
+        ) {
+            "Farm SHA-256 mismatch"
+        }
+
+        val plan=FarmPaperMapBinder()
+            .prepare(
+                bytes,
+                world.uid,
+                origin
+            )
+
+        activePaste=
+            BukkitVerifiedSchematicResetService(
+                plugin,
+                world
+            ).resetToVolume(
+                volume=plan.volume,
+                origin=origin,
+                blocksPerTick=
+                    binding.pasteBlocksPerTick,
+                onProgress=onProgress,
+                onComplete={
+                    activePaste=null
+                    onComplete()
+                },
+                onFailure={
+                    activePaste=null
+                    onFailure(it)
+                }
+            )
+    }
+
     fun cancelActivePaste() {
         activePaste?.cancel()
         activePaste=null
