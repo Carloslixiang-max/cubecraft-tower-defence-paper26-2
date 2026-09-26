@@ -19,7 +19,9 @@ data class PaperStage4GateStatus(
     val towerStress60Passed: Boolean,
     val cleanRestartCycles: Int,
     val cleanArenaRoundTrips: Int,
-    val previousBootWasUnclean: Boolean
+    val previousBootWasUnclean: Boolean,
+    val consecutiveCleanArenaRoundTrips:
+        Int = 0
 ) {
     val coreCertified: Boolean
         get() =
@@ -30,7 +32,7 @@ data class PaperStage4GateStatus(
             restartRecoveryPassed &&
             towerStress60Passed &&
             cleanRestartCycles >= 2 &&
-            cleanArenaRoundTrips >= 1 &&
+            consecutiveCleanArenaRoundTrips >= 2 &&
             !previousBootWasUnclean
 
     // Compatibility alias for existing readiness callers. This is only the
@@ -48,6 +50,7 @@ data class PaperStage4GateStatus(
             "stress60=$towerStress60Passed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
+            "consecutiveCleanArenaRoundTrips=$consecutiveCleanArenaRoundTrips " +
             "previousUnclean=$previousBootWasUnclean"
 }
 
@@ -91,6 +94,10 @@ class PaperStage4GateStore(
         if(previousUnclean) {
             props.setProperty(
                 "cleanRestartCycles","0"
+            )
+            props.setProperty(
+                "consecutiveCleanArenaRoundTrips",
+                "0"
             )
         } else if(previousClean) {
             val current=
@@ -252,8 +259,21 @@ class PaperStage4GateStore(
                     )+1
                 ).toString()
             )
-            save()
+            props.setProperty(
+                "consecutiveCleanArenaRoundTrips",
+                (
+                    int(
+                        "consecutiveCleanArenaRoundTrips"
+                    )+1
+                ).toString()
+            )
+        } else {
+            props.setProperty(
+                "consecutiveCleanArenaRoundTrips",
+                "0"
+            )
         }
+        save()
     }
 
     fun markCleanShutdown(
@@ -310,7 +330,11 @@ class PaperStage4GateStore(
                     "cleanArenaRoundTrips"
                 ),
             previousBootWasUnclean=
-                previousUnclean
+                previousUnclean,
+            consecutiveCleanArenaRoundTrips=
+                int(
+                    "consecutiveCleanArenaRoundTrips"
+                )
         )
 
     private fun bool(

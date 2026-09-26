@@ -18,6 +18,8 @@ data class PaperAdapterDiagnostics(
                         !stage4.restartRecoveryPassed
                     "60+ tower real-server performance certification" ->
                         !stage4.towerStress60Passed
+                    "consecutive-round world residue/reuse real-server certification" ->
+                        stage4.consecutiveCleanArenaRoundTrips < 2
                     else -> true
                 }
             }
@@ -69,6 +71,7 @@ data class PaperAdapterDiagnostics(
                 "durable journal delete-before-memory-restore commit ordering",
                 "bounded automatic retry for online pending player recovery",
                 "truthful Stage-4 core vs full real-server certification reporting",
+                "two-consecutive-clean-round reuse certification counter",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

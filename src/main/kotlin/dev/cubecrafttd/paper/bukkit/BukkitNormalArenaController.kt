@@ -826,11 +826,6 @@ class BukkitNormalArenaController(
                             cleanupReport
                                 .teardown
                         )
-                    stage4Gate
-                        .recordArenaRoundTrip(
-                            cleanupReport
-                                .teardown
-                        )
                 }.onFailure {
                     gateFailure ->
                     t.addSuppressed(

@@ -13,8 +13,9 @@ object PaperLiveCertificationFixture {
                 restartRecoveryPassed=true,
                 towerStress60Passed=true,
                 cleanRestartCycles=2,
-                cleanArenaRoundTrips=1,
-                previousBootWasUnclean=false
+                cleanArenaRoundTrips=2,
+                previousBootWasUnclean=false,
+                consecutiveCleanArenaRoundTrips=2
             )
         val diagnostics=
             PaperAdapterDiagnostics
@@ -31,7 +32,20 @@ object PaperLiveCertificationFixture {
             "restart recovery" !in
                 remaining &&
             "60+ tower real-server performance certification" !in
+                remaining &&
+            "consecutive-round world residue/reuse real-server certification" !in
                 remaining
+
+        val oneCleanOnly=
+            corePassed.copy(
+                cleanArenaRoundTrips=1,
+                consecutiveCleanArenaRoundTrips=1
+            )
+        val oneCleanRemaining=
+            diagnostics
+                .remainingLiveGates(
+                    oneCleanOnly
+                )
 
         val manualStillRequired=
             "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" in
@@ -56,6 +70,12 @@ object PaperLiveCertificationFixture {
                 "live-certification-dynamically-removes-recorded-core-gates-only",
                 coreLinkedRemoved &&
                     manualStillRequired
+            ),
+            FixtureResult(
+                "live-certification-requires-two-consecutive-clean-rounds",
+                !oneCleanOnly.coreCertified &&
+                    "consecutive-round world residue/reuse real-server certification" in
+                        oneCleanRemaining
             )
         )
     }
