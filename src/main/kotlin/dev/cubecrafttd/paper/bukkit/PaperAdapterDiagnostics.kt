@@ -84,6 +84,7 @@ data class PaperAdapterDiagnostics(
                 "observed disconnect/reconnect + departed-owner teammate tower takeover evidence",
                 "admin-only 2v1/2v2 teammate-takeover live certification harness",
                 "2v2 team bootstrap/session/departure regression fixture",
+                "granular /ctdlivegate live-evidence status reporting",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

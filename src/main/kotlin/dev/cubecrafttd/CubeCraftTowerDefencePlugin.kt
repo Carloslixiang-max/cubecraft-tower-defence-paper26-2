@@ -435,7 +435,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v76 enabled; " +
+            "CubeCraftTowerDefence shell v77 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -503,7 +503,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v76 disabled; " +
+            "CubeCraftTowerDefence shell v77 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -537,7 +537,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v76, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v77, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -596,6 +596,41 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     fullCertified +
                     " remaining=" +
                     remaining.size
+            )
+            sender.sendMessage(
+                " Queue evidence: join=" +
+                    stage4.queueJoinObserved +
+                    " hud=" +
+                    stage4.queueHudObserved +
+                    " armageddonGuiVote=" +
+                    stage4.queueArmageddonGuiVoteObserved +
+                    " pricingGuiVote=" +
+                    stage4.queuePricingGuiVoteObserved +
+                    " countdownStart=" +
+                    stage4.queueCountdownStartObserved +
+                    " activeLeave=" +
+                    stage4.queueActiveLeaveObserved
+            )
+            sender.sendMessage(
+                " Departure evidence: reconnectRestore=" +
+                    stage4.departureReconnectObserved +
+                    " teammateTakeover=" +
+                    stage4.departedOwnerTeammateTakeoverObserved
+            )
+            sender.sendMessage(
+                " Recovery/world evidence: snapshotRoundTrip=" +
+                    stage4.playerSnapshotRoundTripPassed +
+                    " restartRecovery=" +
+                    stage4.restartRecoveryPassed +
+                    " stress60=" +
+                    stage4.towerStress60Passed +
+                    " verifiedFarmReset=" +
+                    stage4.verifiedFarmResetPassed +
+                    " consecutiveCleanRounds=" +
+                    stage4.consecutiveCleanArenaRoundTrips +
+                    "/2 cleanRestarts=" +
+                    stage4.cleanRestartCycles +
+                    "/2"
             )
             remaining.forEach {
                 sender.sendMessage(
