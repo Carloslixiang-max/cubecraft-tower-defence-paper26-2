@@ -119,9 +119,31 @@ object DynamicMatchMenusFixture {
                         UiEvidenceStatus.ENGINEERING_FALLBACK
             ),
             FixtureResult(
-                "dynamic-match-menu-layouts-remain-engineering",
+                "dynamic-match-menu-layouts-remain-engineering-except-direct-summoner-controls",
+                summoner.evidenceStatus==
+                    UiEvidenceStatus
+                        .ENGINEERING_FALLBACK &&
+                summoner.slots
+                    .filter {
+                        it.slot==22 ||
+                            it.slot==26
+                    }
+                    .all {
+                        it.evidenceStatus==
+                            UiEvidenceStatus
+                                .HISTORICAL_DIRECT
+                    } &&
+                summoner.slots
+                    .filterNot {
+                        it.slot==22 ||
+                            it.slot==26
+                    }
+                    .all {
+                        it.evidenceStatus==
+                            UiEvidenceStatus
+                                .ENGINEERING_FALLBACK
+                    } &&
                 listOf(
-                    summoner,
                     progression,
                     bazaarLocked,
                     settings,
