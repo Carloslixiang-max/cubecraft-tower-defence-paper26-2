@@ -64,8 +64,6 @@ object PaperLiveCertificationFixture {
             "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" in
                 remaining &&
             "player departure/reconnect and teammate tower takeover certification" in
-                remaining &&
-            "verified Farm reset/repair real-server certification" in
                 remaining
 
         return listOf(
