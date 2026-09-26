@@ -14,13 +14,19 @@ class BukkitEntityRuntimeAdapter(
     LiveEntityPositionPort,
     LiveEntityTeleportPort,
     MobPositionUpdatePort,
-    TrackedEntityRemovalPort {
+    TrackedEntityRemovalPort,
+    TrackedEntityPresencePort {
 
     override fun remove(uuid: UUID): Boolean {
         val entity = server.getEntity(uuid) ?: return true
         entity.remove()
         return server.getEntity(uuid) == null
     }
+
+    override fun exists(
+        entityUuid: UUID
+    ): Boolean =
+        server.getEntity(entityUuid) != null
 
     override fun isAlive(uuid: UUID): Boolean {
         val entity = server.getEntity(uuid) ?: return false

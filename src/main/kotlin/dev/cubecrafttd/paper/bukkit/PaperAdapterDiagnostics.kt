@@ -50,7 +50,8 @@ data class PaperAdapterDiagnostics(
                 "historical pregame Pricing vote with live economy binding",
                 "safe pregame vote GUI projection and Bukkit bridge",
                 "non-invasive pregame queue/countdown action-bar HUD",
-                "pregame GUI filtering for unrunnable Armageddon modes"
+                "pregame GUI filtering for unrunnable Armageddon modes",
+                "post-teardown tracked-entity residue verification"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
@@ -58,6 +59,7 @@ data class PaperAdapterDiagnostics(
                 "raytrace fidelity vs original firing origins",
                 "production GUI icon/lore fidelity",
                 "match-end title/menu cleanup real-server certification",
+                "consecutive-round world residue/reuse real-server certification",
                 "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification",
                 "player departure/reconnect and teammate tower takeover certification",
                 "restart recovery",

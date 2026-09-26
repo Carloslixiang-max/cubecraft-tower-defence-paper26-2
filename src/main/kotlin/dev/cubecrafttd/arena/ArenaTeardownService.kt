@@ -8,6 +8,10 @@ fun interface TrackedEntityRemovalPort {
     fun remove(entityUuid: UUID): Boolean
 }
 
+fun interface TrackedEntityPresencePort {
+    fun exists(entityUuid: UUID): Boolean
+}
+
 fun interface MatchPlayerRestorePort {
     /**
      * true = restored now.
@@ -24,16 +28,20 @@ data class ArenaTeardownReport(
     val pendingPlayerRestores:
         Set<UUID>,
     val removedEntityCount: Int,
-    val restoredPlayerCount: Int
+    val restoredPlayerCount: Int,
+    val survivingTrackedEntities:
+        Set<UUID> = emptySet()
 ) {
     val externalResiduePossible: Boolean
         get() =
-            failedEntityRemovals.isNotEmpty()
+            failedEntityRemovals.isNotEmpty() ||
+                survivingTrackedEntities.isNotEmpty()
 
     val fullyCleanNow: Boolean
         get() =
             towerBodyConflicts.isEmpty() &&
             failedEntityRemovals.isEmpty() &&
+            survivingTrackedEntities.isEmpty() &&
             pendingPlayerRestores.isEmpty()
 }
 
@@ -43,7 +51,10 @@ class ArenaTeardownService(
     private val entityRemoval:
         TrackedEntityRemovalPort,
     private val playerRestore:
-        MatchPlayerRestorePort
+        MatchPlayerRestorePort,
+    private val entityPresence:
+        TrackedEntityPresencePort =
+            TrackedEntityPresencePort { false }
 ) {
     fun teardown(
         context: ArenaContext
@@ -131,6 +142,17 @@ class ArenaTeardownService(
             else pending += uuid
         }
 
+        val surviving=
+            entityIds
+                .filterTo(linkedSetOf()) {
+                    uuid ->
+                    runCatching {
+                        entityPresence.exists(
+                            uuid
+                        )
+                    }.getOrDefault(true)
+                }
+
         context.entityIndex.clearAll()
         check(context.towerBodyLedger.isEmpty()) {
             "TowerBodyLedger must be empty after teardown"
@@ -142,7 +164,9 @@ class ArenaTeardownService(
             failedEntityRemovals=failed,
             pendingPlayerRestores=pending,
             removedEntityCount=removed,
-            restoredPlayerCount=restored
+            restoredPlayerCount=restored,
+            survivingTrackedEntities=
+                surviving
         )
     }
 }

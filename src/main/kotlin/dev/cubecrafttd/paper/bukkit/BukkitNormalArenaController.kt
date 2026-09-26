@@ -443,7 +443,8 @@ class BukkitNormalArenaController(
                                 playerUuid
                             )
                     }
-                }
+                },
+                entityAdapter
             )
         val end=
             MatchEndCoordinator(

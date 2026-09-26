@@ -114,10 +114,16 @@ object ArenaTeardownFixture {
             UUID.fromString(
                 "00000000-0000-0000-0000-000000007202"
             )
+        val stickyUuid=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000007203"
+            )
         context.entityIndex
             .projectiles += projectileUuid
         context.entityIndex
             .transientDisplays += displayUuid
+        context.entityIndex
+            .transientDisplays += stickyUuid
 
         val mob=
             dev.cubecrafttd.mob
@@ -168,6 +174,10 @@ object ArenaTeardownFixture {
                         restored += uuid
                         true
                     }
+                },
+                TrackedEntityPresencePort {
+                    uuid ->
+                    uuid==stickyUuid
                 }
             )
 
@@ -210,6 +220,16 @@ object ArenaTeardownFixture {
                     setOf(failedEntity) &&
                     end.teardown
                         .externalResiduePossible
+            ),
+            FixtureResult(
+                "teardown-post-removal-scan-reports-surviving-tracked-entity",
+                end.teardown
+                    .survivingTrackedEntities ==
+                    setOf(stickyUuid) &&
+                    end.teardown
+                        .externalResiduePossible &&
+                    !end.teardown
+                        .fullyCleanNow
             ),
             FixtureResult(
                 "teardown-reports-offline-player-pending",
