@@ -15,7 +15,8 @@ object PaperLiveCertificationFixture {
                 cleanRestartCycles=2,
                 cleanArenaRoundTrips=2,
                 previousBootWasUnclean=false,
-                consecutiveCleanArenaRoundTrips=2
+                consecutiveCleanArenaRoundTrips=2,
+                verifiedFarmResetPassed=true
             )
         val diagnostics=
             PaperAdapterDiagnostics
@@ -34,6 +35,8 @@ object PaperLiveCertificationFixture {
             "60+ tower real-server performance certification" !in
                 remaining &&
             "consecutive-round world residue/reuse real-server certification" !in
+                remaining &&
+            "verified Farm reset/repair real-server certification" !in
                 remaining
 
         val oneCleanOnly=
@@ -45,6 +48,16 @@ object PaperLiveCertificationFixture {
             diagnostics
                 .remainingLiveGates(
                     oneCleanOnly
+                )
+
+        val resetNotPassed=
+            corePassed.copy(
+                verifiedFarmResetPassed=false
+            )
+        val resetNotPassedRemaining=
+            diagnostics
+                .remainingLiveGates(
+                    resetNotPassed
                 )
 
         val manualStillRequired=
@@ -76,6 +89,12 @@ object PaperLiveCertificationFixture {
                 !oneCleanOnly.coreCertified &&
                     "consecutive-round world residue/reuse real-server certification" in
                         oneCleanRemaining
+            ),
+            FixtureResult(
+                "live-certification-requires-verified-farm-reset-evidence",
+                !resetNotPassed.coreCertified &&
+                    "verified Farm reset/repair real-server certification" in
+                        resetNotPassedRemaining
             )
         )
     }

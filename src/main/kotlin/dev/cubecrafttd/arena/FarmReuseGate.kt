@@ -136,11 +136,15 @@ class FarmReuseGate(
     }
 
     fun clearAfterVerifiedWorldReset() {
+        // Clearing a safety gate must be persistence-first. If the durable
+        // write fails, keep the in-memory gate blocked as well.
+        persist(
+            FarmReuseGatePersistentState()
+        )
         hardTowerConflictKeys.clear()
         suspectTrackedEntities.clear()
         verifiedResetInProgress=false
         uncleanRestartSuspectedResidue=false
-        save()
     }
 
     private fun refreshEntityResidue():

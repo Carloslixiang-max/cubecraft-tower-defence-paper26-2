@@ -385,7 +385,12 @@ class BukkitVerifiedSchematicResetService(
                             report()
                         } catch(t:Throwable) {
                             val rollbackFailure=
-                                if(applied>0)
+                                if(
+                                    applied>0 &&
+                                    phase !=
+                                        VerifiedResetPhase
+                                            .COMPLETE
+                                )
                                     rollbackApplied()
                                 else
                                     null

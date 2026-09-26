@@ -21,7 +21,9 @@ data class PaperStage4GateStatus(
     val cleanArenaRoundTrips: Int,
     val previousBootWasUnclean: Boolean,
     val consecutiveCleanArenaRoundTrips:
-        Int = 0
+        Int = 0,
+    val verifiedFarmResetPassed:
+        Boolean = false
 ) {
     val coreCertified: Boolean
         get() =
@@ -31,6 +33,7 @@ data class PaperStage4GateStatus(
             playerSnapshotRoundTripPassed &&
             restartRecoveryPassed &&
             towerStress60Passed &&
+            verifiedFarmResetPassed &&
             cleanRestartCycles >= 2 &&
             consecutiveCleanArenaRoundTrips >= 2 &&
             !previousBootWasUnclean
@@ -48,6 +51,7 @@ data class PaperStage4GateStatus(
             "snapshotRoundTrip=$playerSnapshotRoundTripPassed " +
             "restartRecovery=$restartRecoveryPassed " +
             "stress60=$towerStress60Passed " +
+            "verifiedFarmReset=$verifiedFarmResetPassed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
             "consecutiveCleanArenaRoundTrips=$consecutiveCleanArenaRoundTrips " +
@@ -247,6 +251,32 @@ class PaperStage4GateStore(
         save()
     }
 
+    fun recordVerifiedFarmReset(
+        passed: Boolean
+    ) {
+        val key=
+            "verifiedFarmResetPassed"
+        val previous=
+            props.getProperty(key)
+        props.setProperty(
+            key,
+            passed.toString()
+        )
+        try {
+            save()
+        } catch(t:Throwable) {
+            if(previous==null) {
+                props.remove(key)
+            } else {
+                props.setProperty(
+                    key,
+                    previous
+                )
+            }
+            throw t
+        }
+    }
+
     fun recordArenaRoundTrip(
         report: ArenaTeardownReport
     ) {
@@ -334,6 +364,10 @@ class PaperStage4GateStore(
             consecutiveCleanArenaRoundTrips=
                 int(
                     "consecutiveCleanArenaRoundTrips"
+                ),
+            verifiedFarmResetPassed=
+                bool(
+                    "verifiedFarmResetPassed"
                 )
         )
 

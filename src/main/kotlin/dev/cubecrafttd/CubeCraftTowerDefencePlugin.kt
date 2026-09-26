@@ -422,7 +422,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v71 enabled; " +
+            "CubeCraftTowerDefence shell v72 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -490,7 +490,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v71 disabled; " +
+            "CubeCraftTowerDefence shell v72 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -524,7 +524,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v71, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v72, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -1657,6 +1657,25 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val wasAlreadyResetLocked=
             before.verifiedResetInProgress
 
+        val evidenceArmed=
+            runCatching {
+                stage4Gate
+                    .recordVerifiedFarmReset(
+                        false
+                    )
+            }
+        if(evidenceArmed.isFailure) {
+            val error=
+                evidenceArmed.exceptionOrNull()
+            sender.sendMessage(
+                "Farm reset refused because Stage-4 reset evidence could not be persisted: " +
+                    error?.javaClass?.simpleName +
+                    ": " +
+                    error?.message
+            )
+            return
+        }
+
         liveArenaController
             .beginFarmVerifiedReset()
 
@@ -1683,16 +1702,53 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     onComplete={
                         liveArenaController
                             .clearFarmReuseAfterVerifiedWorldReset()
-                        logger.info(
-                            "Farm verified reset complete; reuse gate cleared"
-                        )
-                        sender.sendMessage(
-                            "Farm verified reset COMPLETE; reuse gate is clean."
-                        )
+
+                        val evidence=
+                            runCatching {
+                                stage4Gate
+                                    .recordVerifiedFarmReset(
+                                        true
+                                    )
+                            }
+                        if(evidence.isFailure) {
+                            val evidenceError=
+                                evidence.exceptionOrNull()
+                            logger.warning(
+                                "Farm verified reset completed and reuse gate was cleared, but Stage-4 evidence persistence failed: " +
+                                    evidenceError?.javaClass?.simpleName +
+                                    ": " +
+                                    evidenceError?.message
+                            )
+                            sender.sendMessage(
+                                "Farm verified reset COMPLETE and reuse gate is clean, but Stage-4 reset evidence was not durably recorded; check the server log."
+                            )
+                        } else {
+                            logger.info(
+                                "Farm verified reset complete; reuse gate cleared and Stage-4 reset evidence recorded"
+                            )
+                            sender.sendMessage(
+                                "Farm verified reset COMPLETE; reuse gate is clean and live reset evidence PASS was recorded."
+                            )
+                        }
                     },
                     onFailure={ error ->
+                        runCatching {
+                            stage4Gate
+                                .recordVerifiedFarmReset(
+                                    false
+                                )
+                        }.onFailure {
+                            evidenceError ->
+                            logger.warning(
+                                "Could not persist Farm reset FAIL evidence: " +
+                                    evidenceError.javaClass.simpleName +
+                                    ": " +
+                                    evidenceError.message
+                            )
+                        }
+
                         logger.warning(
-                            "Farm verified reset FAILED; rollback was attempted and the persistent reuse gate remains locked: " +
+                            "Farm verified reset FAILED; the persistent reuse gate remains locked: " +
                                 error.javaClass.simpleName +
                                 ": " +
                                 error.message
