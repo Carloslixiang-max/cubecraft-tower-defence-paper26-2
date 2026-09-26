@@ -36,6 +36,7 @@ data class PaperAdapterDiagnostics(
                 "durable player hotbar customization",
                 "live player snapshot roundtrip gate command",
                 "live per-arena tick/phase profiler",
+                "Engineering 60+ tower real-server performance gate harness",
                 "same-world arena spatial/player reservation guard",
                 "cross-restart recovery verification path",
                 "repeat-match snapshot recapture and prepare-failure rollback hardening",

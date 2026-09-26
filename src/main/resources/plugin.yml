@@ -46,8 +46,8 @@ commands:
     usage: /ctdsnapshotcheck [restart-arm|restart-status]
     permission: cubecrafttd.admin
   ctdperf:
-    description: Show or reset per-arena live/core tick profiler metrics
-    usage: /ctdperf [arenaId|reset [arenaId]]
+    description: Show/reset profiler metrics or evaluate the Engineering 60+ tower live stress gate
+    usage: /ctdperf [arenaId|reset [arenaId]|gate [arenaId]]
     permission: cubecrafttd.admin
   ctdmapplan:
     description: Validate configured Farm world/origin without mutating the world

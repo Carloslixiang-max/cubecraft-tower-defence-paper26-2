@@ -1,6 +1,8 @@
 package dev.cubecrafttd
 
 import dev.cubecrafttd.arena.ArenaService
+import dev.cubecrafttd.arena.ArenaPerformanceGateStatus
+import dev.cubecrafttd.arena.EngineeringArenaPerformanceGate
 import dev.cubecrafttd.recovery.FilePlayerRecoveryJournal
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import dev.cubecrafttd.player.PlayerSnapshotStore
@@ -420,7 +422,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v66 enabled; " +
+            "CubeCraftTowerDefence shell v67 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -485,7 +487,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v66 disabled; " +
+            "CubeCraftTowerDefence shell v67 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -519,7 +521,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v66, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v67, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -1029,107 +1031,136 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 )
                 return
             }
-            val arenaId=
-                args.getOrNull(1)
-            val count=
-                liveArenaController
-                    .resetPerformance(
-                        arenaId
-                    )
+            val arenaId=args.getOrNull(1)
+            val count=liveArenaController.resetPerformance(arenaId)
+            sender.sendMessage("CubeCraft TD profiler reset: arenas=" + count)
+            return
+        }
+
+        if(
+            args.firstOrNull()
+                ?.equals(
+                    "gate",
+                    ignoreCase=true
+                ) == true
+        ) {
+            if(args.size>2) {
+                sender.sendMessage("Usage: /ctdperf gate [arenaId]")
+                return
+            }
+            val snapshots=liveArenaController.performanceSnapshots(args.getOrNull(1))
+            if(snapshots.isEmpty()) {
+                sender.sendMessage("CubeCraft TD performance gate: no matching active arena.")
+                return
+            }
+
+            val policy=EngineeringArenaPerformanceGate.DEFAULT_POLICY
             sender.sendMessage(
-                "CubeCraft TD profiler reset: arenas=" +
-                    count
+                "TD Engineering 60+ tower gate: requires >=" +
+                    policy.minimumTowerCount +
+                    " towers, >=" +
+                    policy.minimumProfiledTicks +
+                    " profiled ticks, live avg <=" +
+                    policy.maximumAverageTickNanos / 1_000_000L +
+                    "ms, max <" +
+                    policy.hardTickBudgetNanos / 1_000_000L +
+                    "ms, slow>=50ms=0. These are Engineering acceptance thresholds, not recovered CubeCraft rules."
             )
+
+            val results=snapshots.map { snapshot ->
+                snapshot to EngineeringArenaPerformanceGate.evaluate(
+                    snapshot.towerCount,
+                    snapshot.liveTick,
+                    policy
+                )
+            }
+
+            results.forEach { (snapshot,result) ->
+                sender.sendMessage(
+                    " TD stress " + snapshot.arenaId +
+                        ": status=" + result.status +
+                        " towers=" + result.towerCount +
+                        " ticks=" + result.profiledTicks +
+                        " liveAvgUs=" + result.averageTickNanos / 1_000L +
+                        " liveMaxUs=" + result.maximumTickNanos / 1_000L +
+                        " slow>=50ms=" + result.slowTicksOver50ms
+                )
+                result.reasons.forEach { reason ->
+                    sender.sendMessage("  " + reason)
+                }
+            }
+
+            val readyResults=results.map { it.second }.filter {
+                it.status != ArenaPerformanceGateStatus.NOT_READY
+            }
+            when {
+                readyResults.any { it.status==ArenaPerformanceGateStatus.FAIL } -> {
+                    stage4Gate.recordTowerStress60(false)
+                    sender.sendMessage(
+                        "TD 60+ tower live evidence: FAIL recorded. Fix the regression, reset the profiler, then rerun a sustained real-server sample."
+                    )
+                }
+                readyResults.any { it.status==ArenaPerformanceGateStatus.PASS } -> {
+                    stage4Gate.recordTowerStress60(true)
+                    sender.sendMessage(
+                        "TD 60+ tower live evidence: PASS recorded in Stage-4."
+                    )
+                }
+                else -> sender.sendMessage(
+                    "TD 60+ tower live evidence: NOT READY; Stage-4 evidence was not changed."
+                )
+            }
             return
         }
 
         if(args.size>1) {
             sender.sendMessage(
-                "Usage: /ctdperf [arenaId|reset [arenaId]]"
+                "Usage: /ctdperf [arenaId|reset [arenaId]|gate [arenaId]]"
             )
             return
         }
 
-        val snapshots=
-            liveArenaController
-                .performanceSnapshots(
-                    args.firstOrNull()
-                )
+        val snapshots=liveArenaController.performanceSnapshots(args.firstOrNull())
         if(snapshots.isEmpty()) {
-            sender.sendMessage(
-                "CubeCraft TD profiler: no matching active arena."
-            )
+            sender.sendMessage("CubeCraft TD profiler: no matching active arena.")
             return
         }
 
-        fun micros(
-            nanos: Long
-        ): Long =
-            nanos / 1_000L
+        fun micros(nanos: Long): Long = nanos / 1_000L
 
         snapshots.forEach { snapshot ->
-            val live=
-                snapshot.liveTick
-            val core=
-                snapshot.coreTick
+            val live=snapshot.liveTick
+            val core=snapshot.coreTick
             sender.sendMessage(
-                "TD perf " +
-                    snapshot.arenaId +
-                    ": tick=" +
-                    snapshot.gameTick +
-                    " towers=" +
-                    snapshot.towerCount +
-                    " mobs=" +
-                    snapshot.mobCount +
-                    " guards=" +
-                    snapshot.guardCount +
-                    " displays=" +
-                    snapshot.transientDisplayCount +
-                    " projectiles=" +
-                    snapshot.projectileCount
+                "TD perf " + snapshot.arenaId +
+                    ": tick=" + snapshot.gameTick +
+                    " towers=" + snapshot.towerCount +
+                    " mobs=" + snapshot.mobCount +
+                    " guards=" + snapshot.guardCount +
+                    " displays=" + snapshot.transientDisplayCount +
+                    " projectiles=" + snapshot.projectileCount
             )
             sender.sendMessage(
-                " live us last/avg/max=" +
-                    micros(live.lastNanos) +
-                    "/" +
-                    micros(live.averageNanos) +
-                    "/" +
-                    micros(live.maxNanos) +
-                    " slow>=50ms=" +
-                    live.slowTicksOver50ms +
-                    "/" +
-                    live.ticks
+                " live us last/avg/max=" + micros(live.lastNanos) +
+                    "/" + micros(live.averageNanos) +
+                    "/" + micros(live.maxNanos) +
+                    " slow>=50ms=" + live.slowTicksOver50ms +
+                    "/" + live.ticks
             )
             sender.sendMessage(
-                " core us last/avg/max=" +
-                    micros(core.lastNanos) +
-                    "/" +
-                    micros(core.averageNanos) +
-                    "/" +
-                    micros(core.maxNanos) +
-                    " slow>=50ms=" +
-                    core.slowTicksOver50ms +
-                    "/" +
-                    core.ticks
+                " core us last/avg/max=" + micros(core.lastNanos) +
+                    "/" + micros(core.averageNanos) +
+                    "/" + micros(core.maxNanos) +
+                    " slow>=50ms=" + core.slowTicksOver50ms +
+                    "/" + core.ticks
             )
-            core.phases.forEach {
-                (id,phase) ->
+            core.phases.forEach { (id,phase) ->
                 sender.sendMessage(
                     "  " + id +
-                        " us last/avg/max=" +
-                        micros(
-                            phase.lastNanos
-                        ) +
-                        "/" +
-                        micros(
-                            phase.averageNanos
-                        ) +
-                        "/" +
-                        micros(
-                            phase.maxNanos
-                        ) +
-                        " calls=" +
-                        phase.calls
+                        " us last/avg/max=" + micros(phase.lastNanos) +
+                        "/" + micros(phase.averageNanos) +
+                        "/" + micros(phase.maxNanos) +
+                        " calls=" + phase.calls
                 )
             }
         }

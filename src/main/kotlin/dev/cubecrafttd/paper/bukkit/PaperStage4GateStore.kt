@@ -16,6 +16,7 @@ data class PaperStage4GateStatus(
     val adapterSmokePassed: Boolean,
     val playerSnapshotRoundTripPassed: Boolean,
     val restartRecoveryPassed: Boolean,
+    val towerStress60Passed: Boolean,
     val cleanRestartCycles: Int,
     val cleanArenaRoundTrips: Int,
     val previousBootWasUnclean: Boolean
@@ -27,6 +28,7 @@ data class PaperStage4GateStatus(
             adapterSmokePassed &&
             playerSnapshotRoundTripPassed &&
             restartRecoveryPassed &&
+            towerStress60Passed &&
             cleanRestartCycles >= 2 &&
             cleanArenaRoundTrips >= 1 &&
             !previousBootWasUnclean
@@ -38,6 +40,7 @@ data class PaperStage4GateStatus(
             "smoke=$adapterSmokePassed " +
             "snapshotRoundTrip=$playerSnapshotRoundTripPassed " +
             "restartRecovery=$restartRecoveryPassed " +
+            "stress60=$towerStress60Passed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
             "previousUnclean=$previousBootWasUnclean"
@@ -222,6 +225,16 @@ class PaperStage4GateStore(
         save()
     }
 
+    fun recordTowerStress60(
+        passed: Boolean
+    ) {
+        props.setProperty(
+            "towerStress60Passed",
+            passed.toString()
+        )
+        save()
+    }
+
     fun recordArenaRoundTrip(
         report: ArenaTeardownReport
     ) {
@@ -278,6 +291,10 @@ class PaperStage4GateStore(
             restartRecoveryPassed=
                 bool(
                     "restartRecoveryPassed"
+                ),
+            towerStress60Passed=
+                bool(
+                    "towerStress60Passed"
                 ),
             cleanRestartCycles=
                 int(
