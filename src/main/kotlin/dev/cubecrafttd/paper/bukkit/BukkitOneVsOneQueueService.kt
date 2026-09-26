@@ -1,7 +1,9 @@
 package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.match.ArmageddonType
+import dev.cubecrafttd.match.EngineeringOneVsOneQueuePair
 import dev.cubecrafttd.match.EngineeringOneVsOneQueueState
+import dev.cubecrafttd.match.HistoricalTowerDefenceStartCountdown
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
@@ -9,14 +11,14 @@ import java.util.UUID
 
 data class BukkitQueueJoinReport(
     val added: Boolean,
-    val position: Int?,
+    val position: Int,
     val waitingCount: Int,
-    val startedArenaId: String?,
     val blockingCode: String?
 )
 
 data class BukkitQueueLeaveReport(
     val removedFromWaiting: Boolean,
+    val cancelledStartCountdown: Boolean,
     val leftActiveMatch: Boolean,
     val restoredNow: Boolean,
     val arenaCleaned: Boolean
@@ -25,9 +27,9 @@ data class BukkitQueueLeaveReport(
 /**
  * Engineering player-facing bridge for the single configured Farm arena.
  *
- * It intentionally does not claim to reproduce CubeCraft matchmaking. One
- * physical map binding currently means one live arena at a time, so further
- * pairs remain in FIFO order until the arena becomes free.
+ * FIFO order and first=RED/second=BLUE remain Engineering behavior. Once two
+ * eligible players are paired, the service uses the recovered historical
+ * 3 -> 2 -> 1 Tower Defence chat countdown before creating the live arena.
  */
 class BukkitOneVsOneQueueService(
     private val plugin: JavaPlugin,
@@ -44,15 +46,27 @@ class BukkitOneVsOneQueueService(
     private var nextArenaSequence=
         1L
 
-    private var failedStartCooldownPumps=
+    private var failedStartCooldownTicks=
         0
+
+    private var pendingPair:
+        EngineeringOneVsOneQueuePair? =
+        null
+
+    private var pendingArenaId:
+        String? =
+        null
+
+    private var pendingCountdown:
+        HistoricalTowerDefenceStartCountdown? =
+        null
 
     private val task: BukkitTask =
         plugin.server.scheduler
             .runTaskTimer(
                 plugin,
                 Runnable {
-                    pump()
+                    tick()
                 },
                 20L,
                 20L
@@ -81,13 +95,22 @@ class BukkitOneVsOneQueueService(
         ) {
             "Player must be online"
         }
+        check(
+            playerUuid !in
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        ) {
+            "You are already matched and the TD start countdown is running"
+        }
 
         val joined=
             queue.join(
                 playerUuid
             )
-        val started=
-            pump()
+
         val blocker=
             nonLiveBlockers()
                 .firstOrNull()
@@ -96,13 +119,9 @@ class BukkitOneVsOneQueueService(
         return BukkitQueueJoinReport(
             added=joined.added,
             position=
-                queue.position(
-                    playerUuid
-                ),
+                joined.position,
             waitingCount=
                 queue.size(),
-            startedArenaId=
-                started,
             blockingCode=
                 blocker
         )
@@ -114,6 +133,30 @@ class BukkitOneVsOneQueueService(
         if(queue.leave(playerUuid)) {
             return BukkitQueueLeaveReport(
                 removedFromWaiting=true,
+                cancelledStartCountdown=false,
+                leftActiveMatch=false,
+                restoredNow=false,
+                arenaCleaned=false
+            )
+        }
+
+        if(
+            playerUuid in
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        ) {
+            cancelPendingCountdown(
+                dropPlayers=
+                    setOf(playerUuid),
+                reason=
+                    "A matched player left before the game started."
+            )
+            return BukkitQueueLeaveReport(
+                removedFromWaiting=false,
+                cancelledStartCountdown=true,
                 leftActiveMatch=false,
                 restoredNow=false,
                 arenaCleaned=false
@@ -127,6 +170,7 @@ class BukkitOneVsOneQueueService(
                 )
                 ?: return BukkitQueueLeaveReport(
                     removedFromWaiting=false,
+                    cancelledStartCountdown=false,
                     leftActiveMatch=false,
                     restoredNow=false,
                     arenaCleaned=false
@@ -134,6 +178,7 @@ class BukkitOneVsOneQueueService(
 
         return BukkitQueueLeaveReport(
             removedFromWaiting=false,
+            cancelledStartCountdown=false,
             leftActiveMatch=true,
             restoredNow=
                 active.restoredNow,
@@ -153,53 +198,165 @@ class BukkitOneVsOneQueueService(
         List<UUID> =
         queue.snapshot()
 
+    fun queuedPlayerCount(): Int =
+        queue.size() +
+            (
+                pendingPair
+                    ?.players
+                    ?.size
+                    ?: 0
+            )
+
     fun close() {
         task.cancel()
     }
 
-    private fun pump():
-        String? {
-        val eligible=
-            queue.snapshot()
-                .filterTo(
-                    linkedSetOf()
-                ) { uuid ->
-                    plugin.server
-                        .getPlayer(uuid)
-                        ?.isOnline == true &&
-                    !controller
-                        .isActivePlayer(uuid) &&
-                    uuid !in
-                        recovery.pending()
-                }
-        queue.retainEligible(
-            eligible
-        )
+    private fun tick() {
+        pruneWaitingPlayers()
 
-        if(failedStartCooldownPumps>0) {
-            failedStartCooldownPumps--
-            return null
+        val pair=
+            pendingPair
+        if(pair!=null) {
+            val ineligible=
+                pair.players
+                    .filterTo(
+                        linkedSetOf()
+                    ) {
+                        !eligibleForStart(
+                            it
+                        )
+                    }
+
+            if(ineligible.isNotEmpty()) {
+                cancelPendingCountdown(
+                    dropPlayers=
+                        ineligible,
+                    reason=
+                        "TD start countdown cancelled because a matched player became unavailable."
+                )
+                return
+            }
+
+            if(
+                controller.activeArenaIds()
+                    .isNotEmpty()
+            ) {
+                cancelPendingCountdown(
+                    emptySet(),
+                    "TD start countdown cancelled because the configured arena became busy."
+                )
+                return
+            }
+
+            if(nonLiveBlockers().isNotEmpty()) {
+                cancelPendingCountdown(
+                    emptySet(),
+                    "TD start countdown paused by server readiness; players returned to queue."
+                )
+                return
+            }
+
+            advancePendingCountdown()
+            return
         }
 
+        if(failedStartCooldownTicks>0) {
+            failedStartCooldownTicks--
+            return
+        }
+
+        prepareCountdownIfPossible()
+    }
+
+    private fun prepareCountdownIfPossible() {
+        if(pendingPair!=null) {
+            return
+        }
+        if(failedStartCooldownTicks>0) {
+            return
+        }
         if(
             controller.activeArenaIds()
                 .isNotEmpty()
-        ) return null
-
+        ) return
         if(nonLiveBlockers().isNotEmpty()) {
-            return null
+            return
         }
+
+        pruneWaitingPlayers()
 
         val pair=
             queue.pairIfArenaAvailable(
                 true
-            ) ?: return null
+            ) ?: return
 
-        val arenaId=
+        pendingPair=pair
+        pendingArenaId=
             "queue-" +
                 nextArenaSequence++
+        pendingCountdown=
+            HistoricalTowerDefenceStartCountdown()
 
-        return try {
+        // Announce "3" immediately when the second eligible player is paired.
+        advancePendingCountdown()
+    }
+
+    private fun advancePendingCountdown() {
+        val pair=
+            pendingPair
+                ?: return
+        val countdown=
+            pendingCountdown
+                ?: error(
+                    "Pending pair has no start countdown"
+                )
+        val arenaId=
+            pendingArenaId
+                ?: error(
+                    "Pending pair has no arena id"
+                )
+
+        val step=
+            countdown.advance()
+
+        val seconds=
+            step.announceSeconds
+        if(seconds!=null) {
+            val unit=
+                if(seconds==1)
+                    "second"
+                else
+                    "seconds"
+            pair.players.forEach {
+                uuid ->
+                plugin.server
+                    .getPlayer(uuid)
+                    ?.sendMessage(
+                        "Tower Defence is starting in " +
+                            seconds +
+                            " " +
+                            unit +
+                            "."
+                    )
+            }
+            return
+        }
+
+        check(step.startNow)
+
+        clearPendingCountdown()
+        startPair(
+            pair,
+            arenaId
+        )
+    }
+
+    private fun startPair(
+        pair:
+            EngineeringOneVsOneQueuePair,
+        arenaId: String
+    ) {
+        try {
             controller
                 .startOneVsOneTest(
                     arenaId,
@@ -219,12 +376,11 @@ class BukkitOneVsOneQueueService(
                             "use Settings -> Armageddon vote to change it."
                     )
             }
-            arenaId
         } catch(t:Throwable) {
             queue.restorePairToFront(
                 pair
             )
-            failedStartCooldownPumps=5
+            failedStartCooldownTicks=5
 
             pair.players.forEach {
                 uuid ->
@@ -245,9 +401,70 @@ class BukkitOneVsOneQueueService(
                     ": " +
                     t.stackTraceToString()
             )
-            null
         }
     }
+
+    private fun cancelPendingCountdown(
+        dropPlayers: Set<UUID>,
+        reason: String
+    ) {
+        val pair=
+            pendingPair
+                ?: return
+
+        clearPendingCountdown()
+        queue.restorePairToFront(
+            pair
+        )
+        dropPlayers.forEach {
+            queue.leave(it)
+        }
+        pruneWaitingPlayers()
+
+        pair.players
+            .filterNot {
+                it in dropPlayers
+            }
+            .forEach { uuid ->
+                plugin.server
+                    .getPlayer(uuid)
+                    ?.sendMessage(reason)
+            }
+    }
+
+    private fun clearPendingCountdown() {
+        pendingPair=null
+        pendingArenaId=null
+        pendingCountdown=null
+    }
+
+    private fun pruneWaitingPlayers() {
+        val eligible=
+            queue.snapshot()
+                .filterTo(
+                    linkedSetOf()
+                ) {
+                    eligibleForStart(
+                        it
+                    )
+                }
+        queue.retainEligible(
+            eligible
+        )
+    }
+
+    private fun eligibleForStart(
+        playerUuid: UUID
+    ): Boolean =
+        plugin.server
+            .getPlayer(playerUuid)
+            ?.isOnline == true &&
+        !controller
+            .isActivePlayer(
+                playerUuid
+            ) &&
+        playerUuid !in
+            recovery.pending()
 
     private fun nonLiveBlockers():
         List<ReadinessIssue> =

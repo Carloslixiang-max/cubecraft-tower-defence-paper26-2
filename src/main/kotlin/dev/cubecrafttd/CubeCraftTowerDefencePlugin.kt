@@ -347,7 +347,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v53 enabled; " +
+            "CubeCraftTowerDefence shell v54 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -398,7 +398,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v53 disabled; " +
+            "CubeCraftTowerDefence shell v54 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -425,8 +425,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v53, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v54, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
+                    "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
                     "stage4=${stage4Gate.status().summary()}"
@@ -558,12 +559,6 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             )
         }.onSuccess { report ->
             when {
-                report.startedArenaId!=null ->
-                    sender.sendMessage(
-                        "TD queue matched: " +
-                            report.startedArenaId
-                    )
-
                 !report.added ->
                     sender.sendMessage(
                         "Already waiting for TD 1v1; position #" +
@@ -629,6 +624,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 report.removedFromWaiting ->
                     sender.sendMessage(
                         "Left the TD 1v1 waiting queue."
+                    )
+
+                report.cancelledStartCountdown ->
+                    sender.sendMessage(
+                        "Left the TD start countdown; the other player returned to the front of the queue."
                     )
 
                 report.leftActiveMatch ->
