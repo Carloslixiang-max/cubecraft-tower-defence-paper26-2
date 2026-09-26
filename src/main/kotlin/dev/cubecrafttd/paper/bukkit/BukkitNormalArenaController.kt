@@ -41,6 +41,13 @@ data class BukkitPlayerDepartureReport(
     val allPlayersDeparted: Boolean
 )
 
+data class BukkitVoluntaryLeaveReport(
+    val departure:
+        BukkitPlayerDepartureReport,
+    val restoredNow: Boolean,
+    val arenaCleaned: Boolean
+)
+
 data class BukkitArenaPerformanceSnapshot(
     val arenaId: String,
     val gameTick: Long,
@@ -1363,6 +1370,45 @@ class BukkitNormalArenaController(
             allPlayersDeparted=
                 departure.activePlayersRemaining==
                     0
+        )
+    }
+
+    fun leaveActivePlayer(
+        playerUuid: UUID
+    ): BukkitVoluntaryLeaveReport? {
+        if(!isActivePlayer(playerUuid)) {
+            return null
+        }
+
+        val departure=
+            markPlayerDeparted(
+                playerUuid
+            ) ?: return null
+
+        matchEndFeedback.beforeRestore(
+            setOf(playerUuid)
+        )
+        val restored=
+            recovery.restoreIfPossible(
+                playerUuid
+            )
+
+        val cleaned=
+            if(
+                departure
+                    .allPlayersDeparted
+            ) {
+                stopIfNoActivePlayers(
+                    departure.arenaId
+                ) != null
+            } else {
+                false
+            }
+
+        return BukkitVoluntaryLeaveReport(
+            departure=departure,
+            restoredNow=restored,
+            arenaCleaned=cleaned
         )
     }
 

@@ -5,6 +5,14 @@ description: High-fidelity CubeCraft Tower Defence recreation runtime
 api-version: '26.2'
 load: POSTWORLD
 commands:
+  ctdjoin:
+    description: Join the Engineering 1v1 Tower Defence queue
+    usage: /ctdjoin
+    permission: cubecrafttd.play
+  ctdleave:
+    description: Leave the TD waiting queue or current Engineering match
+    usage: /ctdleave
+    permission: cubecrafttd.play
   ctdstatus:
     description: Show CubeCraft TD shell/runtime status
     usage: /ctdstatus
@@ -70,5 +78,7 @@ commands:
     usage: /ctdplaytestsetup apply
     permission: cubecrafttd.admin
 permissions:
+  cubecrafttd.play:
+    default: true
   cubecrafttd.admin:
     default: op

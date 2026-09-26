@@ -10,6 +10,7 @@ object DomainFixtureSuite {
         addAll(ArenaIsolationFixture.run())
         addAll(MatchParticipantDepartureFixture.run())
         addAll(DepartedOwnerTowerInteractionFixture.run())
+        addAll(EngineeringOneVsOneQueueFixture.run())
         addAll(PlayerRecoveryFixture.run())
         addAll(PlayerRecoveryJournalFixture.run())
         addAll(KillAttributionFixture.run())

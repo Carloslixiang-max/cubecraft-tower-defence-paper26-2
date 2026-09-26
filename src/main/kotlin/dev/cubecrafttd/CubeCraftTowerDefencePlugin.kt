@@ -37,6 +37,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var towerPlacementListener: BukkitTowerPlacementListener
     private lateinit var matchSafetyListener: BukkitMatchSafetyListener
     private lateinit var matchDepartureListener: BukkitMatchDepartureListener
+    private lateinit var oneVsOneQueue: BukkitOneVsOneQueueService
     private lateinit var rangefinderService: BukkitEngineeringRangefinderService
     private var fallbackMissing: List<MissingFallback> = emptyList()
 
@@ -114,6 +115,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate,
             hotbarPreferences
         )
+        oneVsOneQueue =
+            BukkitOneVsOneQueueService(
+                this,
+                liveArenaController,
+                readinessService,
+                recoveryCoordinator
+            )
         trackedDamageListener = BukkitTrackedMobDamageListener(
             this,
             TrackedMobPredicate {
@@ -339,7 +347,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v52 enabled; " +
+            "CubeCraftTowerDefence shell v53 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -369,6 +377,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
     override fun onDisable() {
+        if (::oneVsOneQueue.isInitialized) {
+            oneVsOneQueue.close()
+        }
         if (::liveArenaController.isInitialized) {
             liveArenaController.stopAll()
         }
@@ -387,7 +398,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v52 disabled; " +
+            "CubeCraftTowerDefence shell v53 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -398,9 +409,23 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         label: String,
         args: Array<out String>
     ): Boolean = when (command.name.lowercase()) {
+        "ctdjoin" -> {
+            runPlayerQueueJoin(
+                sender,args.toList()
+            )
+            true
+        }
+
+        "ctdleave" -> {
+            runPlayerQueueLeave(
+                sender,args.toList()
+            )
+            true
+        }
+
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v52, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v53, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
@@ -504,6 +529,131 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
 
         else -> false
+    }
+
+    private fun runPlayerQueueJoin(
+        sender: CommandSender,
+        args: List<String>
+    ) {
+        if(args.isNotEmpty()) {
+            sender.sendMessage(
+                "Usage: /ctdjoin"
+            )
+            return
+        }
+
+        val player=
+            sender as?
+                org.bukkit.entity.Player
+                ?: run {
+                    sender.sendMessage(
+                        "ctdjoin requires a player"
+                    )
+                    return
+                }
+
+        runCatching {
+            oneVsOneQueue.join(
+                player.uniqueId
+            )
+        }.onSuccess { report ->
+            when {
+                report.startedArenaId!=null ->
+                    sender.sendMessage(
+                        "TD queue matched: " +
+                            report.startedArenaId
+                    )
+
+                !report.added ->
+                    sender.sendMessage(
+                        "Already waiting for TD 1v1; position #" +
+                            report.position
+                    )
+
+                report.blockingCode!=null ->
+                    sender.sendMessage(
+                        "Joined TD 1v1 queue at position #" +
+                            report.position +
+                            ". Start is currently blocked by " +
+                            report.blockingCode +
+                            "."
+                    )
+
+                else ->
+                    sender.sendMessage(
+                        "Joined TD 1v1 queue at position #" +
+                            report.position +
+                            ". Waiting players=" +
+                            report.waitingCount
+                    )
+            }
+        }.onFailure { error ->
+            sender.sendMessage(
+                "ctdjoin ERROR: " +
+                    (
+                        error.message
+                            ?: error.javaClass
+                                .simpleName
+                    )
+            )
+        }
+    }
+
+    private fun runPlayerQueueLeave(
+        sender: CommandSender,
+        args: List<String>
+    ) {
+        if(args.isNotEmpty()) {
+            sender.sendMessage(
+                "Usage: /ctdleave"
+            )
+            return
+        }
+
+        val player=
+            sender as?
+                org.bukkit.entity.Player
+                ?: run {
+                    sender.sendMessage(
+                        "ctdleave requires a player"
+                    )
+                    return
+                }
+
+        runCatching {
+            oneVsOneQueue.leave(
+                player.uniqueId
+            )
+        }.onSuccess { report ->
+            when {
+                report.removedFromWaiting ->
+                    sender.sendMessage(
+                        "Left the TD 1v1 waiting queue."
+                    )
+
+                report.leftActiveMatch ->
+                    sender.sendMessage(
+                        "Left the TD match; restoredNow=" +
+                            report.restoredNow +
+                            ", arenaCleaned=" +
+                            report.arenaCleaned
+                    )
+
+                else ->
+                    sender.sendMessage(
+                        "You are not waiting for or playing a TD match."
+                    )
+            }
+        }.onFailure { error ->
+            sender.sendMessage(
+                "ctdleave ERROR: " +
+                    (
+                        error.message
+                            ?: error.javaClass
+                                .simpleName
+                    )
+            )
+        }
     }
 
     private fun runFarmMapCheck(sender: CommandSender) {
