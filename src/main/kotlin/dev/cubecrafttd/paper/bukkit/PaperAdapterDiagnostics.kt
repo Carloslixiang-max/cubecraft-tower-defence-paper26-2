@@ -39,6 +39,7 @@ data class PaperAdapterDiagnostics(
                 "same-world arena spatial/player reservation guard",
                 "cross-restart recovery verification path",
                 "repeat-match snapshot recapture and prepare-failure rollback hardening",
+                "fail-closed corrupt recovery-journal readiness gate",
                 "route-facing live entity orientation",
                 "tracked-mob vanilla side-effect shielding",
                 "engineering Armageddon player vote bridge",

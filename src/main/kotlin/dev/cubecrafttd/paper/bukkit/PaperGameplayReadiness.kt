@@ -42,6 +42,8 @@ class PaperGameplayReadinessService(
         PaperMapBindingConfig,
     private val pendingRecoveryCount:
         () -> Int,
+    private val recoveryJournalFailureCount:
+        () -> Int,
     private val liveGate:
         PaperStage4GateStore
 ) {
@@ -205,6 +207,16 @@ class PaperGameplayReadinessService(
                     )
                 }
             }
+
+        val journalFailures=
+            recoveryJournalFailureCount()
+        if(journalFailures>0) {
+            issues += ReadinessIssue(
+                "RECOVERY_JOURNAL_CORRUPT",
+                ReadinessSeverity.BLOCKING,
+                "$journalFailures recovery snapshot file(s) could not be decoded at startup. Original files were preserved; repair/restore them and restart before starting another TD match."
+            )
+        }
 
         val pending=
             pendingRecoveryCount()

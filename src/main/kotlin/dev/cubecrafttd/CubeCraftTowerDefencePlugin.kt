@@ -92,6 +92,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 }
             }
         recoveryListener.recoverAlreadyOnline()
+        val recoveryJournalLoadFailures=
+            recoveryJournal.loadFailures()
         mapOperations = FarmMapOperationManager(
             this,mapBindingConfig
         )
@@ -100,6 +102,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             fallbackConfig,
             mapBindingConfig,
             { recoveryListener.pendingCount() },
+            { recoveryJournalLoadFailures.size },
             stage4Gate
         )
         hotbarPreferences =
@@ -403,10 +406,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 adapterSmokeFailures.joinToString()
         }
 
-        val pendingRecovery = recoveryJournal.loadAll().size
+        val pendingRecovery =
+            recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v62 enabled; " +
+            "CubeCraftTowerDefence shell v63 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -433,6 +437,20 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "must be validated before production gameplay activation."
             )
         }
+
+        if(recoveryJournalLoadFailures.isNotEmpty()) {
+            logger.severe(
+                "Recovery journal corruption gate is BLOCKING new TD matches. " +
+                    "Unreadable files were preserved: " +
+                    recoveryJournalLoadFailures
+                        .joinToString {
+                            it.fileName +
+                                " (" +
+                                it.reason +
+                                ")"
+                        }
+            )
+        }
     }
 
     override fun onDisable() {
@@ -457,7 +475,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v62 disabled; " +
+            "CubeCraftTowerDefence shell v63 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -491,7 +509,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v62, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v63, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +

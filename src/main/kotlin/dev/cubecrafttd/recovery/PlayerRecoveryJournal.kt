@@ -14,12 +14,26 @@ interface PlayerRecoveryJournal {
     fun loadAll(): List<PlayerSnapshot>
 }
 
+data class PlayerRecoveryJournalLoadFailure(
+    val fileName: String,
+    val reason: String
+)
+
 class FilePlayerRecoveryJournal(
     private val directory: Path
 ) : PlayerRecoveryJournal {
+    @Volatile
+    private var latestLoadFailures:
+        List<PlayerRecoveryJournalLoadFailure> =
+        emptyList()
+
     init {
         Files.createDirectories(directory)
     }
+
+    fun loadFailures():
+        List<PlayerRecoveryJournalLoadFailure> =
+        latestLoadFailures.toList()
 
     override fun save(snapshot: PlayerSnapshot) {
         val target = file(snapshot.playerUuid)
@@ -43,17 +57,77 @@ class FilePlayerRecoveryJournal(
     }
 
     override fun loadAll(): List<PlayerSnapshot> {
-        if (!Files.exists(directory)) return emptyList()
-        return Files.list(directory).use { paths ->
-            paths.filter { it.fileName.toString().endsWith(".snapshot") }
-                .sorted()
-                .map { path ->
-                    Files.newInputStream(path).use { stream ->
-                        DataInputStream(stream).use(PlayerSnapshotBinaryCodec::read)
-                    }
-                }
-                .toList()
+        if(!Files.exists(directory)) {
+            latestLoadFailures=
+                emptyList()
+            return emptyList()
         }
+
+        val failures=
+            mutableListOf<
+                PlayerRecoveryJournalLoadFailure
+            >()
+        val snapshots=
+            mutableListOf<PlayerSnapshot>()
+
+        try {
+            Files.list(directory).use { paths ->
+                paths.filter {
+                    it.fileName
+                        .toString()
+                        .endsWith(".snapshot")
+                }
+                    .sorted()
+                    .forEach { path ->
+                        runCatching {
+                            Files.newInputStream(
+                                path
+                            ).use { stream ->
+                                DataInputStream(
+                                    stream
+                                ).use(
+                                    PlayerSnapshotBinaryCodec
+                                        ::read
+                                )
+                            }
+                        }.onSuccess {
+                            snapshots += it
+                        }.onFailure { error ->
+                            failures +=
+                                PlayerRecoveryJournalLoadFailure(
+                                    fileName=
+                                        path.fileName
+                                            .toString(),
+                                    reason=
+                                        error.javaClass
+                                            .simpleName +
+                                        ": " +
+                                        (
+                                            error.message
+                                                ?: "unknown decode failure"
+                                        )
+                                )
+                        }
+                    }
+            }
+        } catch(error:Throwable) {
+            failures +=
+                PlayerRecoveryJournalLoadFailure(
+                    fileName="<recovery-directory>",
+                    reason=
+                        error.javaClass
+                            .simpleName +
+                        ": " +
+                        (
+                            error.message
+                                ?: "failed to enumerate recovery directory"
+                        )
+                )
+        }
+
+        latestLoadFailures=
+            failures.toList()
+        return snapshots
     }
 
     private fun file(playerUuid: UUID): Path =

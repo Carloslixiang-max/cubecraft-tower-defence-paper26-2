@@ -28,9 +28,61 @@ object PlayerRecoveryJournalFixture {
 
             journal.delete(uuid)
             val deleted = journal.loadAll().isEmpty()
+
+            val validUuid=
+                UUID.fromString(
+                    "00000000-0000-0000-0000-000000000889"
+                )
+            journal.save(
+                snapshot.copy(
+                    playerUuid=validUuid
+                )
+            )
+            val corrupt=
+                dir.resolve(
+                    "00000000-0000-0000-0000-000000000890.snapshot"
+                )
+            val corruptBytes=
+                byteArrayOf(
+                    0x43,0x54,0x44
+                )
+            Files.write(
+                corrupt,
+                corruptBytes
+            )
+
+            val mixedLoad=
+                journal.loadAll()
+            val validSurvivedCorruption=
+                mixedLoad.map {
+                    it.playerUuid
+                }==
+                    listOf(validUuid)
+            val corruptionReported=
+                journal.loadFailures()
+                    .singleOrNull()
+                    ?.fileName==
+                    corrupt.fileName
+                        .toString()
+            val corruptPreserved=
+                Files.readAllBytes(
+                    corrupt
+                ).contentEquals(
+                    corruptBytes
+                )
+
             listOf(
                 FixtureResult("recovery-journal-roundtrip", roundTrip),
-                FixtureResult("recovery-journal-delete-after-restore", deleted)
+                FixtureResult("recovery-journal-delete-after-restore", deleted),
+                FixtureResult(
+                    "recovery-journal-corrupt-entry-does-not-hide-valid-snapshot",
+                    validSurvivedCorruption
+                ),
+                FixtureResult(
+                    "recovery-journal-corrupt-entry-is-reported-and-preserved",
+                    corruptionReported &&
+                        corruptPreserved
+                )
             )
         } finally {
             Files.walk(dir).sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
