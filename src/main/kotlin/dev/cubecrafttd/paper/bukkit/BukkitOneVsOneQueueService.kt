@@ -642,93 +642,134 @@ class BukkitOneVsOneQueueService(
             EngineeringOneVsOneQueuePair,
         arenaId: String
     ) {
-        try {
-            pair.players.forEach {
-                uuid ->
-                clearQueueHud(
-                    uuid
-                )
-                plugin.server
-                    .getPlayer(uuid)
-                    ?.closeInventory()
-            }
-
-            val runnable=
-                controller
-                    .runnableArmageddonTypes()
-                    .sortedBy {
-                        it.name
-                    }
-            check(runnable.isNotEmpty()) {
-                "No runnable Armageddon mode is available"
-            }
-
-            val pregameVote=
-                HistoricalPregameArmageddonVoteRuntime(
-                    eligiblePlayers=
-                        pair.players.toSet(),
-                    runnableTypes=
-                        runnable.toSet()
-                )
-            pair.players.forEach { uuid ->
-                pregameArmageddonVotes[
-                    uuid
-                ]?.let { option ->
-                    pregameVote.cast(
-                        uuid,
-                        option
+        val resolvedStart=
+            try {
+                pair.players.forEach {
+                    uuid ->
+                    clearQueueHud(
+                        uuid
                     )
+                    plugin.server
+                        .getPlayer(uuid)
+                        ?.closeInventory()
                 }
-            }
 
-            val randomChoice=
-                runnable[
-                    java.util.concurrent
-                        .ThreadLocalRandom
-                        .current()
-                        .nextInt(
-                            runnable.size
+                val runnable=
+                    controller
+                        .runnableArmageddonTypes()
+                        .sortedBy {
+                            it.name
+                        }
+                check(runnable.isNotEmpty()) {
+                    "No runnable Armageddon mode is available"
+                }
+
+                val pregameVote=
+                    HistoricalPregameArmageddonVoteRuntime(
+                        eligiblePlayers=
+                            pair.players.toSet(),
+                        runnableTypes=
+                            runnable.toSet()
+                    )
+                pair.players.forEach { uuid ->
+                    pregameArmageddonVotes[
+                        uuid
+                    ]?.let { option ->
+                        pregameVote.cast(
+                            uuid,
+                            option
                         )
-                ]
-            val resolved=
-                pregameVote.resolve(
-                    randomChoice
-                )
-
-            val pricingVote=
-                HistoricalPregamePricingVoteRuntime(
-                    pair.players.toSet()
-                )
-            pair.players.forEach { uuid ->
-                pregamePricingVotes[
-                    uuid
-                ]?.let { option ->
-                    pricingVote.cast(
-                        uuid,
-                        option
-                    )
+                    }
                 }
-            }
-            val resolvedPricing=
-                pricingVote.resolve()
 
-            controller
-                .startOneVsOneResolvedTest(
-                    arenaId,
-                    pair.redPlayer,
-                    pair.bluePlayer,
-                    resolved.selection,
+                val randomChoice=
+                    runnable[
+                        java.util.concurrent
+                            .ThreadLocalRandom
+                            .current()
+                            .nextInt(
+                                runnable.size
+                            )
+                    ]
+                val resolved=
+                    pregameVote.resolve(
+                        randomChoice
+                    )
+
+                val pricingVote=
+                    HistoricalPregamePricingVoteRuntime(
+                        pair.players.toSet()
+                    )
+                pair.players.forEach { uuid ->
+                    pregamePricingVotes[
+                        uuid
+                    ]?.let { option ->
+                        pricingVote.cast(
+                            uuid,
+                            option
+                        )
+                    }
+                }
+                val resolvedPricing=
+                    pricingVote.resolve()
+
+                controller
+                    .startOneVsOneResolvedTest(
+                        arenaId,
+                        pair.redPlayer,
+                        pair.bluePlayer,
+                        resolved.selection,
+                        resolvedPricing
+                            .pricingMode
+                    )
+
+                resolved to
                     resolvedPricing
-                        .pricingMode
+            } catch(t:Throwable) {
+                // Nothing after a successful controller return may requeue this
+                // pair. This catch therefore owns only the pre-start/start
+                // transaction. A controller failure is expected to tear down
+                // any partial arena state before control returns here.
+                queue.restorePairToFront(
+                    pair
                 )
+                failedStartCooldownTicks=5
 
-            pair.players.forEach {
-                pregameArmageddonVotes
-                    .remove(it)
-                pregamePricingVotes
-                    .remove(it)
+                pair.players.forEach {
+                    uuid ->
+                    plugin.server
+                        .getPlayer(uuid)
+                        ?.sendMessage(
+                            "TD queue start delayed: " +
+                                (
+                                    t.message
+                                        ?: t.javaClass
+                                            .simpleName
+                                )
+                        )
+                }
+                plugin.logger.warning(
+                    "Engineering 1v1 queue start failed for " +
+                        arenaId +
+                        ": " +
+                        t.stackTraceToString()
+                )
+                return
             }
 
+        val (resolved,resolvedPricing)=
+            resolvedStart
+
+        // The arena is now committed/live. Queue/vote cleanup is no longer
+        // allowed to roll the pair back into matchmaking.
+        pair.players.forEach {
+            pregameArmageddonVotes
+                .remove(it)
+            pregamePricingVotes
+                .remove(it)
+        }
+
+        try {
             val armageddonReason=
                 when(resolved.resolution) {
                     HistoricalPregameArmageddonResolution
@@ -809,28 +850,11 @@ class BukkitOneVsOneQueueService(
                     }
             }
         } catch(t:Throwable) {
-            queue.restorePairToFront(
-                pair
-            )
-            failedStartCooldownTicks=5
-
-            pair.players.forEach {
-                uuid ->
-                plugin.server
-                    .getPlayer(uuid)
-                    ?.sendMessage(
-                        "TD queue start delayed: " +
-                            (
-                                t.message
-                                    ?: t.javaClass
-                                        .simpleName
-                            )
-                    )
-            }
             plugin.logger.warning(
-                "Engineering 1v1 queue start failed for " +
+                "Engineering 1v1 arena " +
                     arenaId +
-                    ": " +
+                    " started successfully, but post-start presentation failed. " +
+                    "Players were NOT requeued: " +
                     t.stackTraceToString()
             )
         }

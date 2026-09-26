@@ -41,6 +41,7 @@ data class PaperAdapterDiagnostics(
                 "repeat-match snapshot recapture and prepare-failure rollback hardening",
                 "fail-closed corrupt recovery-journal readiness gate",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
+                "queue start commit boundary prevents post-start ghost requeue",
                 "route-facing live entity orientation",
                 "tracked-mob vanilla side-effect shielding",
                 "engineering Armageddon player vote bridge",
