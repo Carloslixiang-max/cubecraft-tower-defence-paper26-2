@@ -59,8 +59,27 @@ class PlayerSnapshotStore {
     private val records = linkedMapOf<UUID, PlayerSnapshotRecord>()
 
     fun put(snapshot: PlayerSnapshot) {
-        check(snapshot.playerUuid !in records) { "Snapshot already exists for ${snapshot.playerUuid}" }
-        records[snapshot.playerUuid] = PlayerSnapshotRecord(snapshot)
+        val existing=
+            records[snapshot.playerUuid]
+        check(
+            existing==null ||
+                existing.state==
+                    PlayerSnapshotState.RESTORED
+        ) {
+            "Snapshot already active for ${snapshot.playerUuid}: ${existing?.state}"
+        }
+        records[snapshot.playerUuid] =
+            PlayerSnapshotRecord(snapshot)
+    }
+
+    fun canCapture(
+        playerUuid: UUID
+    ): Boolean {
+        val existing=
+            records[playerUuid]
+        return existing==null ||
+            existing.state==
+                PlayerSnapshotState.RESTORED
     }
 
     fun record(playerUuid: UUID): PlayerSnapshotRecord? = records[playerUuid]

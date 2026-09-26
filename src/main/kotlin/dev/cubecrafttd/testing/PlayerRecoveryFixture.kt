@@ -7,6 +7,7 @@ private class FakePlayerStateAdapter : PlayerStateAdapter {
     private val online = linkedSetOf<UUID>()
     val restores = mutableMapOf<UUID, Int>()
     var failNextRestore = false
+    var failNextPrepare = false
 
     fun setOnline(uuid: UUID, value: Boolean) {
         if (value) online += uuid else online -= uuid
@@ -20,7 +21,16 @@ private class FakePlayerStateAdapter : PlayerStateAdapter {
             0, 300, false, false, 0f, byteArrayOf(5), byteArrayOf(6)
         )
 
-    override fun prepareForMatch(playerUuid: UUID) = Unit
+    override fun prepareForMatch(
+        playerUuid: UUID
+    ) {
+        if(failNextPrepare) {
+            failNextPrepare=false
+            error(
+                "synthetic prepare failure"
+            )
+        }
+    }
 
     override fun restore(snapshot: PlayerSnapshot) {
         if (failNextRestore) {
@@ -51,10 +61,58 @@ object PlayerRecoveryFixture {
         val secondAttempt = recovery.restoreIfPossible(uuid)
         val exactlyOnce = adapter.restores[uuid] == 1
 
+        val secondMatchCapture=
+            runCatching {
+                recovery.captureBeforeMatch(
+                    uuid,43
+                )
+            }.isSuccess
+        val secondMatchPending=
+            uuid in recovery.pending()
+        val secondMatchRestore=
+            recovery.restoreIfPossible(
+                uuid
+            )
+
+        val prepareFailureUuid=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000000778"
+            )
+        adapter.setOnline(
+            prepareFailureUuid,
+            true
+        )
+        adapter.failNextPrepare=true
+        val prepareFailure=
+            runCatching {
+                recovery.captureBeforeMatch(
+                    prepareFailureUuid,
+                    44
+                )
+            }.isFailure
+        val immediatePrepareRollback=
+            adapter.restores[
+                prepareFailureUuid
+            ]==1 &&
+            prepareFailureUuid !in
+                recovery.pending()
+
         return listOf(
             FixtureResult("player-restore-failure-retains-snapshot", !failed && retainedAfterFailure),
             FixtureResult("player-restore-retry-success", success),
-            FixtureResult("player-restore-exactly-once", !secondAttempt && exactlyOnce)
+            FixtureResult("player-restore-exactly-once", !secondAttempt && exactlyOnce),
+            FixtureResult(
+                "player-recovery-allows-next-match-after-restored-tombstone",
+                secondMatchCapture &&
+                    secondMatchPending &&
+                    secondMatchRestore &&
+                    adapter.restores[uuid]==2
+            ),
+            FixtureResult(
+                "player-prepare-failure-immediately-rolls-back",
+                prepareFailure &&
+                    immediatePrepareRollback
+            )
         )
     }
 }

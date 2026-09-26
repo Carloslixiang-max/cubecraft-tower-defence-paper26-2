@@ -253,6 +253,114 @@ object MatchBootstrapDurableRecoveryFixture {
                         player
                 }
 
+        val prepareFailurePlayer=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000013002"
+            )
+        val prepareFailureJournal=
+            RecordingRecoveryJournal()
+        var prepareFailureRestoreCount=0
+        val prepareFailureRecovery=
+            JournaledPlayerRecoveryOrchestrator(
+                object: PlayerStateAdapter {
+                    override fun capture(
+                        playerUuid: UUID,
+                        arenaTick: Long
+                    )=snapshot(playerUuid)
+
+                    override fun prepareForMatch(
+                        playerUuid: UUID
+                    ) {
+                        error(
+                            "synthetic prepare failure"
+                        )
+                    }
+
+                    override fun restore(
+                        snapshot: PlayerSnapshot
+                    ) {
+                        prepareFailureRestoreCount++
+                    }
+
+                    override fun isOnline(
+                        playerUuid: UUID
+                    )=true
+                },
+                PlayerSnapshotStore(),
+                prepareFailureJournal
+            )
+        val prepareFailureThrown=
+            runCatching {
+                prepareFailureRecovery
+                    .captureBeforeMatch(
+                        prepareFailurePlayer,
+                        0
+                    )
+            }.isFailure
+        val prepareFailureRolledBack=
+            prepareFailureThrown &&
+            prepareFailureRestoreCount==1 &&
+            prepareFailurePlayer !in
+                prepareFailureRecovery
+                    .pending() &&
+            prepareFailurePlayer !in
+                prepareFailureJournal
+                    .saved
+
+        val rollbackFailurePlayer=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000013003"
+            )
+        val rollbackFailureJournal=
+            RecordingRecoveryJournal()
+        val rollbackFailureRecovery=
+            JournaledPlayerRecoveryOrchestrator(
+                object: PlayerStateAdapter {
+                    override fun capture(
+                        playerUuid: UUID,
+                        arenaTick: Long
+                    )=snapshot(playerUuid)
+
+                    override fun prepareForMatch(
+                        playerUuid: UUID
+                    ) {
+                        error(
+                            "synthetic prepare failure"
+                        )
+                    }
+
+                    override fun restore(
+                        snapshot: PlayerSnapshot
+                    ) {
+                        error(
+                            "synthetic rollback failure"
+                        )
+                    }
+
+                    override fun isOnline(
+                        playerUuid: UUID
+                    )=true
+                },
+                PlayerSnapshotStore(),
+                rollbackFailureJournal
+            )
+        val rollbackFailureThrown=
+            runCatching {
+                rollbackFailureRecovery
+                    .captureBeforeMatch(
+                        rollbackFailurePlayer,
+                        0
+                    )
+            }.isFailure
+        val rollbackFailureRetained=
+            rollbackFailureThrown &&
+            rollbackFailurePlayer in
+                rollbackFailureRecovery
+                    .pending() &&
+            rollbackFailurePlayer in
+                rollbackFailureJournal
+                    .saved
+
         return listOf(
             FixtureResult(
                 "bootstrap-durable-save-before-player-mutation",
@@ -288,6 +396,14 @@ object MatchBootstrapDurableRecoveryFixture {
                     restartRecovery
                         .pending()
                         .isEmpty()
+            ),
+            FixtureResult(
+                "durable-prepare-failure-immediately-restores-and-deletes-journal",
+                prepareFailureRolledBack
+            ),
+            FixtureResult(
+                "durable-prepare-rollback-failure-keeps-pending-journal",
+                rollbackFailureRetained
             )
         )
     }

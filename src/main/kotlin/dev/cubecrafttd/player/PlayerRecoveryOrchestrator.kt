@@ -24,18 +24,36 @@ class PlayerRecoveryOrchestrator(
         arenaTick: Long
     ) {
         check(
-            store.record(playerUuid) == null
+            store.canCapture(
+                playerUuid
+            )
         ) {
             "Player already has active snapshot: $playerUuid"
         }
-        store.put(
+        val snapshot=
             adapter.capture(
                 playerUuid,arenaTick
             )
-        )
-        adapter.prepareForMatch(
-            playerUuid
-        )
+        store.put(snapshot)
+
+        try {
+            adapter.prepareForMatch(
+                playerUuid
+            )
+        } catch(t:Throwable) {
+            val rolledBack=
+                restoreIfPossible(
+                    playerUuid
+                )
+            if(!rolledBack) {
+                t.addSuppressed(
+                    IllegalStateException(
+                        "Immediate player-state rollback failed for $playerUuid; snapshot remains pending"
+                    )
+                )
+            }
+            throw t
+        }
     }
 
     override fun restoreIfPossible(

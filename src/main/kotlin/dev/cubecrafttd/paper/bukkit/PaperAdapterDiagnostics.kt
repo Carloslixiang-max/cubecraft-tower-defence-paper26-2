@@ -38,6 +38,7 @@ data class PaperAdapterDiagnostics(
                 "live per-arena tick/phase profiler",
                 "same-world arena spatial/player reservation guard",
                 "cross-restart recovery verification path",
+                "repeat-match snapshot recapture and prepare-failure rollback hardening",
                 "route-facing live entity orientation",
                 "tracked-mob vanilla side-effect shielding",
                 "engineering Armageddon player vote bridge",
