@@ -13,6 +13,10 @@ commands:
     description: Leave the TD waiting queue or current Engineering match
     usage: /ctdleave
     permission: cubecrafttd.play
+  ctdvote:
+    description: Cast a pregame Tower Defence vote
+    usage: /ctdvote armageddon <random|wither|lightning|horde>
+    permission: cubecrafttd.play
   ctdstatus:
     description: Show CubeCraft TD shell/runtime status
     usage: /ctdstatus

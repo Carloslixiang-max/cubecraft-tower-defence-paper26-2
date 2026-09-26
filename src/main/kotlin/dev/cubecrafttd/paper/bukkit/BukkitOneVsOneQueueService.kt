@@ -3,6 +3,9 @@ package dev.cubecrafttd.paper.bukkit
 import dev.cubecrafttd.match.ArmageddonType
 import dev.cubecrafttd.match.EngineeringOneVsOneQueuePair
 import dev.cubecrafttd.match.EngineeringOneVsOneQueueState
+import dev.cubecrafttd.match.HistoricalPregameArmageddonResolution
+import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
+import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteRuntime
 import dev.cubecrafttd.match.HistoricalTowerDefenceStartCountdown
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import org.bukkit.plugin.java.JavaPlugin
@@ -22,6 +25,13 @@ data class BukkitQueueLeaveReport(
     val leftActiveMatch: Boolean,
     val restoredNow: Boolean,
     val arenaCleaned: Boolean
+)
+
+data class BukkitPregameArmageddonVoteReport(
+    val option:
+        HistoricalPregameArmageddonVoteOption,
+    val waitingPosition: Int?,
+    val countdownRunning: Boolean
 )
 
 /**
@@ -60,6 +70,12 @@ class BukkitOneVsOneQueueService(
     private var pendingCountdown:
         HistoricalTowerDefenceStartCountdown? =
         null
+
+    private val pregameArmageddonVotes=
+        linkedMapOf<
+            UUID,
+            HistoricalPregameArmageddonVoteOption
+        >()
 
     private val task: BukkitTask =
         plugin.server.scheduler
@@ -127,10 +143,58 @@ class BukkitOneVsOneQueueService(
         )
     }
 
+    fun castArmageddonVote(
+        playerUuid: UUID,
+        option:
+            HistoricalPregameArmageddonVoteOption
+    ): BukkitPregameArmageddonVoteReport {
+        val inWaiting=
+            queue.contains(
+                playerUuid
+            )
+        val inCountdown=
+            playerUuid in
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        check(inWaiting || inCountdown) {
+            "Join the TD queue before voting"
+        }
+
+        val concrete=
+            option.concreteTypeOrNull()
+        check(
+            concrete==null ||
+                concrete in
+                    controller
+                        .runnableArmageddonTypes()
+        ) {
+            "That Armageddon mode is not runnable in the current server profile"
+        }
+
+        pregameArmageddonVotes[
+            playerUuid
+        ]=option
+
+        return BukkitPregameArmageddonVoteReport(
+            option=option,
+            waitingPosition=
+                queue.position(
+                    playerUuid
+                ),
+            countdownRunning=
+                inCountdown
+        )
+    }
+
     fun leave(
         playerUuid: UUID
     ): BukkitQueueLeaveReport {
         if(queue.leave(playerUuid)) {
+            pregameArmageddonVotes
+                .remove(playerUuid)
             return BukkitQueueLeaveReport(
                 removedFromWaiting=true,
                 cancelledStartCountdown=false,
@@ -148,6 +212,8 @@ class BukkitOneVsOneQueueService(
                         ?: emptyList()
                 )
         ) {
+            pregameArmageddonVotes
+                .remove(playerUuid)
             cancelPendingCountdown(
                 dropPlayers=
                     setOf(playerUuid),
@@ -357,24 +423,104 @@ class BukkitOneVsOneQueueService(
         arenaId: String
     ) {
         try {
+            val runnable=
+                controller
+                    .runnableArmageddonTypes()
+                    .sortedBy {
+                        it.name
+                    }
+            check(runnable.isNotEmpty()) {
+                "No runnable Armageddon mode is available"
+            }
+
+            val pregameVote=
+                HistoricalPregameArmageddonVoteRuntime(
+                    eligiblePlayers=
+                        pair.players.toSet(),
+                    runnableTypes=
+                        runnable.toSet()
+                )
+            pair.players.forEach { uuid ->
+                pregameArmageddonVotes[
+                    uuid
+                ]?.let { option ->
+                    pregameVote.cast(
+                        uuid,
+                        option
+                    )
+                }
+            }
+
+            val randomChoice=
+                runnable[
+                    java.util.concurrent
+                        .ThreadLocalRandom
+                        .current()
+                        .nextInt(
+                            runnable.size
+                        )
+                ]
+            val resolved=
+                pregameVote.resolve(
+                    randomChoice
+                )
+
             controller
-                .startOneVsOneTest(
+                .startOneVsOneResolvedTest(
                     arenaId,
                     pair.redPlayer,
                     pair.bluePlayer,
-                    ArmageddonType.WITHER
+                    resolved.selection
                 )
+
+            pair.players.forEach {
+                pregameArmageddonVotes
+                    .remove(it)
+            }
+
+            val armageddonReason=
+                when(resolved.resolution) {
+                    HistoricalPregameArmageddonResolution
+                        .NO_VOTES_RANDOM ->
+                        "Due to no votes."
+                    HistoricalPregameArmageddonResolution
+                        .VOTED_RANDOM ->
+                        "Random won the vote."
+                    HistoricalPregameArmageddonResolution
+                        .UNIQUE_HIGHEST_CONCRETE ->
+                        "Due to votes."
+                    HistoricalPregameArmageddonResolution
+                        .ENGINEERING_TIE_RANDOM_FALLBACK ->
+                        "Engineering tie fallback: Random."
+                }
 
             pair.players.forEach {
                 uuid ->
                 plugin.server
                     .getPlayer(uuid)
-                    ?.sendMessage(
-                        "TD Engineering 1v1 started: " +
-                            arenaId +
-                            ". WITHER is only the Engineering fallback; " +
-                            "use Settings -> Armageddon vote to change it."
-                    )
+                    ?.apply {
+                        sendMessage(
+                            "Selected " +
+                                resolved.selection
+                                    .type.name
+                                    .lowercase()
+                                    .replaceFirstChar {
+                                        it.uppercase()
+                                    } +
+                                " armageddon mode! " +
+                                armageddonReason
+                        )
+                        sendMessage(
+                            "Selected Normal pricing! Due to no votes."
+                        )
+                        sendMessage(
+                            "Selected Normal gamemode! Due to no votes."
+                        )
+                        sendMessage(
+                            "TD Engineering 1v1 started: " +
+                                arenaId
+                        )
+                    }
             }
         } catch(t:Throwable) {
             queue.restorePairToFront(
@@ -418,6 +564,8 @@ class BukkitOneVsOneQueueService(
         )
         dropPlayers.forEach {
             queue.leave(it)
+            pregameArmageddonVotes
+                .remove(it)
         }
         pruneWaitingPlayers()
 
@@ -448,9 +596,14 @@ class BukkitOneVsOneQueueService(
                         it
                     )
                 }
-        queue.retainEligible(
-            eligible
-        )
+        val removed=
+            queue.retainEligible(
+                eligible
+            )
+        removed.forEach {
+            pregameArmageddonVotes
+                .remove(it)
+        }
     }
 
     private fun eligibleForStart(

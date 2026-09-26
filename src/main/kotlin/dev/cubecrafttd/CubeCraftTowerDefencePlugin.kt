@@ -9,6 +9,7 @@ import dev.cubecrafttd.testing.*
 import dev.cubecrafttd.admin.*
 import dev.cubecrafttd.truth.*
 import dev.cubecrafttd.match.ArmageddonType
+import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
 import dev.cubecrafttd.paper.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
@@ -347,7 +348,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v54 enabled; " +
+            "CubeCraftTowerDefence shell v55 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -398,7 +399,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v54 disabled; " +
+            "CubeCraftTowerDefence shell v55 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -423,9 +424,16 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             true
         }
 
+        "ctdvote" -> {
+            runPlayerPregameVote(
+                sender,args.toList()
+            )
+            true
+        }
+
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v54, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v55, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
@@ -532,6 +540,75 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         else -> false
     }
 
+    private fun runPlayerPregameVote(
+        sender: CommandSender,
+        args: List<String>
+    ) {
+        val player=
+            sender as?
+                org.bukkit.entity.Player
+                ?: run {
+                    sender.sendMessage(
+                        "ctdvote requires a player"
+                    )
+                    return
+                }
+
+        if(
+            args.size!=2 ||
+            !args[0].equals(
+                "armageddon",
+                ignoreCase=true
+            )
+        ) {
+            sender.sendMessage(
+                "Usage: /ctdvote armageddon <random|wither|lightning|horde>"
+            )
+            return
+        }
+
+        val option=
+            runCatching {
+                HistoricalPregameArmageddonVoteOption
+                    .valueOf(
+                        args[1].uppercase()
+                    )
+            }.getOrElse {
+                sender.sendMessage(
+                    "Armageddon vote must be random/wither/lightning/horde"
+                )
+                return
+            }
+
+        runCatching {
+            oneVsOneQueue
+                .castArmageddonVote(
+                    player.uniqueId,
+                    option
+                )
+        }.onSuccess { report ->
+            sender.sendMessage(
+                "Pregame Armageddon vote: " +
+                    report.option +
+                    if(report.countdownRunning)
+                        " (start countdown is running)"
+                    else
+                        " (queue position #" +
+                            report.waitingPosition +
+                            ")"
+            )
+        }.onFailure { error ->
+            sender.sendMessage(
+                "ctdvote ERROR: " +
+                    (
+                        error.message
+                            ?: error.javaClass
+                                .simpleName
+                    )
+            )
+        }
+    }
+
     private fun runPlayerQueueJoin(
         sender: CommandSender,
         args: List<String>
@@ -579,7 +656,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         "Joined TD 1v1 queue at position #" +
                             report.position +
                             ". Waiting players=" +
-                            report.waitingCount
+                            report.waitingCount +
+                            ". Optional: /ctdvote armageddon <random|wither|lightning|horde>"
                     )
             }
         }.onFailure { error ->

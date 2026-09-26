@@ -45,7 +45,8 @@ data class PaperAdapterDiagnostics(
                 "departed-owner teammate tower management",
                 "engineering match-end UI cleanup and result presentation",
                 "regular-player Engineering 1v1 queue/join/leave bridge",
-                "historical direct-log 3-second pre-game countdown"
+                "historical direct-log 3-second pre-game countdown",
+                "historical pregame Armageddon vote/no-vote Random resolution"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
@@ -53,7 +54,7 @@ data class PaperAdapterDiagnostics(
                 "raytrace fidelity vs original firing origins",
                 "production GUI icon/lore fidelity",
                 "match-end title/menu cleanup real-server certification",
-                "regular-player queue/join/leave + 3-second countdown real-server certification",
+                "regular-player queue/join/leave + pregame vote/countdown real-server certification",
                 "player departure/reconnect and teammate tower takeover certification",
                 "restart recovery",
                 "same-world non-overlap multi-arena real-server certification",

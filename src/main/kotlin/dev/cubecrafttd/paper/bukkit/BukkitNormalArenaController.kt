@@ -78,6 +78,8 @@ data class BukkitLiveArenaHandle(
         NormalMatchClockRuntime,
     val armageddonVote:
         EngineeringArmageddonVoteRuntime,
+    val allowLiveArmageddonVoting:
+        Boolean,
     val armageddonRuntime:
         BukkitArenaArmageddonRuntime,
     val progressionService:
@@ -150,11 +152,55 @@ class BukkitNormalArenaController(
                     .mobsByUuid
         }
 
+    fun runnableArmageddonTypes():
+        Set<ArmageddonType> =
+        ArmageddonType.entries
+            .filterTo(linkedSetOf()) {
+                ArmageddonFallbackValidator
+                    .validate(it,fallback)
+                    .isEmpty()
+            }
+
     fun startOneVsOneTest(
         arenaIdText: String,
         redPlayer: UUID,
         bluePlayer: UUID,
         armageddonType: ArmageddonType
+    ): ArenaId =
+        startOneVsOneInternal(
+            arenaIdText,
+            redPlayer,
+            bluePlayer,
+            armageddonType,
+            resolvedSelection=null,
+            allowLiveArmageddonVoting=true
+        )
+
+    fun startOneVsOneResolvedTest(
+        arenaIdText: String,
+        redPlayer: UUID,
+        bluePlayer: UUID,
+        selection:
+            ResolvedArmageddonSelection
+    ): ArenaId =
+        startOneVsOneInternal(
+            arenaIdText,
+            redPlayer,
+            bluePlayer,
+            selection.type,
+            resolvedSelection=selection,
+            allowLiveArmageddonVoting=false
+        )
+
+    private fun startOneVsOneInternal(
+        arenaIdText: String,
+        redPlayer: UUID,
+        bluePlayer: UUID,
+        armageddonType: ArmageddonType,
+        resolvedSelection:
+            ResolvedArmageddonSelection?,
+        allowLiveArmageddonVoting:
+            Boolean
     ): ArenaId {
         check(redPlayer!=bluePlayer)
         val arenaId=ArenaId(arenaIdText)
@@ -176,12 +222,7 @@ class BukkitNormalArenaController(
         }
 
         val voteAllowedTypes=
-            ArmageddonType.entries
-                .filterTo(linkedSetOf()) {
-                    ArmageddonFallbackValidator
-                        .validate(it,fallback)
-                        .isEmpty()
-                }
+            runnableArmageddonTypes()
         val armageddonVote=
             EngineeringArmageddonVoteRuntime(
                 eligiblePlayers=setOf(redPlayer,bluePlayer),
@@ -411,9 +452,10 @@ class BukkitNormalArenaController(
                 startGameTick=
                     context.gameTick,
                 selection=
-                    armageddonVote
-                        .snapshot()
-                        .selection,
+                    resolvedSelection
+                        ?: armageddonVote
+                            .snapshot()
+                            .selection,
                 tiePolicy=
                     TimeoutTiePolicy.DRAW,
                 armageddonPort=
@@ -432,6 +474,8 @@ class BukkitNormalArenaController(
                 matchClock=matchClock,
                 armageddonVote=
                     armageddonVote,
+                allowLiveArmageddonVoting=
+                    allowLiveArmageddonVoting,
                 armageddonRuntime=
                     armageddonRuntime,
                 progressionService=
@@ -858,7 +902,8 @@ class BukkitNormalArenaController(
                     .armageddonVote(
                         playerUuid,
                         handle.armageddonVote.snapshot(),
-                        handle.matchClock.isArmageddonStarted()
+                        !handle.allowLiveArmageddonVoting ||
+                            handle.matchClock.isArmageddonStarted()
                     )
             "hotbar" ->
                 DynamicMatchMenus
@@ -1333,6 +1378,7 @@ class BukkitNormalArenaController(
             )
 
             if(
+                handle.allowLiveArmageddonVoting &&
                 !handle.matchClock
                     .isArmageddonStarted()
             ) {
@@ -1487,6 +1533,9 @@ class BukkitNormalArenaController(
                 "armageddon:vote:"
             )
         ) {
+            check(handle.allowLiveArmageddonVoting) {
+                "Armageddon was resolved during pregame and is locked for this match"
+            }
             check(!handle.matchClock.isArmageddonStarted()) {
                 "Armageddon vote is locked after activation"
             }
