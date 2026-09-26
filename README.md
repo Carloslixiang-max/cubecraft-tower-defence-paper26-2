@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v56 engineering playtest shell**
-- Pure-domain baseline: **415/415 fixtures PASS**
+- Current shell lineage: **v57 engineering playtest shell**
+- Pure-domain baseline: **419/419 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -55,7 +55,8 @@ The codebase already contains substantial runtime work, including:
 - Engineering match-end presentation and UI teardown: live TD inventories are closed and the action-bar HUD is cleared before snapshot restore; after restoration, still-active participants receive explicit VICTORY / DEFEAT / DRAW / MATCH ENDED title + chat feedback. Exact original CubeCraft end-screen wording, styling and timing remain unresolved and are not claimed by this Engineering layer;
 - a regular-player Engineering 1v1 FIFO queue: `/ctdjoin` waits for a second eligible online player and automatically starts the single configured Farm arena when it is free; extra players remain queued while the map is busy. Once paired, players receive the historically recovered Tower Defence 3 → 2 → 1 chat countdown at exact one-second intervals before arena creation. Leaving, disconnecting, or becoming recovery-ineligible during that countdown cancels the pair and returns the remaining eligible player to the front of the queue. `/ctdleave` also exits an active match and immediately restores the online player's pre-match state. FIFO order and first-player RED / second-player BLUE assignment remain explicit Engineering behavior, not recovered original matchmaking truth;
 - pregame Armageddon voting for queued players through `/ctdvote armageddon <random|wither|lightning|horde>`. Historical evidence confirms these four options and that no votes resolve through Random; the concrete Random result is chosen from currently runnable modes immediately before arena creation. A unique highest concrete vote is honored, while an unresolved exact original tie rule remains an explicitly labelled Engineering Random fallback. Queue-started matches lock Armageddon after this pregame resolution; admin-started live tests retain the older engineering in-match vote path for debugging;
-- pregame Pricing voting through `/ctdvote pricing <normal|double|quick>`. No-vote resolves to Normal as recovered from the historical client log. Double Income now flows through the real live runtime—double Goldmine income, mob-kill Coins and sent-mob EXP—while Quick Start uses the recovered Mature-era 1500 Coins / 100 EXP starting balance and otherwise Normal income. The exact original tie rule remains unresolved, so a tied highest vote uses an explicit Engineering Normal fallback rather than pretending the rule is known.
+- pregame Pricing voting through `/ctdvote pricing <normal|double|quick>`. No-vote resolves to Normal as recovered from the historical client log. Double Income now flows through the real live runtime—double Goldmine income, mob-kill Coins and sent-mob EXP—while Quick Start uses the recovered Mature-era 1500 Coins / 100 EXP starting balance and otherwise Normal income. The exact original tie rule remains unresolved, so a tied highest vote uses an explicit Engineering Normal fallback rather than pretending the rule is known;
+- a safe pregame voting GUI: queued/countdown players can now run `/ctdvote` with no arguments and click Armageddon/Pricing choices directly. The menu refreshes immediately and marks the player's current choices. Historical evidence confirms an End Crystal inventory entry point in the original game, but the exact internal slot/icon layout is not recovered strongly enough, so this current GUI layout is explicitly Engineering-only and does not mutate the player's pre-queue inventory.
 
 ## Build
 
@@ -113,7 +114,7 @@ Unknown original values remain unknown in the strict configuration. For actual t
 9. During the match, each player can open Settings → **Armageddon vote (Engineering)** and vote for any currently runnable concrete mode. The operator's start argument remains the explicit Engineering fallback for no-vote/tie states.
 10. Disconnecting a player no longer leaves a half-active session: the old arena continues for remaining participants, the departed player's snapshot restores on reconnect, and their towers become manageable by active teammates. If everybody leaves, the empty arena is cleaned up automatically on the next tick.
 11. A natural win/loss or manual stop closes TD menus before restoration and then shows an Engineering result title/chat after the player's pre-match state is back.
-12. For ordinary player-facing testing after the same setup/preflight, players can use `/ctdjoin` instead of an OP manually starting each round. While waiting or during the 3 → 2 → 1 countdown, each queued player may use `/ctdvote armageddon <random|wither|lightning|horde>` and `/ctdvote pricing <normal|double|quick>`. With no votes, Armageddon resolves through Random and Pricing resolves to Normal as in the recovered historical log. Both selections are locked into the queue arena when it starts. Later players wait until the single configured Farm arena is free. Use `/ctdleave` to leave the queue, cancel your pending countdown slot, or exit an active match.
+12. For ordinary player-facing testing after the same setup/preflight, players can use `/ctdjoin` instead of an OP manually starting each round. While waiting or during the 3 → 2 → 1 countdown, run `/ctdvote` to open the safe clickable vote GUI, or use the direct `/ctdvote armageddon ...` / `/ctdvote pricing ...` forms. With no votes, Armageddon resolves through Random and Pricing resolves to Normal as in the recovered historical log. Both selections are locked into the queue arena when it starts. Later players wait until the single configured Farm arena is free. Use `/ctdleave` to leave the queue, cancel your pending countdown slot, or exit an active match.
 13. End an admin-started test with `/ctdlivetest stop test`.
 
 The setup command creates `config.before-engineering-playtest.yml` before its first overwrite. Generated numbers, route choice, player spawns, and Guard anchors are explicitly tagged **ENGINEERING** and are never promoted to original CubeCraft truth.
@@ -128,6 +129,7 @@ The plugin currently exposes player-facing Engineering commands:
 
 - `/ctdjoin`
 - `/ctdleave`
+- `/ctdvote` (open safe pregame voting GUI)
 - `/ctdvote armageddon <random|wither|lightning|horde>`
 - `/ctdvote pricing <normal|double|quick>`
 

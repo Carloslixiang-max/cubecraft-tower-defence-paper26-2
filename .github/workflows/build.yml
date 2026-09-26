@@ -87,8 +87,8 @@ jobs:
           echo "stop" >&3
           exec 3>&-
           wait "$SERVER_PID"
-          grep -q "CubeCraft TD domain fixtures: 415/415 PASS" /tmp/ctd-server-1.log
-          grep -q "CubeCraftTowerDefence shell v56 disabled; clean=true" /tmp/ctd-server-1.log
+          grep -q "CubeCraft TD domain fixtures: 419/419 PASS" /tmp/ctd-server-1.log
+          grep -q "CubeCraftTowerDefence shell v57 disabled; clean=true" /tmp/ctd-server-1.log
           cp /tmp/ctd-server-1.log build/paper-smoke-1.log
 
       - name: Paper 26.2 live smoke boot #2
@@ -123,7 +123,7 @@ jobs:
           echo "stop" >&3
           exec 3>&-
           wait "$SERVER_PID"
-          grep -q "CubeCraftTowerDefence shell v56 disabled; clean=true" /tmp/ctd-server-2.log
+          grep -q "CubeCraftTowerDefence shell v57 disabled; clean=true" /tmp/ctd-server-2.log
           cp /tmp/ctd-server-2.log build/paper-smoke-2.log
 
       - name: Upload plugin JAR

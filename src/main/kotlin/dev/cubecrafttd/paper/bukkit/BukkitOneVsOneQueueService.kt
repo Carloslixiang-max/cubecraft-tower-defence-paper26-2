@@ -11,6 +11,10 @@ import dev.cubecrafttd.match.HistoricalPregamePricingVoteOption
 import dev.cubecrafttd.match.HistoricalPregamePricingVoteRuntime
 import dev.cubecrafttd.match.HistoricalTowerDefenceStartCountdown
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
+import dev.cubecrafttd.ui.MenuActionInvocation
+import dev.cubecrafttd.ui.MenuDefinition
+import dev.cubecrafttd.ui.PregameVoteMenuProjection
+import dev.cubecrafttd.ui.PregameVoteMenuState
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
 import java.util.UUID
@@ -238,6 +242,107 @@ class BukkitOneVsOneQueueService(
             countdownRunning=
                 inCountdown
         )
+    }
+
+    fun pregameVoteMenu(
+        playerUuid: UUID
+    ): MenuDefinition {
+        val inWaiting=
+            queue.contains(
+                playerUuid
+            )
+        val inCountdown=
+            playerUuid in
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        check(inWaiting || inCountdown) {
+            "Join the TD queue before opening the voting menu"
+        }
+
+        return PregameVoteMenuProjection
+            .menu(
+                PregameVoteMenuState(
+                    armageddonVote=
+                        pregameArmageddonVotes[
+                            playerUuid
+                        ],
+                    pricingVote=
+                        pregamePricingVotes[
+                            playerUuid
+                        ],
+                    waitingPosition=
+                        queue.position(
+                            playerUuid
+                        ),
+                    countdownRunning=
+                        inCountdown
+                )
+            )
+    }
+
+    fun handlePregameMenuAction(
+        invocation:
+            MenuActionInvocation
+    ): Any {
+        val parts=
+            invocation.actionId
+                .split(':')
+        check(
+            parts.size==3 &&
+            parts[0]=="pregame"
+        ) {
+            "Unknown pregame vote action " +
+                invocation.actionId
+        }
+
+        return when(parts[1]) {
+            "armageddon" ->
+                castArmageddonVote(
+                    invocation.playerUuid,
+                    when(parts[2]) {
+                        "random" ->
+                            HistoricalPregameArmageddonVoteOption.RANDOM
+                        "wither" ->
+                            HistoricalPregameArmageddonVoteOption.WITHER
+                        "lightning" ->
+                            HistoricalPregameArmageddonVoteOption.LIGHTNING
+                        "horde" ->
+                            HistoricalPregameArmageddonVoteOption.HORDE
+                        else ->
+                            error(
+                                "Unknown Armageddon vote option " +
+                                    parts[2]
+                            )
+                    }
+                )
+
+            "pricing" ->
+                castPricingVote(
+                    invocation.playerUuid,
+                    when(parts[2]) {
+                        "normal" ->
+                            HistoricalPregamePricingVoteOption.NORMAL
+                        "double_income" ->
+                            HistoricalPregamePricingVoteOption.DOUBLE_INCOME
+                        "quick_start" ->
+                            HistoricalPregamePricingVoteOption.QUICK_START
+                        else ->
+                            error(
+                                "Unknown Pricing vote option " +
+                                    parts[2]
+                            )
+                    }
+                )
+
+            else ->
+                error(
+                    "Unknown pregame vote category " +
+                        parts[1]
+                )
+        }
     }
 
     fun leave(
@@ -478,6 +583,13 @@ class BukkitOneVsOneQueueService(
         arenaId: String
     ) {
         try {
+            pair.players.forEach {
+                uuid ->
+                plugin.server
+                    .getPlayer(uuid)
+                    ?.closeInventory()
+            }
+
             val runnable=
                 controller
                     .runnableArmageddonTypes()

@@ -47,7 +47,8 @@ data class PaperAdapterDiagnostics(
                 "regular-player Engineering 1v1 queue/join/leave bridge",
                 "historical direct-log 3-second pre-game countdown",
                 "historical pregame Armageddon vote/no-vote Random resolution",
-                "historical pregame Pricing vote with live economy binding"
+                "historical pregame Pricing vote with live economy binding",
+                "safe pregame vote GUI projection and Bukkit bridge"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
@@ -55,7 +56,7 @@ data class PaperAdapterDiagnostics(
                 "raytrace fidelity vs original firing origins",
                 "production GUI icon/lore fidelity",
                 "match-end title/menu cleanup real-server certification",
-                "regular-player queue/join/leave + Armageddon/Pricing pregame vote/countdown real-server certification",
+                "regular-player queue/join/leave + pregame GUI/vote/countdown real-server certification",
                 "player departure/reconnect and teammate tower takeover certification",
                 "restart recovery",
                 "same-world non-overlap multi-arena real-server certification",

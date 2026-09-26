@@ -14,8 +14,8 @@ commands:
     usage: /ctdleave
     permission: cubecrafttd.play
   ctdvote:
-    description: Cast a pregame Tower Defence vote
-    usage: /ctdvote <armageddon|pricing> <option>
+    description: Open the pregame vote GUI or cast a Tower Defence vote directly
+    usage: /ctdvote [<armageddon|pricing> <option>]
     permission: cubecrafttd.play
   ctdstatus:
     description: Show CubeCraft TD shell/runtime status

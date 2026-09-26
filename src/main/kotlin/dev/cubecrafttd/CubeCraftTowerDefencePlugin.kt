@@ -33,6 +33,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var trackedDamageListener: BukkitTrackedMobDamageListener
     private lateinit var trackedMobEnvironmentListener: BukkitTrackedMobEnvironmentListener
     private lateinit var menuBridge: BukkitMenuBridge
+    private lateinit var pregameVoteMenuBridge: BukkitMenuBridge
     private lateinit var aoePotionTargetListener: BukkitAoEPotionTargetListener
     private lateinit var towerInteractionListener: BukkitTowerInteractionListener
     private lateinit var matchHotbarListener: BukkitMatchHotbarListener
@@ -293,6 +294,62 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 }
             }
         )
+        pregameVoteMenuBridge =
+            BukkitMenuBridge(
+                this,
+                BukkitEngineeringMenuRenderer(),
+                BukkitMenuActionSink {
+                    invocation ->
+                    runCatching {
+                        oneVsOneQueue
+                            .handlePregameMenuAction(
+                                invocation
+                            )
+                    }.onSuccess { result ->
+                        val player=
+                            server.getPlayer(
+                                invocation.playerUuid
+                            )
+                        when(result) {
+                            is BukkitPregameArmageddonVoteReport ->
+                                player?.sendMessage(
+                                    "Pregame Armageddon vote: " +
+                                        result.option
+                                )
+
+                            is BukkitPregamePricingVoteReport ->
+                                player?.sendMessage(
+                                    "Pregame Pricing vote: " +
+                                        result.option
+                                )
+                        }
+
+                        runCatching {
+                            oneVsOneQueue
+                                .pregameVoteMenu(
+                                    invocation.playerUuid
+                                )
+                        }.onSuccess { menu ->
+                            pregameVoteMenuBridge
+                                .open(
+                                    invocation.playerUuid,
+                                    menu.toLiveView()
+                                )
+                        }
+                    }.onFailure { error ->
+                        server.getPlayer(
+                            invocation.playerUuid
+                        )?.sendMessage(
+                            "Pregame vote ERROR: " +
+                                (
+                                    error.message
+                                        ?: error.javaClass
+                                            .simpleName
+                                )
+                        )
+                    }
+                }
+            )
         aoePotionTargetListener =
             BukkitAoEPotionTargetListener(
                 this,
@@ -349,7 +406,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v56 enabled; " +
+            "CubeCraftTowerDefence shell v57 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -400,7 +457,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v56 disabled; " +
+            "CubeCraftTowerDefence shell v57 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -434,7 +491,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v56, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v57, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
@@ -555,9 +612,37 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     return
                 }
 
+        if(args.isEmpty()) {
+            runCatching {
+                oneVsOneQueue
+                    .pregameVoteMenu(
+                        player.uniqueId
+                    )
+            }.onSuccess { menu ->
+                pregameVoteMenuBridge
+                    .open(
+                        player.uniqueId,
+                        menu.toLiveView()
+                    )
+            }.onFailure { error ->
+                sender.sendMessage(
+                    "ctdvote ERROR: " +
+                        (
+                            error.message
+                                ?: error.javaClass
+                                    .simpleName
+                        )
+                )
+            }
+            return
+        }
+
         if(args.size!=2) {
             sender.sendMessage(
-                "Usage: /ctdvote <armageddon|pricing> <option>"
+                "Usage: /ctdvote [<armageddon|pricing> <option>]"
+            )
+            sender.sendMessage(
+                "No arguments opens the safe pregame voting GUI."
             )
             sender.sendMessage(
                 "Armageddon: random|wither|lightning|horde"
@@ -724,7 +809,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             report.position +
                             ". Waiting players=" +
                             report.waitingCount +
-                            ". Optional votes: /ctdvote armageddon <random|wither|lightning|horde> or /ctdvote pricing <normal|double|quick>"
+                            ". Use /ctdvote to open the pregame voting menu."
                     )
             }
         }.onFailure { error ->
