@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v67 engineering playtest shell**
-- Pure-domain baseline: **442/442 fixtures PASS**
+- Current shell lineage: **v68 engineering playtest shell**
+- Pure-domain baseline: **444/444 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -66,7 +66,8 @@ The codebase already contains substantial runtime work, including:
 - v64 closes the world-side crash-restart gap. Every live TD mob, Guard anchor and Engineering tower summon is marked with a persistent entity scoreboard tag. If the previous plugin process did not shut down cleanly, startup persists an unclean-restart Farm reuse hard gate instead of trusting an absent teardown report. The verified Farm reset now loads/scans the whole schematic volume, removes only persistently-tagged TD entities from that volume, applies block differences, fully verifies the map, verifies that no tagged TD entity survived, and only then clears the crash/reuse gate;
 - v65 separates the 1v1 queue's pre-start transaction from post-start presentation. Vote resolution and controller start failures still restore the matched pair to the front of the queue with a short retry cooldown. Once `startOneVsOneResolvedTest` returns successfully, the arena is committed: votes are cleared and later chat/UI presentation failures are logged only, never requeueing players who are already inside a live match;
 - v66 makes partial arena-start failure teardown authoritative for Farm reuse. A failed start now records the teardown report into the same persistent residue gate used by normal match end, including surviving tracked entities and tower-body conflicts. If teardown itself fails, or if its residue report cannot be persisted, the Farm is conservatively marked with unknown world integrity and remains hard-blocked until the verified Farm reset proves the world clean;
-- v67 adds a formal Engineering real-server 60+ tower performance evidence gate on top of `/ctdperf`. `/ctdperf gate [arenaId]` requires at least 60 live towers and a sustained 1,200 profiled-tick window, then checks the TD live-tick profiler against explicit Engineering acceptance thresholds (average <= 10 ms, maximum < 50 ms, zero TD ticks >= 50 ms). PASS/FAIL is durably recorded in Stage-4 evidence; NOT READY does not mutate evidence. These thresholds are engineering acceptance criteria, not recovered CubeCraft gameplay truth, and the real-server gate remains uncertified until an actual live arena satisfies it.
+- v67 adds a formal Engineering real-server 60+ tower performance evidence gate on top of `/ctdperf`. `/ctdperf gate [arenaId]` requires at least 60 live towers and a sustained 1,200 profiled-tick window, then checks the TD live-tick profiler against explicit Engineering acceptance thresholds (average <= 10 ms, maximum < 50 ms, zero TD ticks >= 50 ms). PASS/FAIL is durably recorded in Stage-4 evidence; NOT READY does not mutate evidence. These thresholds are engineering acceptance criteria, not recovered CubeCraft gameplay truth, and the real-server gate remains uncertified until an actual live arena satisfies it;
+- v68 hardens durable recovery commit ordering. After a player snapshot has been restored and verified, the on-disk recovery journal must now be deleted successfully before the in-memory snapshot record may transition to RESTORED. If journal deletion fails, the authoritative snapshot is returned to pending CAPTURED state and can be retried safely; a stale snapshot can no longer survive on disk while memory incorrectly treats recovery as complete.
 
 ## Build
 

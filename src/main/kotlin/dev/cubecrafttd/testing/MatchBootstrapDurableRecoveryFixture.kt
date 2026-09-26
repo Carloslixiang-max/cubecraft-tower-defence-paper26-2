@@ -15,6 +15,7 @@ private class RecordingRecoveryJournal :
         linkedMapOf<UUID,PlayerSnapshot>()
     val deleted =
         linkedSetOf<UUID>()
+    var failNextDelete=false
 
     override fun save(
         snapshot: PlayerSnapshot
@@ -26,6 +27,12 @@ private class RecordingRecoveryJournal :
     override fun delete(
         playerUuid: UUID
     ) {
+        if(failNextDelete) {
+            failNextDelete=false
+            error(
+                "synthetic journal delete failure"
+            )
+        }
         deleted += playerUuid
         saved.remove(playerUuid)
     }
@@ -361,6 +368,73 @@ object MatchBootstrapDurableRecoveryFixture {
                 rollbackFailureJournal
                     .saved
 
+        val deleteFailurePlayer=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000013004"
+            )
+        val deleteFailureJournal=
+            RecordingRecoveryJournal()
+        deleteFailureJournal.save(
+            snapshot(
+                deleteFailurePlayer
+            )
+        )
+        var deleteFailureRestoreCount=0
+        val deleteFailureRecovery=
+            JournaledPlayerRecoveryOrchestrator(
+                object: PlayerStateAdapter {
+                    override fun capture(
+                        playerUuid: UUID,
+                        arenaTick: Long
+                    )=snapshot(playerUuid)
+
+                    override fun prepareForMatch(
+                        playerUuid: UUID
+                    )=Unit
+
+                    override fun restore(
+                        snapshot: PlayerSnapshot
+                    ) {
+                        deleteFailureRestoreCount++
+                    }
+
+                    override fun isOnline(
+                        playerUuid: UUID
+                    )=true
+                },
+                PlayerSnapshotStore(),
+                deleteFailureJournal
+            )
+        deleteFailureRecovery
+            .recoverJournalIntoMemory()
+        deleteFailureJournal
+            .failNextDelete=true
+        val deleteFailed=
+            !deleteFailureRecovery
+                .restoreIfPossible(
+                    deleteFailurePlayer
+                ) { true }
+        val deleteFailureStillPending=
+            deleteFailed &&
+            deleteFailurePlayer in
+                deleteFailureRecovery
+                    .pending() &&
+            deleteFailurePlayer in
+                deleteFailureJournal
+                    .saved
+        val deleteRetrySucceeded=
+            deleteFailureRecovery
+                .restoreIfPossible(
+                    deleteFailurePlayer
+                ) { true } &&
+            deleteFailurePlayer !in
+                deleteFailureRecovery
+                    .pending() &&
+            deleteFailurePlayer !in
+                deleteFailureJournal
+                    .saved &&
+            deleteFailureRestoreCount>=2
+
         return listOf(
             FixtureResult(
                 "bootstrap-durable-save-before-player-mutation",
@@ -404,6 +478,14 @@ object MatchBootstrapDurableRecoveryFixture {
             FixtureResult(
                 "durable-prepare-rollback-failure-keeps-pending-journal",
                 rollbackFailureRetained
+            ),
+            FixtureResult(
+                "durable-journal-delete-failure-keeps-snapshot-pending",
+                deleteFailureStillPending
+            ),
+            FixtureResult(
+                "durable-journal-delete-failure-can-retry-safely",
+                deleteRetrySucceeded
             )
         )
     }

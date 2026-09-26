@@ -111,10 +111,15 @@ class JournaledPlayerRecoveryOrchestrator(
                 )
                 false
             } else {
-                store.markRestored(
+                // Durable state is authoritative across process boundaries.
+                // Delete the on-disk journal before exposing RESTORED in memory;
+                // if deletion fails, the catch path returns this record to
+                // CAPTURED so the same authoritative snapshot remains pending
+                // and can be retried safely.
+                journal.delete(
                     playerUuid
                 )
-                journal.delete(
+                store.markRestored(
                     playerUuid
                 )
                 true
