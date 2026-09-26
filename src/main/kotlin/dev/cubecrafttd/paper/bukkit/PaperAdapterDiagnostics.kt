@@ -42,6 +42,7 @@ data class PaperAdapterDiagnostics(
                 "repeat-match snapshot recapture and prepare-failure rollback hardening",
                 "fail-closed corrupt recovery-journal readiness gate",
                 "durable journal delete-before-memory-restore commit ordering",
+                "bounded automatic retry for online pending player recovery",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

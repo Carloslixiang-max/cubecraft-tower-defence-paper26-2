@@ -422,7 +422,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v68 enabled; " +
+            "CubeCraftTowerDefence shell v69 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -472,6 +472,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         if (::liveArenaController.isInitialized) {
             liveArenaController.stopAll()
         }
+        if (::recoveryListener.isInitialized) {
+            recoveryListener.close()
+        }
         if (::mapOperations.isInitialized) {
             mapOperations.cancelActivePaste()
         }
@@ -487,7 +490,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v68 disabled; " +
+            "CubeCraftTowerDefence shell v69 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -521,7 +524,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v68, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v69, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -954,10 +957,15 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
                 report.leftActiveMatch ->
                     sender.sendMessage(
-                        "Left the TD match; restoredNow=" +
-                            report.restoredNow +
-                            ", arenaCleaned=" +
-                            report.arenaCleaned
+                        if(report.restoredNow) {
+                            "Left the TD match; player state restored immediately, arenaCleaned=" +
+                                report.arenaCleaned
+                        } else {
+                            "Left the TD match; immediate player-state restore is still pending. " +
+                                "Automatic online recovery retry is armed; durable journal remains authoritative. " +
+                                "arenaCleaned=" +
+                                report.arenaCleaned
+                        }
                     )
 
                 else ->

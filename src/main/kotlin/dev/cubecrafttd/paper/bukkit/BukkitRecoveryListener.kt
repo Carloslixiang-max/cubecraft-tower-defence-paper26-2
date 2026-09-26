@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.plugin.Plugin
+import org.bukkit.scheduler.BukkitTask
 import java.util.UUID
 
 class BukkitRecoveryListener(
@@ -19,13 +20,45 @@ class BukkitRecoveryListener(
     private val restartEvidence:
         (UUID,PlayerSnapshotComparison?)->Unit
 ) : Listener {
+    companion object {
+        private const val
+            MAX_AUTO_RESTORE_ATTEMPTS=3
+        private const val
+            RETRY_DELAY_TICKS=20L
+        private const val
+            SWEEP_PERIOD_TICKS=20L
+    }
+
     private val loadedFromPreviousProcess=
         recovery.recoverJournalIntoMemory()
             .toMutableSet()
 
+    private val scheduledRestores=
+        linkedSetOf<UUID>()
+
+    private val retryAttempts=
+        linkedMapOf<UUID,Int>()
+
+    private val exhaustedAutoRetries=
+        linkedSetOf<UUID>()
+
+    private val sweepTask:
+        BukkitTask
+
     init {
         plugin.server.pluginManager
             .registerEvents(this,plugin)
+
+        sweepTask=
+            plugin.server.scheduler
+                .runTaskTimer(
+                    plugin,
+                    Runnable {
+                        sweepPendingOnline()
+                    },
+                    SWEEP_PERIOD_TICKS,
+                    SWEEP_PERIOD_TICKS
+                )
     }
 
     fun pendingCount(): Int =
@@ -47,9 +80,18 @@ class BukkitRecoveryListener(
                         .getPlayer(uuid)
                         ?.isOnline == true
                 ) {
-                    scheduleRestore(uuid)
+                    scheduleRestore(
+                        uuid
+                    )
                 }
             }
+    }
+
+    fun close() {
+        sweepTask.cancel()
+        scheduledRestores.clear()
+        retryAttempts.clear()
+        exhaustedAutoRetries.clear()
     }
 
     @EventHandler
@@ -58,6 +100,11 @@ class BukkitRecoveryListener(
     ) {
         val uuid=
             event.player.uniqueId
+
+        retryAttempts.remove(uuid)
+        exhaustedAutoRetries
+            .remove(uuid)
+
         if(
             uuid in
                 recovery.pending()
@@ -66,16 +113,58 @@ class BukkitRecoveryListener(
         }
     }
 
+    private fun sweepPendingOnline() {
+        recovery.pending()
+            .toList()
+            .forEach { uuid ->
+                if(
+                    uuid !in
+                        exhaustedAutoRetries &&
+                    plugin.server
+                        .getPlayer(uuid)
+                        ?.isOnline == true
+                ) {
+                    scheduleRestore(
+                        uuid
+                    )
+                }
+            }
+    }
+
     private fun scheduleRestore(
-        uuid: UUID
+        uuid: UUID,
+        delayTicks: Long = 1L
     ) {
+        if(
+            uuid !in
+                recovery.pending() ||
+            !scheduledRestores.add(uuid)
+        ) {
+            return
+        }
+
         plugin.server.scheduler
-            .runTask(
+            .runTaskLater(
                 plugin,
                 Runnable {
+                    scheduledRestores
+                        .remove(uuid)
+
                     if(
                         uuid !in
                             recovery.pending()
+                    ) {
+                        retryAttempts
+                            .remove(uuid)
+                        exhaustedAutoRetries
+                            .remove(uuid)
+                        return@Runnable
+                    }
+
+                    if(
+                        plugin.server
+                            .getPlayer(uuid)
+                            ?.isOnline != true
                     ) {
                         return@Runnable
                     }
@@ -129,6 +218,10 @@ class BukkitRecoveryListener(
                     if(ok) {
                         loadedFromPreviousProcess
                             .remove(uuid)
+                        retryAttempts
+                            .remove(uuid)
+                        exhaustedAutoRetries
+                            .remove(uuid)
                         plugin.logger.info(
                             "Restored pending CubeCraft TD snapshot for " +
                                 uuid +
@@ -137,13 +230,52 @@ class BukkitRecoveryListener(
                                 else ""
                         )
                     } else {
-                        plugin.logger.warning(
-                            "Pending snapshot for " +
-                                uuid +
-                                " was not restored/verified; durable journal remains."
-                        )
+                        val attempt=
+                            (
+                                retryAttempts[
+                                    uuid
+                                ] ?: 0
+                            ) + 1
+                        retryAttempts[uuid]=
+                            attempt
+
+                        if(
+                            attempt <
+                                MAX_AUTO_RESTORE_ATTEMPTS &&
+                            uuid in
+                                recovery.pending() &&
+                            plugin.server
+                                .getPlayer(uuid)
+                                ?.isOnline == true
+                        ) {
+                            plugin.logger.warning(
+                                "Pending snapshot for " +
+                                    uuid +
+                                    " was not restored/verified; durable journal remains. " +
+                                    "Automatic retry " +
+                                    (attempt+1) +
+                                    "/" +
+                                    MAX_AUTO_RESTORE_ATTEMPTS +
+                                    " is scheduled."
+                            )
+                            scheduleRestore(
+                                uuid,
+                                RETRY_DELAY_TICKS
+                            )
+                        } else {
+                            exhaustedAutoRetries +=
+                                uuid
+                            plugin.logger.warning(
+                                "Pending snapshot for " +
+                                    uuid +
+                                    " remains unresolved after " +
+                                    attempt +
+                                    " online restore attempt(s). Durable journal remains; reconnect to reset the automatic retry budget."
+                            )
+                        }
                     }
-                }
+                },
+                delayTicks
             )
     }
 }
