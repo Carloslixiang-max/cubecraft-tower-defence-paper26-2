@@ -173,7 +173,9 @@ class BukkitNormalArenaController(
             bluePlayer,
             armageddonType,
             resolvedSelection=null,
-            allowLiveArmageddonVoting=true
+            allowLiveArmageddonVoting=true,
+            pricingMode=
+                PricingMode.NORMAL
         )
 
     fun startOneVsOneResolvedTest(
@@ -181,7 +183,9 @@ class BukkitNormalArenaController(
         redPlayer: UUID,
         bluePlayer: UUID,
         selection:
-            ResolvedArmageddonSelection
+            ResolvedArmageddonSelection,
+        pricingMode:
+            PricingMode = PricingMode.NORMAL
     ): ArenaId =
         startOneVsOneInternal(
             arenaIdText,
@@ -189,7 +193,9 @@ class BukkitNormalArenaController(
             bluePlayer,
             selection.type,
             resolvedSelection=selection,
-            allowLiveArmageddonVoting=false
+            allowLiveArmageddonVoting=false,
+            pricingMode=
+                pricingMode
         )
 
     private fun startOneVsOneInternal(
@@ -200,7 +206,9 @@ class BukkitNormalArenaController(
         resolvedSelection:
             ResolvedArmageddonSelection?,
         allowLiveArmageddonVoting:
-            Boolean
+            Boolean,
+        pricingMode:
+            PricingMode
     ): ArenaId {
         check(redPlayer!=bluePlayer)
         val arenaId=ArenaId(arenaIdText)
@@ -270,14 +278,14 @@ class BukkitNormalArenaController(
                     .mobKillReward(
                         fallback
                     ),
-                PricingMode.NORMAL
+                pricingMode
             )
         val sentExpFinalizer=
             PlayerSentMobDeathFinalizer(
                 SentMobExpRewardService(
                     RecommendedMatureMobDefinitions,
                     ledger,
-                    PricingMode.NORMAL
+                    pricingMode
                 )
             )
         val deathFinalizer=
@@ -533,19 +541,54 @@ class BukkitNormalArenaController(
 
             val preset=
                 MatchRulePreset(
-                    mode=MatchMode.NORMAL,
+                    mode=
+                        when(pricingMode) {
+                            PricingMode.NORMAL ->
+                                MatchMode.NORMAL
+                            PricingMode.DOUBLE_INCOME ->
+                                MatchMode.DOUBLE_INCOME
+                            PricingMode.QUICK_START ->
+                                MatchMode.QUICK_START
+                        },
                     pricingMode=
-                        PricingMode.NORMAL,
+                        pricingMode,
                     goldmineIncomeMode=
-                        GoldmineIncomeMode.NORMAL,
+                        if(
+                            pricingMode==
+                                PricingMode.DOUBLE_INCOME
+                        )
+                            GoldmineIncomeMode
+                                .DOUBLE_INCOME
+                        else
+                            GoldmineIncomeMode
+                                .NORMAL,
                     progressionMode=
                         ProgressionMode
                             .CLASSIC_PROGRESSION,
                     startingBalance=
-                        preflight.gameplay
-                            .startingBalance,
-                    mobKillCoinMultiplier=1L,
-                    sentMobExpMultiplier=1L
+                        if(
+                            pricingMode==
+                                PricingMode.QUICK_START
+                        )
+                            MatchStartingBalance(
+                                RecommendedMaturePricing
+                                    .QUICK_START_COINS,
+                                RecommendedMaturePricing
+                                    .QUICK_START_EXP
+                            )
+                        else
+                            preflight.gameplay
+                                .startingBalance,
+                    mobKillCoinMultiplier=
+                        if(
+                            pricingMode==
+                                PricingMode.DOUBLE_INCOME
+                        ) 2L else 1L,
+                    sentMobExpMultiplier=
+                        if(
+                            pricingMode==
+                                PricingMode.DOUBLE_INCOME
+                        ) 2L else 1L
                 )
 
             val bootstrap=

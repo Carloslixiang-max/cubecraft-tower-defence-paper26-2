@@ -6,6 +6,9 @@ import dev.cubecrafttd.match.EngineeringOneVsOneQueueState
 import dev.cubecrafttd.match.HistoricalPregameArmageddonResolution
 import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
 import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteRuntime
+import dev.cubecrafttd.match.HistoricalPregamePricingResolution
+import dev.cubecrafttd.match.HistoricalPregamePricingVoteOption
+import dev.cubecrafttd.match.HistoricalPregamePricingVoteRuntime
 import dev.cubecrafttd.match.HistoricalTowerDefenceStartCountdown
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import org.bukkit.plugin.java.JavaPlugin
@@ -30,6 +33,13 @@ data class BukkitQueueLeaveReport(
 data class BukkitPregameArmageddonVoteReport(
     val option:
         HistoricalPregameArmageddonVoteOption,
+    val waitingPosition: Int?,
+    val countdownRunning: Boolean
+)
+
+data class BukkitPregamePricingVoteReport(
+    val option:
+        HistoricalPregamePricingVoteOption,
     val waitingPosition: Int?,
     val countdownRunning: Boolean
 )
@@ -75,6 +85,12 @@ class BukkitOneVsOneQueueService(
         linkedMapOf<
             UUID,
             HistoricalPregameArmageddonVoteOption
+        >()
+
+    private val pregamePricingVotes=
+        linkedMapOf<
+            UUID,
+            HistoricalPregamePricingVoteOption
         >()
 
     private val task: BukkitTask =
@@ -189,11 +205,48 @@ class BukkitOneVsOneQueueService(
         )
     }
 
+    fun castPricingVote(
+        playerUuid: UUID,
+        option:
+            HistoricalPregamePricingVoteOption
+    ): BukkitPregamePricingVoteReport {
+        val inWaiting=
+            queue.contains(
+                playerUuid
+            )
+        val inCountdown=
+            playerUuid in
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        check(inWaiting || inCountdown) {
+            "Join the TD queue before voting"
+        }
+
+        pregamePricingVotes[
+            playerUuid
+        ]=option
+
+        return BukkitPregamePricingVoteReport(
+            option=option,
+            waitingPosition=
+                queue.position(
+                    playerUuid
+                ),
+            countdownRunning=
+                inCountdown
+        )
+    }
+
     fun leave(
         playerUuid: UUID
     ): BukkitQueueLeaveReport {
         if(queue.leave(playerUuid)) {
             pregameArmageddonVotes
+                .remove(playerUuid)
+            pregamePricingVotes
                 .remove(playerUuid)
             return BukkitQueueLeaveReport(
                 removedFromWaiting=true,
@@ -213,6 +266,8 @@ class BukkitOneVsOneQueueService(
                 )
         ) {
             pregameArmageddonVotes
+                .remove(playerUuid)
+            pregamePricingVotes
                 .remove(playerUuid)
             cancelPendingCountdown(
                 dropPlayers=
@@ -465,16 +520,37 @@ class BukkitOneVsOneQueueService(
                     randomChoice
                 )
 
+            val pricingVote=
+                HistoricalPregamePricingVoteRuntime(
+                    pair.players.toSet()
+                )
+            pair.players.forEach { uuid ->
+                pregamePricingVotes[
+                    uuid
+                ]?.let { option ->
+                    pricingVote.cast(
+                        uuid,
+                        option
+                    )
+                }
+            }
+            val resolvedPricing=
+                pricingVote.resolve()
+
             controller
                 .startOneVsOneResolvedTest(
                     arenaId,
                     pair.redPlayer,
                     pair.bluePlayer,
-                    resolved.selection
+                    resolved.selection,
+                    resolvedPricing
+                        .pricingMode
                 )
 
             pair.players.forEach {
                 pregameArmageddonVotes
+                    .remove(it)
+                pregamePricingVotes
                     .remove(it)
             }
 
@@ -494,6 +570,38 @@ class BukkitOneVsOneQueueService(
                         "Engineering tie fallback: Random."
                 }
 
+            val pricingReason=
+                when(
+                    resolvedPricing
+                        .resolution
+                ) {
+                    HistoricalPregamePricingResolution
+                        .NO_VOTES_NORMAL ->
+                        "Due to no votes."
+                    HistoricalPregamePricingResolution
+                        .UNIQUE_HIGHEST ->
+                        "Due to votes."
+                    HistoricalPregamePricingResolution
+                        .ENGINEERING_TIE_NORMAL_FALLBACK ->
+                        "Engineering tie fallback: Normal."
+                }
+
+            val pricingLabel=
+                when(
+                    resolvedPricing
+                        .pricingMode
+                ) {
+                    dev.cubecrafttd.economy
+                        .PricingMode.NORMAL ->
+                        "Normal"
+                    dev.cubecrafttd.economy
+                        .PricingMode.DOUBLE_INCOME ->
+                        "Double Income"
+                    dev.cubecrafttd.economy
+                        .PricingMode.QUICK_START ->
+                        "Quick Start"
+                }
+
             pair.players.forEach {
                 uuid ->
                 plugin.server
@@ -511,7 +619,10 @@ class BukkitOneVsOneQueueService(
                                 armageddonReason
                         )
                         sendMessage(
-                            "Selected Normal pricing! Due to no votes."
+                            "Selected " +
+                                pricingLabel +
+                                " pricing! " +
+                                pricingReason
                         )
                         sendMessage(
                             "Selected Normal gamemode! Due to no votes."
@@ -566,6 +677,8 @@ class BukkitOneVsOneQueueService(
             queue.leave(it)
             pregameArmageddonVotes
                 .remove(it)
+            pregamePricingVotes
+                .remove(it)
         }
         pruneWaitingPlayers()
 
@@ -602,6 +715,8 @@ class BukkitOneVsOneQueueService(
             )
         removed.forEach {
             pregameArmageddonVotes
+                .remove(it)
+            pregamePricingVotes
                 .remove(it)
         }
     }

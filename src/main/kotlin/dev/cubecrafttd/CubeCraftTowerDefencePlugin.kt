@@ -10,6 +10,7 @@ import dev.cubecrafttd.admin.*
 import dev.cubecrafttd.truth.*
 import dev.cubecrafttd.match.ArmageddonType
 import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
+import dev.cubecrafttd.match.HistoricalPregamePricingVoteOption
 import dev.cubecrafttd.paper.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
@@ -348,7 +349,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v55 enabled; " +
+            "CubeCraftTowerDefence shell v56 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -399,7 +400,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v55 disabled; " +
+            "CubeCraftTowerDefence shell v56 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -433,7 +434,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v55, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v56, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
@@ -554,58 +555,124 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     return
                 }
 
-        if(
-            args.size!=2 ||
-            !args[0].equals(
-                "armageddon",
-                ignoreCase=true
-            )
-        ) {
+        if(args.size!=2) {
             sender.sendMessage(
-                "Usage: /ctdvote armageddon <random|wither|lightning|horde>"
+                "Usage: /ctdvote <armageddon|pricing> <option>"
+            )
+            sender.sendMessage(
+                "Armageddon: random|wither|lightning|horde"
+            )
+            sender.sendMessage(
+                "Pricing: normal|double|quick"
             )
             return
         }
 
-        val option=
-            runCatching {
-                HistoricalPregameArmageddonVoteOption
-                    .valueOf(
-                        args[1].uppercase()
+        when(args[0].lowercase()) {
+            "armageddon" -> {
+                val option=
+                    runCatching {
+                        HistoricalPregameArmageddonVoteOption
+                            .valueOf(
+                                args[1].uppercase()
+                            )
+                    }.getOrElse {
+                        sender.sendMessage(
+                            "Armageddon vote must be random/wither/lightning/horde"
+                        )
+                        return
+                    }
+
+                runCatching {
+                    oneVsOneQueue
+                        .castArmageddonVote(
+                            player.uniqueId,
+                            option
+                        )
+                }.onSuccess { report ->
+                    sender.sendMessage(
+                        "Pregame Armageddon vote: " +
+                            report.option +
+                            if(report.countdownRunning)
+                                " (start countdown is running)"
+                            else
+                                " (queue position #" +
+                                    report.waitingPosition +
+                                    ")"
                     )
-            }.getOrElse {
-                sender.sendMessage(
-                    "Armageddon vote must be random/wither/lightning/horde"
-                )
-                return
+                }.onFailure { error ->
+                    sender.sendMessage(
+                        "ctdvote ERROR: " +
+                            (
+                                error.message
+                                    ?: error.javaClass
+                                        .simpleName
+                            )
+                    )
+                }
             }
 
-        runCatching {
-            oneVsOneQueue
-                .castArmageddonVote(
-                    player.uniqueId,
-                    option
-                )
-        }.onSuccess { report ->
-            sender.sendMessage(
-                "Pregame Armageddon vote: " +
-                    report.option +
-                    if(report.countdownRunning)
-                        " (start countdown is running)"
-                    else
-                        " (queue position #" +
-                            report.waitingPosition +
-                            ")"
-            )
-        }.onFailure { error ->
-            sender.sendMessage(
-                "ctdvote ERROR: " +
-                    (
-                        error.message
-                            ?: error.javaClass
-                                .simpleName
+            "pricing" -> {
+                val option=
+                    when(
+                        args[1]
+                            .lowercase()
+                    ) {
+                        "normal" ->
+                            HistoricalPregamePricingVoteOption
+                                .NORMAL
+                        "double",
+                        "double_income",
+                        "doubleincome" ->
+                            HistoricalPregamePricingVoteOption
+                                .DOUBLE_INCOME
+                        "quick",
+                        "quick_start",
+                        "quickstart" ->
+                            HistoricalPregamePricingVoteOption
+                                .QUICK_START
+                        else -> {
+                            sender.sendMessage(
+                                "Pricing vote must be normal/double/quick"
+                            )
+                            return
+                        }
+                    }
+
+                runCatching {
+                    oneVsOneQueue
+                        .castPricingVote(
+                            player.uniqueId,
+                            option
+                        )
+                }.onSuccess { report ->
+                    sender.sendMessage(
+                        "Pregame Pricing vote: " +
+                            report.option +
+                            if(report.countdownRunning)
+                                " (start countdown is running)"
+                            else
+                                " (queue position #" +
+                                    report.waitingPosition +
+                                    ")"
                     )
-            )
+                }.onFailure { error ->
+                    sender.sendMessage(
+                        "ctdvote ERROR: " +
+                            (
+                                error.message
+                                    ?: error.javaClass
+                                        .simpleName
+                            )
+                    )
+                }
+            }
+
+            else -> {
+                sender.sendMessage(
+                    "Vote category must be armageddon or pricing"
+                )
+            }
         }
     }
 
@@ -657,7 +724,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             report.position +
                             ". Waiting players=" +
                             report.waitingCount +
-                            ". Optional: /ctdvote armageddon <random|wither|lightning|horde>"
+                            ". Optional votes: /ctdvote armageddon <random|wither|lightning|horde> or /ctdvote pricing <normal|double|quick>"
                     )
             }
         }.onFailure { error ->

@@ -13,6 +13,7 @@ object DomainFixtureSuite {
         addAll(EngineeringOneVsOneQueueFixture.run())
         addAll(HistoricalTowerDefenceStartCountdownFixture.run())
         addAll(HistoricalPregameArmageddonVoteFixture.run())
+        addAll(HistoricalPregamePricingVoteFixture.run())
         addAll(PlayerRecoveryFixture.run())
         addAll(PlayerRecoveryJournalFixture.run())
         addAll(KillAttributionFixture.run())
