@@ -114,6 +114,11 @@ class BukkitNormalArenaController(
             plugin.server
         )
 
+    private val matchEndFeedback=
+        BukkitMatchEndFeedbackService(
+            plugin.server
+        )
+
     private val isolationRegistry=
         ArenaIsolationRegistry()
 
@@ -1700,6 +1705,33 @@ class BukkitNormalArenaController(
             handles.remove(arenaId)
                 ?: return null
 
+        val activeTeamByPlayer=
+            handle.session
+                ?.players
+                ?.keys
+                ?.associateWith { uuid ->
+                    when {
+                        uuid in
+                            handle.context
+                                .redTeam.players ->
+                            TeamId.RED
+                        uuid in
+                            handle.context
+                                .blueTeam.players ->
+                            TeamId.BLUE
+                        else ->
+                            error(
+                                "Active session player is not on an arena team"
+                            )
+                    }
+                } ?: emptyMap()
+
+        matchEndFeedback
+            .beforeRestore(
+                activeTeamByPlayer
+                    .keys
+            )
+
         return try {
             val report=
                 handle.endCoordinator
@@ -1712,6 +1744,10 @@ class BukkitNormalArenaController(
                 .recordArenaRoundTrip(
                     report.teardown
                 )
+            matchEndFeedback.present(
+                report.outcome,
+                activeTeamByPlayer
+            )
             report
         } finally {
             arenaService.close(

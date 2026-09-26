@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v51 engineering playtest shell**
-- Pure-domain baseline: **392/392 fixtures PASS**
+- Current shell lineage: **v52 engineering playtest shell**
+- Pure-domain baseline: **396/396 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -51,7 +51,8 @@ The codebase already contains substantial runtime work, including:
 - route-facing live mob orientation: AI-disabled living entities keep the deterministic core position but their Paper teleport yaw now follows the actual horizontal route delta, removing sideways/backwards sliding through turns without changing speed, routing or combat geometry;
 - tracked-mob vanilla side-effect shielding: live TD mobs are non-collidable, cannot pick up items, ignore vanilla combustion visuals, and active-match arrows are cleaned after impact so deterministic core movement/combat is not visually polluted by ordinary survival mechanics;
 - an Engineering Armageddon player-vote bridge for the concrete Wither / Lightning / Horde outcomes. A unique highest vote overrides the operator-selected default, while no-vote and tie states fall back to that default. This resolution policy is explicitly Engineering-only: recovered sources confirm the original menu also offered Random, but the original winner/tie/Random-resolution semantics are not claimed until stronger evidence is recovered;
-- historical-style player departure handling: leaving does not automatically end the match, the departed player leaves the active live session and their pre-match recovery journal remains authoritative, while same-team active players may manage towers owned by the departed player. A released player UUID is removed from the arena's player reservation, and a completely empty live arena is closed only as an Engineering resource cleanup rather than a gameplay win.
+- historical-style player departure handling: leaving does not automatically end the match, the departed player leaves the active live session and their pre-match recovery journal remains authoritative, while same-team active players may manage towers owned by the departed player. A released player UUID is removed from the arena's player reservation, and a completely empty live arena is closed only as an Engineering resource cleanup rather than a gameplay win;
+- Engineering match-end presentation and UI teardown: live TD inventories are closed and the action-bar HUD is cleared before snapshot restore; after restoration, still-active participants receive explicit VICTORY / DEFEAT / DRAW / MATCH ENDED title + chat feedback. Exact original CubeCraft end-screen wording, styling and timing remain unresolved and are not claimed by this Engineering layer.
 
 ## Build
 
@@ -108,7 +109,8 @@ Unknown original values remain unknown in the strict configuration. For actual t
 8. With two online players, run `/ctdlivetest start test <redPlayer> <bluePlayer> wither`.
 9. During the match, each player can open Settings → **Armageddon vote (Engineering)** and vote for any currently runnable concrete mode. The operator's start argument remains the explicit Engineering fallback for no-vote/tie states.
 10. Disconnecting a player no longer leaves a half-active session: the old arena continues for remaining participants, the departed player's snapshot restores on reconnect, and their towers become manageable by active teammates. If everybody leaves, the empty arena is cleaned up automatically on the next tick.
-11. End the test with `/ctdlivetest stop test`.
+11. A natural win/loss or manual stop closes TD menus before restoration and then shows an Engineering result title/chat after the player's pre-match state is back.
+12. End the test with `/ctdlivetest stop test`.
 
 The setup command creates `config.before-engineering-playtest.yml` before its first overwrite. Generated numbers, route choice, player spawns, and Guard anchors are explicitly tagged **ENGINEERING** and are never promoted to original CubeCraft truth.
 

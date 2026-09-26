@@ -42,13 +42,15 @@ data class PaperAdapterDiagnostics(
                 "tracked-mob vanilla side-effect shielding",
                 "engineering Armageddon player vote bridge",
                 "historical-style player departure lifecycle",
-                "departed-owner teammate tower management"
+                "departed-owner teammate tower management",
+                "engineering match-end UI cleanup and result presentation"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
                 "entity movement visual smoothness",
                 "raytrace fidelity vs original firing origins",
                 "production GUI icon/lore fidelity",
+                "match-end title/menu cleanup real-server certification",
                 "player departure/reconnect and teammate tower takeover certification",
                 "restart recovery",
                 "same-world non-overlap multi-arena real-server certification",
