@@ -435,7 +435,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v74 enabled; " +
+            "CubeCraftTowerDefence shell v75 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -503,7 +503,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v74 disabled; " +
+            "CubeCraftTowerDefence shell v75 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -537,7 +537,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v74, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v75, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -1969,7 +1969,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ) {
         if(args.isEmpty()) {
             sender.sendMessage(
-                "Usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|stop <arenaId>|status>"
+                "Usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|teamstart <arenaId> <red1[,red2]> <blue1[,blue2]> <wither|lightning|horde>|stop <arenaId>|status>"
             )
             return
         }
@@ -2029,6 +2029,108 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             "for a runnable concrete Armageddon in Settings -> Armageddon vote. " +
                             "This is an engineering test controller, not production matchmaking."
                     )
+                }
+
+                "teamstart" -> {
+                    check(args.size==5) {
+                        "teamstart <arenaId> <red1[,red2]> <blue1[,blue2]> <wither|lightning|horde>"
+                    }
+
+                    fun resolveTeam(
+                        raw: String,
+                        label: String
+                    ): Set<java.util.UUID> {
+                        val names=
+                            raw.split(',')
+                                .map {
+                                    it.trim()
+                                }
+                                .filter {
+                                    it.isNotEmpty()
+                                }
+                        check(
+                            names.size in 1..2
+                        ) {
+                            "$label team must contain 1 or 2 comma-separated online player names"
+                        }
+                        check(
+                            names.distinct().size==
+                                names.size
+                        ) {
+                            "$label team contains a duplicate player name"
+                        }
+                        return names
+                            .mapTo(
+                                linkedSetOf()
+                            ) { name ->
+                                server.getPlayerExact(
+                                    name
+                                )?.uniqueId
+                                    ?: error(
+                                        "$label player $name must be online"
+                                    )
+                            }
+                    }
+
+                    val redPlayers=
+                        resolveTeam(
+                            args[2],
+                            "RED"
+                        )
+                    val bluePlayers=
+                        resolveTeam(
+                            args[3],
+                            "BLUE"
+                        )
+                    check(
+                        redPlayers.intersect(
+                            bluePlayers
+                        ).isEmpty()
+                    ) {
+                        "The same player cannot be on both teams"
+                    }
+
+                    val blockers=
+                        readinessService.inspect()
+                            .blockers
+                            .filterNot {
+                                it.code ==
+                                    "PAPER_LIVE_GATE_NOT_CERTIFIED"
+                            }
+                    check(blockers.isEmpty()) {
+                        "Non-live readiness blockers: " +
+                            blockers.joinToString {
+                                it.code
+                            }
+                    }
+
+                    val id=
+                        liveArenaController
+                            .startTeamCertificationTest(
+                                args[1],
+                                redPlayers,
+                                bluePlayers,
+                                ArmageddonType.valueOf(
+                                    args[4].uppercase()
+                                )
+                            )
+                    sender.sendMessage(
+                        "Engineering team certification arena started: " +
+                            id.value +
+                            " RED=" +
+                            args[2] +
+                            " BLUE=" +
+                            args[3] +
+                            ". This does NOT change regular /ctdjoin 1v1 matchmaking."
+                    )
+                    if(
+                        redPlayers.size>1 ||
+                        bluePlayers.size>1
+                    ) {
+                        sender.sendMessage(
+                            "Takeover certification path: have one player place a tower, disconnect that owner, let a still-active teammate upgrade or sell that tower, then reconnect the departed player and wait for snapshot recovery."
+                        )
+                    }
                 }
 
                 "stop" -> {

@@ -225,10 +225,10 @@ class BukkitNormalArenaController(
         bluePlayer: UUID,
         armageddonType: ArmageddonType
     ): ArenaId =
-        startOneVsOneInternal(
+        startTeamInternal(
             arenaIdText,
-            redPlayer,
-            bluePlayer,
+            setOf(redPlayer),
+            setOf(bluePlayer),
             armageddonType,
             resolvedSelection=null,
             allowLiveArmageddonVoting=true,
@@ -245,10 +245,10 @@ class BukkitNormalArenaController(
         pricingMode:
             PricingMode = PricingMode.NORMAL
     ): ArenaId =
-        startOneVsOneInternal(
+        startTeamInternal(
             arenaIdText,
-            redPlayer,
-            bluePlayer,
+            setOf(redPlayer),
+            setOf(bluePlayer),
             selection.type,
             resolvedSelection=selection,
             allowLiveArmageddonVoting=false,
@@ -256,10 +256,27 @@ class BukkitNormalArenaController(
                 pricingMode
         )
 
-    private fun startOneVsOneInternal(
+    fun startTeamCertificationTest(
         arenaIdText: String,
-        redPlayer: UUID,
-        bluePlayer: UUID,
+        redPlayers: Set<UUID>,
+        bluePlayers: Set<UUID>,
+        armageddonType: ArmageddonType
+    ): ArenaId =
+        startTeamInternal(
+            arenaIdText,
+            redPlayers,
+            bluePlayers,
+            armageddonType,
+            resolvedSelection=null,
+            allowLiveArmageddonVoting=true,
+            pricingMode=
+                PricingMode.NORMAL
+        )
+
+    private fun startTeamInternal(
+        arenaIdText: String,
+        redPlayers: Set<UUID>,
+        bluePlayers: Set<UUID>,
         armageddonType: ArmageddonType,
         resolvedSelection:
             ResolvedArmageddonSelection?,
@@ -268,7 +285,34 @@ class BukkitNormalArenaController(
         pricingMode:
             PricingMode
     ): ArenaId {
-        check(redPlayer!=bluePlayer)
+        check(redPlayers.isNotEmpty()) {
+            "RED team must contain at least one player"
+        }
+        check(bluePlayers.isNotEmpty()) {
+            "BLUE team must contain at least one player"
+        }
+        check(redPlayers.size<=2) {
+            "Engineering team certification harness supports at most 2 RED players"
+        }
+        check(bluePlayers.size<=2) {
+            "Engineering team certification harness supports at most 2 BLUE players"
+        }
+        check(
+            redPlayers.intersect(
+                bluePlayers
+            ).isEmpty()
+        ) {
+            "A player cannot be on both teams"
+        }
+        val allPlayers=
+            redPlayers +
+                bluePlayers
+        check(
+            allPlayers.size==
+                redPlayers.size +
+                    bluePlayers.size
+        )
+
         val arenaId=ArenaId(arenaIdText)
         check(arenaId !in handles) {
             "Arena already active: $arenaIdText"
@@ -298,7 +342,7 @@ class BukkitNormalArenaController(
             runnableArmageddonTypes()
         val armageddonVote=
             EngineeringArmageddonVoteRuntime(
-                eligiblePlayers=setOf(redPlayer,bluePlayer),
+                eligiblePlayers=allPlayers,
                 allowedTypes=voteAllowedTypes,
                 defaultType=armageddonType
             )
@@ -567,10 +611,7 @@ class BukkitNormalArenaController(
                 .fromMap(
                     arenaId,
                     world.uid,
-                    setOf(
-                        redPlayer,
-                        bluePlayer
-                    ),
+                    allPlayers,
                     preflight.mapRuntime
                 )
         val reservationResult=
@@ -670,9 +711,9 @@ class BukkitNormalArenaController(
                 runtimeState,
                 MatchBootstrapRequest(
                     redPlayers=
-                        setOf(redPlayer),
+                        redPlayers,
                     bluePlayers=
-                        setOf(bluePlayer),
+                        bluePlayers,
                     preset=preset,
                     firstGoldmineIncomeTick=
                         context.gameTick +
@@ -761,8 +802,8 @@ class BukkitNormalArenaController(
                     world
                 ).placeTeams(
                     context.mapRuntime,
-                    setOf(redPlayer),
-                    setOf(bluePlayer)
+                    redPlayers,
+                    bluePlayers
                 )
             check(placement.success) {
                 "Player placement failed: " +

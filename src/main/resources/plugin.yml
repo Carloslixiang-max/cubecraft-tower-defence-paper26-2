@@ -79,7 +79,7 @@ commands:
     permission: cubecrafttd.admin
   ctdlivetest:
     description: Start/stop a controlled Stage-4 1v1 live arena test
-    usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|stop <arenaId>|status>
+    usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|teamstart <arenaId> <red1[,red2]> <blue1[,blue2]> <wither|lightning|horde>|stop <arenaId>|status>
     permission: cubecrafttd.admin
   ctdmenu:
     description: Open Stage-4 CubeCraft TD menu projections

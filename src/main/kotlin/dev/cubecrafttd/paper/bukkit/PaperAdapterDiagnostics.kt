@@ -82,6 +82,7 @@ data class PaperAdapterDiagnostics(
                 "post-verify reset callback failures never roll back verified world state",
                 "observed regular-player queue/GUI/HUD/countdown/active-leave live evidence",
                 "observed disconnect/reconnect + departed-owner teammate tower takeover evidence",
+                "admin-only 2v1/2v2 teammate-takeover live certification harness",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",
