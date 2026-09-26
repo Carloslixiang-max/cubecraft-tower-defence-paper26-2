@@ -53,6 +53,11 @@ object EngineeringArmageddonVoteFixture {
             )
         }.isFailure
 
+        val afterRedWithdraw=
+            runtime.withdraw(red)
+        val afterBlueWithdraw=
+            runtime.withdraw(blue)
+
         return listOf(
             FixtureResult(
                 "engineering-armageddon-vote-no-vote-default",
@@ -94,6 +99,24 @@ object EngineeringArmageddonVoteFixture {
             FixtureResult(
                 "engineering-armageddon-vote-rejects-unrunnable-type",
                 unavailableRejected
+            ),
+            FixtureResult(
+                "engineering-armageddon-vote-withdraw-removes-departed-player",
+                afterRedWithdraw.count(
+                    ArmageddonType.LIGHTNING
+                )==1 &&
+                    red !in afterRedWithdraw.votes &&
+                    afterRedWithdraw.selection.type==
+                        ArmageddonType.LIGHTNING
+            ),
+            FixtureResult(
+                "engineering-armageddon-vote-empty-after-withdraw-falls-back",
+                afterBlueWithdraw.votes.isEmpty() &&
+                    afterBlueWithdraw.selection.type==
+                        ArmageddonType.WITHER &&
+                    afterBlueWithdraw.resolution==
+                        EngineeringArmageddonVoteResolution
+                            .DEFAULT_NO_VOTES
             )
         )
     }

@@ -225,6 +225,39 @@ object ArenaIsolationFixture {
                 )
             )
 
+        val playerReleaseRegistry=
+            ArenaIsolationRegistry()
+        val playerReleaseId=
+            ArenaId("player-release")
+        check(
+            playerReleaseRegistry.reserve(
+                reservation(
+                    playerReleaseId.value,
+                    world,
+                    setOf(playerA,playerB),
+                    baseMap
+                )
+            ) is ArenaReservationResult.Accepted
+        )
+        val playerReleased=
+            playerReleaseRegistry.releasePlayer(
+                playerReleaseId,
+                playerA
+            )
+        val playerReleaseSnapshot=
+            playerReleaseRegistry
+                .snapshot()
+                .single()
+        val releasedPlayerCanReserve=
+            playerReleaseRegistry.reserve(
+                reservation(
+                    "player-release-next",
+                    otherWorld,
+                    setOf(playerA),
+                    farMap
+                )
+            )
+
         return listOf(
             FixtureResult("arena-two-context-index-isolation", isolated),
             FixtureResult("arena-unregister-does-not-cross-context", bUnaffected),
@@ -269,6 +302,20 @@ object ArenaIsolationFixture {
                     reserveAfterRelease is
                         ArenaReservationResult
                             .Accepted
+            ),
+            FixtureResult(
+                "arena-reservation-release-player-updates-membership",
+                playerReleased &&
+                    playerA !in
+                        playerReleaseSnapshot.players &&
+                    playerB in
+                        playerReleaseSnapshot.players
+            ),
+            FixtureResult(
+                "arena-reservation-released-player-can-enter-other-arena",
+                releasedPlayerCanReserve is
+                    ArenaReservationResult
+                        .Accepted
             )
         )
     }

@@ -68,6 +68,13 @@ class EngineeringArmageddonVoteRuntime(
         )
     }
 
+    fun withdraw(
+        playerUuid: UUID
+    ): EngineeringArmageddonVoteSnapshot {
+        votes.remove(playerUuid)
+        return snapshot()
+    }
+
     fun snapshot(): EngineeringArmageddonVoteSnapshot {
         val resolution=resolve()
         return EngineeringArmageddonVoteSnapshot(

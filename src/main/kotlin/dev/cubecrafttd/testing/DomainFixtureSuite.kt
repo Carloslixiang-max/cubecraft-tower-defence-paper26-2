@@ -8,6 +8,8 @@ object DomainFixtureSuite {
         addAll(FarmMapImportFixture.run().let { listOf(it) })
         addAll(FarmFullRuntimeFixture.run())
         addAll(ArenaIsolationFixture.run())
+        addAll(MatchParticipantDepartureFixture.run())
+        addAll(DepartedOwnerTowerInteractionFixture.run())
         addAll(PlayerRecoveryFixture.run())
         addAll(PlayerRecoveryJournalFixture.run())
         addAll(KillAttributionFixture.run())

@@ -31,6 +31,16 @@ data class BukkitAoEPotionCommitReport(
     val cooldownReadyAtTick: Long
 )
 
+data class BukkitPlayerDepartureReport(
+    val arenaId: String,
+    val playerUuid: UUID,
+    val team: TeamId,
+    val newlyDeparted: Boolean,
+    val activePlayersRemaining: Int,
+    val releasedTowerCount: Int,
+    val allPlayersDeparted: Boolean
+)
+
 data class BukkitArenaPerformanceSnapshot(
     val arenaId: String,
     val gameTick: Long,
@@ -69,6 +79,8 @@ data class BukkitLiveArenaHandle(
         DeterministicCooldownTracker,
     val liveTickProfiler:
         ArenaTickProfiler,
+    val departedPlayers:
+        MutableSet<UUID>,
     var session:
         MatchSessionState? = null,
     var menuRouter:
@@ -183,6 +195,8 @@ class BukkitNormalArenaController(
             world.uid,
             preflight.mapRuntime
         )
+        val departedPlayers=
+            linkedSetOf<UUID>()
         val ledger=EconomyLedger()
         val runtimeState=
             NormalArenaRuntimeState
@@ -354,8 +368,20 @@ class BukkitNormalArenaController(
                 bodyMutation,
                 entityAdapter,
                 MatchPlayerRestorePort {
-                    recovery
-                        .restoreIfPossible(it)
+                    playerUuid ->
+                    if(
+                        playerUuid in
+                            departedPlayers &&
+                        playerUuid !in
+                            recovery.pending()
+                    ) {
+                        true
+                    } else {
+                        recovery
+                            .restoreIfPossible(
+                                playerUuid
+                            )
+                    }
                 }
             )
         val end=
@@ -401,6 +427,8 @@ class BukkitNormalArenaController(
                 aoeCooldowns=aoeCooldowns,
                 liveTickProfiler=
                     ArenaTickProfiler(),
+                departedPlayers=
+                    departedPlayers,
                 nextTransactionId=
                     nextTransactionId
             )
@@ -524,9 +552,15 @@ class BukkitNormalArenaController(
 
             val towerLifecycle=
                 TowerLifecycleService(
-                    context,
-                    ledger,
-                    bodyMutation
+                    context=context,
+                    economy=ledger,
+                    bodyMutation=
+                        bodyMutation,
+                    interactionPolicy=
+                        DepartedOwnerTeamTowerInteractionPolicy(
+                            context,
+                            departedPlayers
+                        )
                 )
             val towerWorldActions=
                 MatchTowerWorldActionService(
@@ -1261,7 +1295,98 @@ class BukkitNormalArenaController(
     ): Boolean =
         handleForPlayer(playerUuid) != null
 
-    private fun handleForPlayer(
+    fun markPlayerDeparted(
+        playerUuid: UUID
+    ): BukkitPlayerDepartureReport? {
+        val handle=
+            rawHandleForPlayer(
+                playerUuid
+            ) ?: return null
+        val session=
+            handle.session
+                ?: return null
+
+        val departure=
+            MatchParticipantDepartureService(
+                handle.context,
+                session,
+                handle.departedPlayers
+            ).depart(playerUuid)
+                ?: return null
+
+        if(departure.newlyDeparted) {
+            isolationRegistry.releasePlayer(
+                handle.context.arenaId,
+                playerUuid
+            )
+
+            if(
+                !handle.matchClock
+                    .isArmageddonStarted()
+            ) {
+                val vote=
+                    handle.armageddonVote
+                        .withdraw(playerUuid)
+                handle.matchClock
+                    .replaceSelectionBeforeArmageddon(
+                        vote.selection
+                    )
+            }
+        }
+
+        val releasedTowerCount=
+            handle.context.entityIndex
+                .towersByInstanceId
+                .values
+                .count {
+                    it.identity.ownerUuid==
+                        playerUuid
+                }
+
+        return BukkitPlayerDepartureReport(
+            arenaId=
+                handle.context.arenaId
+                    .value,
+            playerUuid=playerUuid,
+            team=departure.team,
+            newlyDeparted=
+                departure.newlyDeparted,
+            activePlayersRemaining=
+                departure.activePlayersRemaining,
+            releasedTowerCount=
+                releasedTowerCount,
+            allPlayersDeparted=
+                departure.activePlayersRemaining==
+                    0
+        )
+    }
+
+    fun stopIfNoActivePlayers(
+        arenaIdText: String
+    ): MatchEndReport? {
+        val arenaId=
+            ArenaId(arenaIdText)
+        val handle=
+            handles[arenaId]
+                ?: return null
+        val session=
+            handle.session
+                ?: return null
+        if(session.players.isNotEmpty()) {
+            return null
+        }
+
+        return stop(
+            arenaIdText,
+            MatchOutcome.Tie(
+                TimeoutTiePolicy
+                    .ENGINEERING_CUSTOM,
+                "all_players_departed_engineering_cleanup"
+            )
+        )
+    }
+
+    private fun rawHandleForPlayer(
         playerUuid: UUID
     ): BukkitLiveArenaHandle? =
         handles.values.firstOrNull {
@@ -1271,18 +1396,30 @@ class BukkitNormalArenaController(
                 it.context.blueTeam.players
         }
 
+    private fun handleForPlayer(
+        playerUuid: UUID
+    ): BukkitLiveArenaHandle? =
+        rawHandleForPlayer(
+            playerUuid
+        )?.takeIf {
+            playerUuid !in
+                it.departedPlayers &&
+            (
+                it.session==null ||
+                playerUuid in
+                    it.session!!.players
+            )
+        }
+
     fun handleMenuAction(
         invocation:
             dev.cubecrafttd.ui
                 .MenuActionInvocation
     ): Any {
         val handle=
-            handles.values.firstOrNull {
-                invocation.playerUuid in
-                    it.context.redTeam.players ||
-                invocation.playerUuid in
-                    it.context.blueTeam.players
-            } ?: error(
+            handleForPlayer(
+                invocation.playerUuid
+            ) ?: error(
                 "Player is not in an active live arena"
             )
 

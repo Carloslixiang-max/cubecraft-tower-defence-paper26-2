@@ -149,18 +149,17 @@ data class ArenaSpatialReservation(
     val players: Set<UUID>,
     val envelope: ArenaSpatialEnvelope
 ) {
-    init {
-        require(players.isNotEmpty())
-    }
-
     companion object {
         fun fromMap(
             arenaId: ArenaId,
             worldId: UUID,
             players: Set<UUID>,
             map: MapRuntimeDefinition
-        ): ArenaSpatialReservation =
-            ArenaSpatialReservation(
+        ): ArenaSpatialReservation {
+            require(players.isNotEmpty()) {
+                "A new arena reservation requires at least one player"
+            }
+            return ArenaSpatialReservation(
                 arenaId=arenaId,
                 worldId=worldId,
                 players=players.toSet(),
@@ -168,6 +167,7 @@ data class ArenaSpatialReservation(
                     ArenaSpatialEnvelopeResolver
                         .fromMap(map)
             )
+        }
     }
 }
 
@@ -308,6 +308,26 @@ class ArenaIsolationRegistry {
             request.arenaId
         ]=request
         return ArenaReservationResult.Accepted
+    }
+
+    fun releasePlayer(
+        arenaId: ArenaId,
+        playerUuid: UUID
+    ): Boolean {
+        val existing=
+            reservations[arenaId]
+                ?: return false
+        if(playerUuid !in existing.players) {
+            return false
+        }
+
+        reservations[arenaId]=
+            existing.copy(
+                players=
+                    existing.players -
+                        playerUuid
+            )
+        return true
     }
 
     fun release(
