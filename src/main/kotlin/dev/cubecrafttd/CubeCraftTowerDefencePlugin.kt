@@ -406,7 +406,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v59 enabled; " +
+            "CubeCraftTowerDefence shell v60 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -457,7 +457,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v59 disabled; " +
+            "CubeCraftTowerDefence shell v60 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -491,10 +491,15 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v59, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v60, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
-                    "fallbackMissing=${fallbackMissing.size}, " +
+                    "reuse=" +
+                    (if(::liveArenaController.isInitialized)
+                        liveArenaController.farmReuseStatus().summary()
+                    else
+                        "uninitialized") +
+                    ", fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
                     "stage4=${stage4Gate.status().summary()}"
             )
@@ -525,6 +530,47 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 "CubeCraft TD Stage-4: " +
                     stage4Gate.status().summary()
             )
+            true
+        }
+
+        "ctdreuse" -> {
+            if(
+                args.size!=1 ||
+                !args[0].equals(
+                    "status",
+                    ignoreCase=true
+                )
+            ) {
+                sender.sendMessage(
+                    "Usage: /ctdreuse status"
+                )
+            } else {
+                val reuse=
+                    liveArenaController
+                        .farmReuseStatus()
+                sender.sendMessage(
+                    "Farm reuse gate: " +
+                        reuse.summary()
+                )
+                if(
+                    reuse.hardTowerConflictKeys
+                        .isNotEmpty()
+                ) {
+                    sender.sendMessage(
+                        "Hard tower-body residue requires a verified map repair/reset before this gate may be cleared."
+                    )
+                }
+                if(
+                    reuse.liveTrackedEntityResidue
+                        .isNotEmpty()
+                ) {
+                    sender.sendMessage(
+                        "Live tracked-entity residue UUIDs: " +
+                            reuse.liveTrackedEntityResidue
+                                .joinToString()
+                    )
+                }
+            }
             true
         }
 

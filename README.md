@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v59 engineering playtest shell**
-- Pure-domain baseline: **424/424 fixtures PASS**
+- Current shell lineage: **v60 engineering playtest shell**
+- Pure-domain baseline: **428/428 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -58,7 +58,8 @@ The codebase already contains substantial runtime work, including:
 - pregame Pricing voting through `/ctdvote pricing <normal|double|quick>`. No-vote resolves to Normal as recovered from the historical client log. Double Income now flows through the real live runtime—double Goldmine income, mob-kill Coins and sent-mob EXP—while Quick Start uses the recovered Mature-era 1500 Coins / 100 EXP starting balance and otherwise Normal income. The exact original tie rule remains unresolved, so a tied highest vote uses an explicit Engineering Normal fallback rather than pretending the rule is known;
 - a safe pregame voting GUI: queued/countdown players can now run `/ctdvote` with no arguments and click Armageddon/Pricing choices directly. The menu refreshes immediately and marks the player's current choices. It hides concrete Armageddon choices whose fallback composition is not runnable, while Random remains available over the runnable set. Historical evidence confirms an End Crystal inventory entry point in the original game, but the exact internal slot/icon layout is not recovered strongly enough, so this current GUI layout is explicitly Engineering-only and does not mutate the player's pre-queue inventory;
 - a non-invasive Engineering queue HUD in the action bar: waiting players see their current FIFO position plus their Armageddon/Pricing choices (or the historically recovered no-vote defaults), while matched players see the 3 → 2 → 1 start countdown and the same vote state. The HUD is cleared on leave, removal, shutdown handoff, or live arena start and never occupies an inventory slot;
-- stronger round teardown verification for repeated Farm reuse: after tower bodies are restored and all tracked mobs/guards/displays/projectiles receive their removal calls, teardown performs a second independent Paper-world presence scan over the original tracked UUID set. A tracked entity that still exists is reported separately as world residue and forces the teardown report out of `fullyCleanNow`, preventing a successful remove return from being treated as proof of a clean round.
+- stronger round teardown verification for repeated Farm reuse: after tower bodies are restored and all tracked mobs/guards/displays/projectiles receive their removal calls, teardown performs a second independent Paper-world presence scan over the original tracked UUID set. A tracked entity that still exists is reported separately as world residue and forces the teardown report out of `fullyCleanNow`, preventing a successful remove return from being treated as proof of a clean round;
+- a persistent Farm reuse interlock backed by `farm-reuse-gate.yml`. New admin-started or queued matches are refused after tracked entity residue or tower-body restore conflicts. Tracked entity UUIDs are rechecked against the live server and automatically disappear from the gate once the entities are truly gone. Tower-body conflicts are hard residue and survive restarts; v60 intentionally provides only `/ctdreuse status`, not an unsafe force-clear. A verified reset/repair flow remains a separate live gate before hard residue can be cleared.
 
 ## Build
 
@@ -142,6 +143,7 @@ Administrative/test commands include:
 - `/ctdmapcheck`
 - `/ctdready`
 - `/ctdlivegate`
+- `/ctdreuse status`
 - `/ctdsnapshotcheck [restart-arm|restart-status]`
 - `/ctdperf [arenaId|reset [arenaId]]`
 - `/ctdpreflight`

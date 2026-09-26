@@ -150,10 +150,16 @@ class BukkitOneVsOneQueueService(
                 playerUuid
             )
 
+        val reuse=
+            controller
+                .farmReuseStatus()
         val blocker=
-            nonLiveBlockers()
-                .firstOrNull()
-                ?.code
+            if(reuse.blocked)
+                "FARM_REUSE_BLOCKED"
+            else
+                nonLiveBlockers()
+                    .firstOrNull()
+                    ?.code
 
         return BukkitQueueJoinReport(
             added=joined.added,
@@ -498,6 +504,19 @@ class BukkitOneVsOneQueueService(
                 return
             }
 
+            val reuse=
+                controller
+                    .farmReuseStatus()
+            if(reuse.blocked) {
+                cancelPendingCountdown(
+                    emptySet(),
+                    "TD start countdown cancelled: Farm reuse is blocked by previous teardown residue (" +
+                        reuse.summary() +
+                        ")."
+                )
+                return
+            }
+
             if(nonLiveBlockers().isNotEmpty()) {
                 cancelPendingCountdown(
                     emptySet(),
@@ -528,6 +547,11 @@ class BukkitOneVsOneQueueService(
         if(
             controller.activeArenaIds()
                 .isNotEmpty()
+        ) return
+        if(
+            controller
+                .farmReuseStatus()
+                .blocked
         ) return
         if(nonLiveBlockers().isNotEmpty()) {
             return

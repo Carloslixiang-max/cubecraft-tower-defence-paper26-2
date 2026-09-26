@@ -51,7 +51,8 @@ data class PaperAdapterDiagnostics(
                 "safe pregame vote GUI projection and Bukkit bridge",
                 "non-invasive pregame queue/countdown action-bar HUD",
                 "pregame GUI filtering for unrunnable Armageddon modes",
-                "post-teardown tracked-entity residue verification"
+                "post-teardown tracked-entity residue verification",
+                "persistent Farm reuse interlock across restarts"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",
@@ -60,6 +61,7 @@ data class PaperAdapterDiagnostics(
                 "production GUI icon/lore fidelity",
                 "match-end title/menu cleanup real-server certification",
                 "consecutive-round world residue/reuse real-server certification",
+                "verified safe Farm reset/repair path for hard tower-body residue",
                 "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification",
                 "player departure/reconnect and teammate tower takeover certification",
                 "restart recovery",

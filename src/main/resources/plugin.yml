@@ -37,6 +37,10 @@ commands:
     description: Show automatically recorded Stage-4 live evidence
     usage: /ctdlivegate
     permission: cubecrafttd.admin
+  ctdreuse:
+    description: Show persistent Farm arena reuse residue gate status
+    usage: /ctdreuse status
+    permission: cubecrafttd.admin
   ctdsnapshotcheck:
     description: Validate live snapshot round-trip or arm/check a real cross-restart recovery probe
     usage: /ctdsnapshotcheck [restart-arm|restart-status]

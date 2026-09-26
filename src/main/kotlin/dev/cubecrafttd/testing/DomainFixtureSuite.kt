@@ -44,6 +44,7 @@ object DomainFixtureSuite {
         addAll(PlayerCombatPotionFixture.run())
         addAll(ProgressionShareStatsFixture.run())
         addAll(ArenaTeardownFixture.run())
+        addAll(FarmReuseGateFixture.run())
         addAll(NormalArenaLoopFixture.run())
         addAll(MatchModePresetFixture.run())
         addAll(GuardIndexFixture.run())

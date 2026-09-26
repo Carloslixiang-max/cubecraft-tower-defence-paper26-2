@@ -131,6 +131,28 @@ class BukkitNormalArenaController(
     private val isolationRegistry=
         ArenaIsolationRegistry()
 
+    private val farmReusePersistence=
+        BukkitFarmReuseGatePersistence(
+            java.io.File(
+                plugin.dataFolder,
+                "farm-reuse-gate.yml"
+            )
+        )
+
+    private val farmReuseGate=
+        FarmReuseGate(
+            initial=
+                farmReusePersistence.load(),
+            entityPresence=
+                TrackedEntityPresencePort {
+                    uuid ->
+                    plugin.server
+                        .getEntity(uuid) != null
+                },
+            persist=
+                farmReusePersistence::save
+        )
+
     private val handles=
         linkedMapOf<
             ArenaId,
@@ -142,6 +164,18 @@ class BukkitNormalArenaController(
         handles.keys
             .map { it.value }
             .sorted()
+
+    fun farmReuseStatus():
+        FarmReuseGateSnapshot =
+        farmReuseGate.snapshot()
+
+    fun clearFarmReuseAfterVerifiedWorldReset() {
+        check(handles.isEmpty()) {
+            "Cannot clear Farm reuse gate while an arena is active"
+        }
+        farmReuseGate
+            .clearAfterVerifiedWorldReset()
+    }
 
     fun trackedMob(
         entityUuid: UUID
@@ -214,6 +248,13 @@ class BukkitNormalArenaController(
         val arenaId=ArenaId(arenaIdText)
         check(arenaId !in handles) {
             "Arena already active: $arenaIdText"
+        }
+
+        val reuse=
+            farmReuseGate.snapshot()
+        check(!reuse.blocked) {
+            "Farm reuse blocked by previous teardown residue: " +
+                reuse.summary()
         }
 
         val armageddonMissing=
@@ -1878,6 +1919,11 @@ class BukkitNormalArenaController(
                         handle.context,
                         outcome
                     )
+
+            farmReuseGate
+                .record(
+                    report.teardown
+                )
 
             stage4Gate
                 .recordArenaRoundTrip(
