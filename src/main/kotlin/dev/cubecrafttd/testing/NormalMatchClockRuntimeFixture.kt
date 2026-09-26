@@ -83,6 +83,43 @@ object NormalMatchClockRuntimeFixture {
         val end=
             runtime.tick(context,guards)
 
+        val replacementRuntime=
+            NormalMatchClockRuntime(
+                startGameTick=0L,
+                selection=
+                    ResolvedArmageddonSelection(
+                        ArmageddonType.WITHER,
+                        ArmageddonSelectionSource
+                            .ENGINEERING_TEST
+                    ),
+                tiePolicy=
+                    TimeoutTiePolicy.DRAW,
+                armageddonPort=
+                    ArmageddonStartPort {
+                        _,_,_ -> Unit
+                    }
+            )
+        val replacement=
+            replacementRuntime
+                .replaceSelectionBeforeArmageddon(
+                    ResolvedArmageddonSelection(
+                        ArmageddonType.HORDE,
+                        ArmageddonSelectionSource
+                            .ENGINEERING_PLAYER_VOTE_RESULT
+                    )
+                )
+        val lockAfterStart=
+            runCatching {
+                runtime
+                    .replaceSelectionBeforeArmageddon(
+                        ResolvedArmageddonSelection(
+                            ArmageddonType.HORDE,
+                            ArmageddonSelectionSource
+                                .ENGINEERING_PLAYER_VOTE_RESULT
+                        )
+                    )
+            }.isFailure
+
         return listOf(
             FixtureResult(
                 "match-clock-before-25m",
@@ -129,6 +166,18 @@ object NormalMatchClockRuntimeFixture {
                 runtime.selection().source==
                     ArmageddonSelectionSource
                         .EXPLICIT_VOTE_RESULT
+            ),
+            FixtureResult(
+                "match-clock-selection-replaceable-before-armageddon",
+                replacement.type==
+                    ArmageddonType.HORDE &&
+                    replacementRuntime.selection().source==
+                        ArmageddonSelectionSource
+                            .ENGINEERING_PLAYER_VOTE_RESULT
+            ),
+            FixtureResult(
+                "match-clock-selection-locks-after-armageddon",
+                lockAfterStart
             )
         )
     }

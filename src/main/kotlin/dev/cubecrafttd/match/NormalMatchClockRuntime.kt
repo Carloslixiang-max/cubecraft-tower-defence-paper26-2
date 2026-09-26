@@ -6,7 +6,9 @@ import dev.cubecrafttd.castle.GuardRuntime
 enum class ArmageddonSelectionSource {
     EXPLICIT_VOTE_RESULT,
     RANDOM_RESULT_ALREADY_RESOLVED,
-    ENGINEERING_TEST
+    ENGINEERING_TEST,
+    ENGINEERING_PLAYER_VOTE_RESULT,
+    ENGINEERING_VOTE_FALLBACK
 }
 
 data class ResolvedArmageddonSelection(
@@ -30,15 +32,18 @@ class NormalMatchClockRuntime(
         NormalMatchTiming()
 ) {
     private val startTick=startGameTick
-    private val selected=selection
+    private var selected=selection
     private val timeoutTiePolicy=tiePolicy
-    private val orchestrator=
+    private val timingConfig=timing
+    private val armageddonStartPort=
+        armageddonPort
+    private var orchestrator=
         NormalMatchOrchestrator(
-            timing=timing,
+            timing=timingConfig,
             armageddonType=
                 selection.type,
             armageddonPort=
-                armageddonPort
+                armageddonStartPort
         )
 
     init {
@@ -68,6 +73,25 @@ class NormalMatchClockRuntime(
         context: ArenaContext
     ): Long =
         context.gameTick-startTick
+
+    fun replaceSelectionBeforeArmageddon(
+        selection:
+            ResolvedArmageddonSelection
+    ): ResolvedArmageddonSelection {
+        check(!isArmageddonStarted()) {
+            "Armageddon selection is locked after activation"
+        }
+        selected=selection
+        orchestrator=
+            NormalMatchOrchestrator(
+                timing=timingConfig,
+                armageddonType=
+                    selection.type,
+                armageddonPort=
+                    armageddonStartPort
+            )
+        return selected
+    }
 
     fun selection():
         ResolvedArmageddonSelection =

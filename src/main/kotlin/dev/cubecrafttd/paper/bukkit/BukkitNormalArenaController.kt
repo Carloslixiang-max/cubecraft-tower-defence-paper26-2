@@ -59,6 +59,8 @@ data class BukkitLiveArenaHandle(
         MobKillRewardService,
     val matchClock:
         NormalMatchClockRuntime,
+    val armageddonVote:
+        EngineeringArmageddonVoteRuntime,
     val armageddonRuntime:
         BukkitArenaArmageddonRuntime,
     val progressionService:
@@ -148,6 +150,20 @@ class BukkitNormalArenaController(
                     it.key
                 }
         }
+
+        val voteAllowedTypes=
+            ArmageddonType.entries
+                .filterTo(linkedSetOf()) {
+                    ArmageddonFallbackValidator
+                        .validate(it,fallback)
+                        .isEmpty()
+                }
+        val armageddonVote=
+            EngineeringArmageddonVoteRuntime(
+                eligiblePlayers=setOf(redPlayer,bluePlayer),
+                allowedTypes=voteAllowedTypes,
+                defaultType=armageddonType
+            )
 
         val preflight=
             BukkitLiveCompositionPreflight(
@@ -357,11 +373,9 @@ class BukkitNormalArenaController(
                 startGameTick=
                     context.gameTick,
                 selection=
-                    ResolvedArmageddonSelection(
-                        armageddonType,
-                        ArmageddonSelectionSource
-                            .ENGINEERING_TEST
-                    ),
+                    armageddonVote
+                        .snapshot()
+                        .selection,
                 tiePolicy=
                     TimeoutTiePolicy.DRAW,
                 armageddonPort=
@@ -378,6 +392,8 @@ class BukkitNormalArenaController(
                 endCoordinator=end,
                 mobKillRewards=rewards,
                 matchClock=matchClock,
+                armageddonVote=
+                    armageddonVote,
                 armageddonRuntime=
                     armageddonRuntime,
                 progressionService=
@@ -791,6 +807,13 @@ class BukkitNormalArenaController(
             "settings" ->
                 DynamicMatchMenus
                     .settings(player)
+            "armageddon" ->
+                DynamicMatchMenus
+                    .armageddonVote(
+                        playerUuid,
+                        handle.armageddonVote.snapshot(),
+                        handle.matchClock.isArmageddonStarted()
+                    )
             "hotbar" ->
                 DynamicMatchMenus
                     .hotbarEditor(player)
@@ -1270,6 +1293,26 @@ class BukkitNormalArenaController(
             playerState?.interaction
                 ?.towerPlacement
                 ?.pending != null
+
+        if(
+            invocation.actionId.startsWith(
+                "armageddon:vote:"
+            )
+        ) {
+            check(!handle.matchClock.isArmageddonStarted()) {
+                "Armageddon vote is locked after activation"
+            }
+            val type=ArmageddonType.valueOf(
+                invocation.actionId.substringAfterLast(':').uppercase()
+            )
+            val receipt=handle.armageddonVote.cast(
+                invocation.playerUuid,type
+            )
+            handle.matchClock.replaceSelectionBeforeArmageddon(
+                receipt.snapshot.selection
+            )
+            return receipt
+        }
 
         if(
             invocation.actionId

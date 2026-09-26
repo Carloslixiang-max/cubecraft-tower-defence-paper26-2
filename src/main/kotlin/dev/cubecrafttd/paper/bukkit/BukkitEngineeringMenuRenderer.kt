@@ -42,6 +42,12 @@ class BukkitEngineeringMenuRenderer :
             actionId.startsWith(
                 "path:"
             ) -> Material.PAPER
+            actionId=="armageddon:vote:wither" ->
+                Material.WITHER_SKELETON_SKULL
+            actionId=="armageddon:vote:lightning" ->
+                Material.LIGHTNING_ROD
+            actionId=="armageddon:vote:horde" ->
+                Material.ZOMBIE_HEAD
             actionId.startsWith(
                 "nav:"
             ) -> Material.NETHER_STAR

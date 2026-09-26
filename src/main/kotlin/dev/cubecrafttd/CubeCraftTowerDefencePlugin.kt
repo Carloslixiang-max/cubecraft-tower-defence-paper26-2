@@ -229,6 +229,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                                 "hotbar:"
                                             ) ->
                                             "hotbar"
+                                        invocation.actionId
+                                            .startsWith(
+                                                "armageddon:"
+                                            ) ->
+                                            "armageddon"
                                         else -> null
                                     }
 
@@ -247,7 +252,21 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     }
                                 }
                                 player?.sendMessage(
-                                    "TD action: $result"
+                                    if(
+                                        result is
+                                            dev.cubecrafttd.match
+                                                .EngineeringArmageddonVoteReceipt
+                                    ) {
+                                        "Armageddon vote: " +
+                                            result.newVote +
+                                            "; resolved=" +
+                                            result.snapshot.selection.type +
+                                            "; rule=" +
+                                            result.snapshot.resolution +
+                                            " (Engineering)"
+                                    } else {
+                                        "TD action: $result"
+                                    }
                                 )
                             }
                         }
@@ -314,7 +333,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val pendingRecovery = recoveryJournal.loadAll().size
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v49 enabled; " +
+            "CubeCraftTowerDefence shell v50 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -362,7 +381,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v49 disabled; " +
+            "CubeCraftTowerDefence shell v50 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -375,7 +394,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ): Boolean = when (command.name.lowercase()) {
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v49, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v50, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "fallbackMissing=${fallbackMissing.size}, " +
                     "readiness=${readinessService.inspect().summary()}, " +
@@ -1158,7 +1177,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         if(args.size!=1) {
             sender.sendMessage(
-                "Usage: /ctdmenu <builder3|builder5|summoner|progression|bazaar|settings>"
+                "Usage: /ctdmenu <builder3|builder5|summoner|progression|bazaar|settings|armageddon>"
             )
             return
         }
@@ -1176,7 +1195,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 "summoner",
                 "progression",
                 "bazaar",
-                "settings" ->
+                "settings",
+                "armageddon" ->
                     runCatching {
                         liveArenaController
                             .dynamicMenuForPlayer(
@@ -1191,7 +1211,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     }
                 else -> {
                     sender.sendMessage(
-                        "Unknown menu. Use builder3, builder5, summoner, progression, bazaar, or settings."
+                        "Unknown menu. Use builder3, builder5, summoner, progression, bazaar, settings, or armageddon."
                     )
                     return
                 }
@@ -1265,6 +1285,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             )
                     sender.sendMessage(
                         "Stage-4 live test arena started: ${id.value}. " +
+                            "${args[4].uppercase()} is the Engineering default; players can vote " +
+                            "for a runnable concrete Armageddon in Settings -> Armageddon vote. " +
                             "This is an engineering test controller, not production matchmaking."
                     )
                 }

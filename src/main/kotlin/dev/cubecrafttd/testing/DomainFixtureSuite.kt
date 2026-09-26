@@ -63,6 +63,7 @@ object DomainFixtureSuite {
         addAll(TowerLineOfSightFallbackFixture.run())
         addAll(MobLifecycleCleanupFixture.run())
         addAll(NormalMatchClockRuntimeFixture.run())
+        addAll(EngineeringArmageddonVoteFixture.run())
         addAll(ArmageddonFallbackFixture.run())
         addAll(ArmageddonLiveRuntimeServicesFixture.run())
         addAll(ArmageddonFirstEventDelayFixture.run())

@@ -1,7 +1,10 @@
 package dev.cubecrafttd.ui
 
+import dev.cubecrafttd.match.ArmageddonType
+import dev.cubecrafttd.match.EngineeringArmageddonVoteSnapshot
 import dev.cubecrafttd.match.PlayerMatchSessionState
 import dev.cubecrafttd.mob.MobDefinitionRepository
+import java.util.UUID
 import dev.cubecrafttd.mob.RecommendedMatureMobDefinitions
 
 /**
@@ -237,6 +240,13 @@ object DynamicMatchMenus {
                     "In-game Point purchases: ${model.allowInGamePointPurchases}"
                 ),
                 MenuSlot(
+                    18,
+                    "nav:armageddon",
+                    UiEvidenceStatus
+                        .ENGINEERING_FALLBACK,
+                    "Armageddon vote (Engineering)"
+                ),
+                MenuSlot(
                     22,
                     "nav:hotbar",
                     UiEvidenceStatus
@@ -244,6 +254,50 @@ object DynamicMatchMenus {
                     "Edit hotbar layout"
                 )
             )
+        )
+    }
+
+    fun armageddonVote(
+        playerUuid: UUID,
+        snapshot: EngineeringArmageddonVoteSnapshot,
+        locked: Boolean
+    ): MenuDefinition {
+        val positions=mapOf(
+            ArmageddonType.WITHER to 11,
+            ArmageddonType.LIGHTNING to 13,
+            ArmageddonType.HORDE to 15
+        )
+        val slots=buildList {
+            ArmageddonType.entries
+                .filter { it in snapshot.allowedTypes }
+                .forEach { type ->
+                    val ownVote=snapshot.votes[playerUuid]==type
+                    add(
+                        MenuSlot(
+                            positions.getValue(type),
+                            "armageddon:vote:" + type.name.lowercase(),
+                            UiEvidenceStatus.ENGINEERING_FALLBACK,
+                            type.name + " — " + snapshot.count(type) +
+                                " vote(s)" +
+                                (if(ownVote) " (your vote)" else "") +
+                                (if(locked) " [LOCKED]" else "")
+                        )
+                    )
+                }
+            add(
+                MenuSlot(
+                    22,
+                    "nav:settings",
+                    UiEvidenceStatus.ENGINEERING_FALLBACK,
+                    "Back to Settings"
+                )
+            )
+        }
+        return MenuDefinition(
+            title="Armageddon vote · " + snapshot.selection.type,
+            size=27,
+            slots=slots,
+            evidenceStatus=UiEvidenceStatus.ENGINEERING_FALLBACK
         )
     }
 

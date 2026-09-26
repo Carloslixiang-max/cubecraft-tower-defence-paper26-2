@@ -39,7 +39,8 @@ data class PaperAdapterDiagnostics(
                 "same-world arena spatial/player reservation guard",
                 "cross-restart recovery verification path",
                 "route-facing live entity orientation",
-                "tracked-mob vanilla side-effect shielding"
+                "tracked-mob vanilla side-effect shielding",
+                "engineering Armageddon player vote bridge"
             ),
             stillLiveGateRequired = linkedSetOf(
                 "player snapshot lossless roundtrip on real server",

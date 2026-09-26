@@ -36,6 +36,35 @@ object DynamicMatchMenusFixture {
         val bazaarUnlocked=
             DynamicMatchMenus
                 .bazaar(player)
+        val settings=
+            DynamicMatchMenus
+                .settings(player)
+        val otherPlayer=
+            UUID.fromString(
+                "00000000-0000-0000-0000-000000032002"
+            )
+        val voteRuntime=
+            EngineeringArmageddonVoteRuntime(
+                eligiblePlayers=
+                    setOf(
+                        player.playerUuid,
+                        otherPlayer
+                    ),
+                allowedTypes=
+                    ArmageddonType.entries.toSet(),
+                defaultType=
+                    ArmageddonType.WITHER
+            )
+        voteRuntime.cast(
+            player.playerUuid,
+            ArmageddonType.LIGHTNING
+        )
+        val armageddon=
+            DynamicMatchMenus.armageddonVote(
+                player.playerUuid,
+                voteRuntime.snapshot(),
+                locked=false
+            )
 
         return listOf(
             FixtureResult(
@@ -72,11 +101,31 @@ object DynamicMatchMenusFixture {
                     }
             ),
             FixtureResult(
+                "dynamic-settings-links-engineering-armageddon-vote",
+                settings.slots.any {
+                    it.actionId=="nav:armageddon"
+                }
+            ),
+            FixtureResult(
+                "dynamic-armageddon-vote-projects-count-and-player-choice",
+                armageddon.slots.any {
+                    it.actionId=="armageddon:vote:lightning" &&
+                    it.displayName
+                        ?.contains(
+                            "1 vote(s) (your vote)"
+                        )==true
+                } &&
+                    armageddon.evidenceStatus==
+                        UiEvidenceStatus.ENGINEERING_FALLBACK
+            ),
+            FixtureResult(
                 "dynamic-match-menu-layouts-remain-engineering",
                 listOf(
                     summoner,
                     progression,
-                    bazaarLocked
+                    bazaarLocked,
+                    settings,
+                    armageddon
                 ).all {
                     it.evidenceStatus==
                         UiEvidenceStatus
