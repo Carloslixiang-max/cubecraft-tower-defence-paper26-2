@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v63 engineering playtest shell**
-- Pure-domain baseline: **436/436 fixtures PASS**
+- Current shell lineage: **v64 engineering playtest shell**
+- Pure-domain baseline: **438/438 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -62,7 +62,8 @@ The codebase already contains substantial runtime work, including:
 - a persistent Farm reuse interlock backed by `farm-reuse-gate.yml`. New admin-started or queued matches are refused after tracked entity residue or tower-body restore conflicts. Tracked entity UUIDs are rechecked against the live server and automatically disappear from the gate once the entities are truly gone. Tower-body conflicts are hard residue and survive restarts;
 - a crash-conscious verified Farm repair/reset path through `/ctdresetfarm <verified-sha-prefix>`. It is available only while the reuse gate is blocked, with no active TD arena/map operation and no still-live tracked entity residue. Before scheduling it persists a reset-in-progress maintenance lock; the reset scans the full verified schematic volume without mutation, snapshots only differing blocks, applies differences in bounded batches, then verifies the complete volume. APPLY/VERIFY failures attempt to roll back captured BlockState snapshots and keep the persistent gate locked. Only a fully verified completion clears tower-body residue and the maintenance lock;
 - v62 hardens player-state transactions for repeated real-server rounds: a new match capture may replace only a fully RESTORED prior snapshot tombstone, so a player can safely enter a later round without weakening protection against unresolved CAPTURED/RESTORING snapshots. If `prepareForMatch` fails after a snapshot has been captured (and, for live play, durably journaled), recovery is attempted immediately. A successful rollback removes the durable journal entry; a failed rollback leaves the snapshot pending for reconnect/recovery instead of silently stranding partially-mutated player state;
-- v63 makes restart recovery fail closed without making one damaged snapshot crash the entire plugin. Valid recovery files are still loaded, unreadable `.snapshot` files are preserved byte-for-byte and reported, and startup latches a `RECOVERY_JOURNAL_CORRUPT` readiness blocker. Normal queue countdown/start and admin live-start paths therefore cannot begin another TD match until the damaged recovery file is repaired/restored and the server is restarted.
+- v63 makes restart recovery fail closed without making one damaged snapshot crash the entire plugin. Valid recovery files are still loaded, unreadable `.snapshot` files are preserved byte-for-byte and reported, and startup latches a `RECOVERY_JOURNAL_CORRUPT` readiness blocker. Normal queue countdown/start and admin live-start paths therefore cannot begin another TD match until the damaged recovery file is repaired/restored and the server is restarted;
+- v64 closes the world-side crash-restart gap. Every live TD mob, Guard anchor and Engineering tower summon is marked with a persistent entity scoreboard tag. If the previous plugin process did not shut down cleanly, startup persists an unclean-restart Farm reuse hard gate instead of trusting an absent teardown report. The verified Farm reset now loads/scans the whole schematic volume, removes only persistently-tagged TD entities from that volume, applies block differences, fully verifies the map, verifies that no tagged TD entity survived, and only then clears the crash/reuse gate.
 
 ## Build
 

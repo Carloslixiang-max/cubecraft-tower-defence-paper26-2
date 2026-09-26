@@ -8,6 +8,8 @@ data class FarmReuseGatePersistentState(
     val suspectTrackedEntities:
         Set<UUID> = emptySet(),
     val verifiedResetInProgress:
+        Boolean = false,
+    val uncleanRestartSuspectedResidue:
         Boolean = false
 )
 
@@ -17,11 +19,14 @@ data class FarmReuseGateSnapshot(
     val liveTrackedEntityResidue:
         Set<UUID>,
     val verifiedResetInProgress:
-        Boolean
+        Boolean,
+    val uncleanRestartSuspectedResidue:
+        Boolean = false
 ) {
     val blocked: Boolean
         get() =
             verifiedResetInProgress ||
+                uncleanRestartSuspectedResidue ||
                 hardTowerConflictKeys.isNotEmpty() ||
                 liveTrackedEntityResidue.isNotEmpty()
 
@@ -29,6 +34,8 @@ data class FarmReuseGateSnapshot(
         "blocked=" + blocked +
             ", resetInProgress=" +
             verifiedResetInProgress +
+            ", uncleanRestartResidue=" +
+            uncleanRestartSuspectedResidue +
             ", towerConflicts=" +
             hardTowerConflictKeys.size +
             ", liveEntityResidue=" +
@@ -73,6 +80,14 @@ class FarmReuseGate(
 
     private var verifiedResetInProgress=
         initial.verifiedResetInProgress
+
+    private var uncleanRestartSuspectedResidue=
+        initial.uncleanRestartSuspectedResidue
+
+    fun markUncleanRestartSuspectedResidue() {
+        uncleanRestartSuspectedResidue=true
+        save()
+    }
 
     fun beginVerifiedWorldReset() {
         verifiedResetInProgress=true
@@ -120,6 +135,7 @@ class FarmReuseGate(
         hardTowerConflictKeys.clear()
         suspectTrackedEntities.clear()
         verifiedResetInProgress=false
+        uncleanRestartSuspectedResidue=false
         save()
     }
 
@@ -149,7 +165,9 @@ class FarmReuseGate(
                 suspectTrackedEntities
                     .toSet(),
             verifiedResetInProgress=
-                verifiedResetInProgress
+                verifiedResetInProgress,
+            uncleanRestartSuspectedResidue=
+                uncleanRestartSuspectedResidue
         )
 
     private fun save() {
@@ -162,7 +180,9 @@ class FarmReuseGate(
                     suspectTrackedEntities
                         .toSet(),
                 verifiedResetInProgress=
-                    verifiedResetInProgress
+                    verifiedResetInProgress,
+                uncleanRestartSuspectedResidue=
+                    uncleanRestartSuspectedResidue
             )
         )
     }

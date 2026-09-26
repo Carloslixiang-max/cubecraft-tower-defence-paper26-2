@@ -40,6 +40,7 @@ data class PaperAdapterDiagnostics(
                 "cross-restart recovery verification path",
                 "repeat-match snapshot recapture and prepare-failure rollback hardening",
                 "fail-closed corrupt recovery-journal readiness gate",
+                "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "route-facing live entity orientation",
                 "tracked-mob vanilla side-effect shielding",
                 "engineering Armageddon player vote bridge",

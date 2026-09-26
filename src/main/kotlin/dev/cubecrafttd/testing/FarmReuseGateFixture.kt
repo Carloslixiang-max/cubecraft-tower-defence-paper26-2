@@ -98,6 +98,36 @@ object FarmReuseGateFixture {
         val cleared=
             gate.snapshot()
 
+        var crashPersisted=
+            FarmReuseGatePersistentState()
+        val crashGate=
+            FarmReuseGate(
+                entityPresence=
+                    TrackedEntityPresencePort {
+                        false
+                    },
+                persist={
+                    crashPersisted=it
+                }
+            )
+        crashGate
+            .markUncleanRestartSuspectedResidue()
+        val crashBlocked=
+            crashGate.snapshot()
+        val crashReloaded=
+            FarmReuseGate(
+                initial=crashPersisted,
+                entityPresence=
+                    TrackedEntityPresencePort {
+                        false
+                    }
+            ).snapshot()
+        crashGate.beginVerifiedWorldReset()
+        crashGate
+            .clearAfterVerifiedWorldReset()
+        val crashCleared=
+            crashGate.snapshot()
+
         return listOf(
             FixtureResult(
                 "farm-reuse-gate-blocks-on-teardown-residue",
@@ -156,6 +186,23 @@ object FarmReuseGateFixture {
                         .isEmpty() &&
                     !persisted
                         .verifiedResetInProgress
+            ),
+            FixtureResult(
+                "farm-reuse-gate-blocks-and-persists-unclean-restart",
+                crashBlocked.blocked &&
+                    crashBlocked
+                        .uncleanRestartSuspectedResidue &&
+                    crashReloaded.blocked &&
+                    crashReloaded
+                        .uncleanRestartSuspectedResidue
+            ),
+            FixtureResult(
+                "farm-reuse-gate-unclean-restart-clears-only-after-verified-reset",
+                !crashCleared.blocked &&
+                    !crashCleared
+                        .uncleanRestartSuspectedResidue &&
+                    !crashPersisted
+                        .uncleanRestartSuspectedResidue
             )
         )
     }

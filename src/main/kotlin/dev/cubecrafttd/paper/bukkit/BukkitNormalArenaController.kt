@@ -169,6 +169,14 @@ class BukkitNormalArenaController(
         FarmReuseGateSnapshot =
         farmReuseGate.snapshot()
 
+    fun blockFarmReuseAfterUncleanRestart() {
+        check(handles.isEmpty()) {
+            "Cannot mark unclean-restart Farm residue while an arena is active"
+        }
+        farmReuseGate
+            .markUncleanRestartSuspectedResidue()
+    }
+
     fun beginFarmVerifiedReset() {
         check(handles.isEmpty()) {
             "Cannot begin Farm reset while an arena is active"

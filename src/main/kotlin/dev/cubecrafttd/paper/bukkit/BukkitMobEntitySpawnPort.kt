@@ -117,6 +117,9 @@ class BukkitMobEntitySpawnPort(
             CreatureSpawnEvent
                 .SpawnReason.CUSTOM
         ) { spawned ->
+            BukkitTrackedEntityTag.mark(
+                spawned
+            )
             spawned.setRemoveWhenFarAway(
                 false
             )

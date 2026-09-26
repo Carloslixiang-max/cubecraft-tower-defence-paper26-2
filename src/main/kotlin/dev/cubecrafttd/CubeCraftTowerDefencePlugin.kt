@@ -121,6 +121,16 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate,
             hotbarPreferences
         )
+        if(
+            stage4Gate.status()
+                .previousBootWasUnclean
+        ) {
+            liveArenaController
+                .blockFarmReuseAfterUncleanRestart()
+            logger.severe(
+                "Previous TD process was not cleanly shut down. Farm reuse is hard-blocked until /ctdresetfarm completes a verified tagged-entity cleanup + schematic reset."
+            )
+        }
         oneVsOneQueue =
             BukkitOneVsOneQueueService(
                 this,
@@ -410,7 +420,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v63 enabled; " +
+            "CubeCraftTowerDefence shell v64 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -475,7 +485,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v63 disabled; " +
+            "CubeCraftTowerDefence shell v64 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -509,7 +519,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v63, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v64, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -576,6 +586,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 ) {
                     sender.sendMessage(
                         "Hard tower-body residue requires a verified map repair/reset before this gate may be cleared."
+                    )
+                }
+                if(
+                    reuse.uncleanRestartSuspectedResidue
+                ) {
+                    sender.sendMessage(
+                        "Unclean restart residue is suspected. Run the verified Farm reset; it will remove persistently-tagged TD entities in the Farm volume and then verify the schematic before reuse is unlocked."
                     )
                 }
                 if(

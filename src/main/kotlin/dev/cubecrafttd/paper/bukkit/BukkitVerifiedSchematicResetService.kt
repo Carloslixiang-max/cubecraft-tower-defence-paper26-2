@@ -12,6 +12,7 @@ import org.bukkit.scheduler.BukkitTask
 
 private enum class VerifiedResetPhase {
     SCAN,
+    ENTITY_CLEANUP,
     APPLY,
     VERIFY,
     COMPLETE,
@@ -30,10 +31,13 @@ private data class VerifiedResetChange(
 /**
  * Crash-conscious Farm repair/reset.
  *
- * SCAN never mutates the world and stores snapshots only for blocks that differ
- * from the verified schematic. APPLY changes those differences in bounded
- * batches. VERIFY then scans the entire schematic volume again. Any APPLY or
- * VERIFY failure attempts to restore every changed BlockState snapshot.
+ * SCAN never mutates blocks and stores snapshots only for blocks that differ
+ * from the verified schematic. Once the full volume has been scanned (and its
+ * chunks therefore loaded), ENTITY_CLEANUP removes only persistently-tagged TD
+ * entities in that verified volume. APPLY changes block differences in bounded
+ * batches. VERIFY then scans the entire schematic volume again and also proves
+ * that no tagged TD entity survived. Any APPLY or VERIFY failure attempts to
+ * restore every changed BlockState snapshot.
  *
  * A persistent reuse/maintenance gate lives outside this service. Callers mark
  * reset-in-progress before scheduling and clear that gate only from onComplete.
@@ -190,7 +194,7 @@ class BukkitVerifiedSchematicResetService(
                                         ) {
                                             phase=
                                                 VerifiedResetPhase
-                                                    .APPLY
+                                                    .ENTITY_CLEANUP
                                             cursor=0
                                             report()
                                             continue
@@ -234,6 +238,49 @@ class BukkitVerifiedSchematicResetService(
                                     }
 
                                     VerifiedResetPhase
+                                        .ENTITY_CLEANUP -> {
+                                        val dimensions=
+                                            volume.dimensions
+                                        BukkitTrackedEntityTag
+                                            .taggedInVolume(
+                                                world,
+                                                origin,
+                                                dimensions.width,
+                                                dimensions.height,
+                                                dimensions.length
+                                            )
+                                            .forEach {
+                                                it.remove()
+                                            }
+
+                                        val survivors=
+                                            BukkitTrackedEntityTag
+                                                .taggedInVolume(
+                                                    world,
+                                                    origin,
+                                                    dimensions.width,
+                                                    dimensions.height,
+                                                    dimensions.length
+                                                )
+                                        check(
+                                            survivors.isEmpty()
+                                        ) {
+                                            "Verified Farm reset could not remove tagged TD entities: " +
+                                                survivors.joinToString {
+                                                    it.uniqueId
+                                                        .toString()
+                                                }
+                                        }
+
+                                        phase=
+                                            VerifiedResetPhase
+                                                .APPLY
+                                        cursor=0
+                                        report()
+                                        continue
+                                    }
+
+                                    VerifiedResetPhase
                                         .APPLY -> {
                                         if(
                                             cursor>=
@@ -270,6 +317,27 @@ class BukkitVerifiedSchematicResetService(
                                         if(
                                             cursor>=total
                                         ) {
+                                            val dimensions=
+                                                volume.dimensions
+                                            val survivors=
+                                                BukkitTrackedEntityTag
+                                                    .taggedInVolume(
+                                                        world,
+                                                        origin,
+                                                        dimensions.width,
+                                                        dimensions.height,
+                                                        dimensions.length
+                                                    )
+                                            check(
+                                                survivors.isEmpty()
+                                            ) {
+                                                "Verified Farm reset finished block verification but tagged TD entities remain: " +
+                                                    survivors.joinToString {
+                                                        it.uniqueId
+                                                            .toString()
+                                                    }
+                                            }
+
                                             phase=
                                                 VerifiedResetPhase
                                                     .COMPLETE

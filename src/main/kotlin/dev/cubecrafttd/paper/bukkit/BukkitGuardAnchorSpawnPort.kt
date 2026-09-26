@@ -28,6 +28,9 @@ class BukkitGuardAnchorSpawnPort(
             CreatureSpawnEvent
                 .SpawnReason.CUSTOM
         ) {
+            BukkitTrackedEntityTag.mark(
+                it
+            )
             it.setVisible(false)
             it.setGravity(false)
             it.setMarker(true)

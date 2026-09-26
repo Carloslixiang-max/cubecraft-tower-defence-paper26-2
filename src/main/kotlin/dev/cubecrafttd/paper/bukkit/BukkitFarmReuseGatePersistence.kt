@@ -42,6 +42,11 @@ class BukkitFarmReuseGatePersistence(
                 yaml.getBoolean(
                     "verified-reset-in-progress",
                     false
+                ),
+            uncleanRestartSuspectedResidue=
+                yaml.getBoolean(
+                    "unclean-restart-suspected-residue",
+                    false
                 )
         )
     }
@@ -67,6 +72,10 @@ class BukkitFarmReuseGatePersistence(
         yaml.set(
             "verified-reset-in-progress",
             state.verifiedResetInProgress
+        )
+        yaml.set(
+            "unclean-restart-suspected-residue",
+            state.uncleanRestartSuspectedResidue
         )
         yaml.save(file)
     }
