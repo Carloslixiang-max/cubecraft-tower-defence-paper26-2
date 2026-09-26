@@ -1,5 +1,6 @@
 package dev.cubecrafttd.ui
 
+import dev.cubecrafttd.match.ArmageddonType
 import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
 import dev.cubecrafttd.match.HistoricalPregamePricingVoteOption
 
@@ -9,8 +10,18 @@ data class PregameVoteMenuState(
     val pricingVote:
         HistoricalPregamePricingVoteOption?,
     val waitingPosition: Int?,
-    val countdownRunning: Boolean
-)
+    val countdownRunning: Boolean,
+    val runnableArmageddonTypes:
+        Set<ArmageddonType> =
+        ArmageddonType.entries.toSet()
+) {
+    init {
+        require(
+            runnableArmageddonTypes
+                .isNotEmpty()
+        )
+    }
+}
 
 /**
  * Safe Engineering projection of the historically confirmed pregame vote
@@ -25,8 +36,9 @@ object PregameVoteMenuProjection {
     fun menu(
         state: PregameVoteMenuState
     ): MenuDefinition {
-        fun marker(selected: Boolean):
-            String =
+        fun marker(
+            selected: Boolean
+        ): String =
             if(selected)
                 " ✓ YOUR VOTE"
             else
@@ -42,97 +54,126 @@ object PregameVoteMenuProjection {
                     }
                     ?: "Waiting"
 
+        val slots=
+            buildList {
+                add(
+                    MenuSlot(
+                        1,
+                        "pregame:armageddon:random",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Armageddon: Random" +
+                            marker(
+                                state.armageddonVote==
+                                    HistoricalPregameArmageddonVoteOption
+                                        .RANDOM
+                            )
+                    )
+                )
+
+                fun addArmageddon(
+                    type: ArmageddonType,
+                    slot: Int,
+                    action: String,
+                    name: String,
+                    vote:
+                        HistoricalPregameArmageddonVoteOption
+                ) {
+                    if(
+                        type !in
+                            state.runnableArmageddonTypes
+                    ) return
+
+                    add(
+                        MenuSlot(
+                            slot,
+                            action,
+                            UiEvidenceStatus
+                                .ENGINEERING_FALLBACK,
+                            name +
+                                marker(
+                                    state.armageddonVote==
+                                        vote
+                                )
+                        )
+                    )
+                }
+
+                addArmageddon(
+                    ArmageddonType.WITHER,
+                    3,
+                    "pregame:armageddon:wither",
+                    "Armageddon: Wither",
+                    HistoricalPregameArmageddonVoteOption
+                        .WITHER
+                )
+                addArmageddon(
+                    ArmageddonType.LIGHTNING,
+                    5,
+                    "pregame:armageddon:lightning",
+                    "Armageddon: Lightning",
+                    HistoricalPregameArmageddonVoteOption
+                        .LIGHTNING
+                )
+                addArmageddon(
+                    ArmageddonType.HORDE,
+                    7,
+                    "pregame:armageddon:horde",
+                    "Armageddon: Horde",
+                    HistoricalPregameArmageddonVoteOption
+                        .HORDE
+                )
+
+                add(
+                    MenuSlot(
+                        11,
+                        "pregame:pricing:normal",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Pricing: Normal" +
+                            marker(
+                                state.pricingVote==
+                                    HistoricalPregamePricingVoteOption
+                                        .NORMAL
+                            )
+                    )
+                )
+                add(
+                    MenuSlot(
+                        13,
+                        "pregame:pricing:double_income",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Pricing: Double Income" +
+                            marker(
+                                state.pricingVote==
+                                    HistoricalPregamePricingVoteOption
+                                        .DOUBLE_INCOME
+                            )
+                    )
+                )
+                add(
+                    MenuSlot(
+                        15,
+                        "pregame:pricing:quick_start",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Pricing: Quick Start" +
+                            marker(
+                                state.pricingVote==
+                                    HistoricalPregamePricingVoteOption
+                                        .QUICK_START
+                            )
+                    )
+                )
+            }
+
         return MenuDefinition(
             title=
                 "Tower Defence Voting · " +
                     status,
             size=27,
-            slots=listOf(
-                MenuSlot(
-                    1,
-                    "pregame:armageddon:random",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Armageddon: Random" +
-                        marker(
-                            state.armageddonVote==
-                                HistoricalPregameArmageddonVoteOption
-                                    .RANDOM
-                        )
-                ),
-                MenuSlot(
-                    3,
-                    "pregame:armageddon:wither",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Armageddon: Wither" +
-                        marker(
-                            state.armageddonVote==
-                                HistoricalPregameArmageddonVoteOption
-                                    .WITHER
-                        )
-                ),
-                MenuSlot(
-                    5,
-                    "pregame:armageddon:lightning",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Armageddon: Lightning" +
-                        marker(
-                            state.armageddonVote==
-                                HistoricalPregameArmageddonVoteOption
-                                    .LIGHTNING
-                        )
-                ),
-                MenuSlot(
-                    7,
-                    "pregame:armageddon:horde",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Armageddon: Horde" +
-                        marker(
-                            state.armageddonVote==
-                                HistoricalPregameArmageddonVoteOption
-                                    .HORDE
-                        )
-                ),
-                MenuSlot(
-                    11,
-                    "pregame:pricing:normal",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Pricing: Normal" +
-                        marker(
-                            state.pricingVote==
-                                HistoricalPregamePricingVoteOption
-                                    .NORMAL
-                        )
-                ),
-                MenuSlot(
-                    13,
-                    "pregame:pricing:double_income",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Pricing: Double Income" +
-                        marker(
-                            state.pricingVote==
-                                HistoricalPregamePricingVoteOption
-                                    .DOUBLE_INCOME
-                        )
-                ),
-                MenuSlot(
-                    15,
-                    "pregame:pricing:quick_start",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Pricing: Quick Start" +
-                        marker(
-                            state.pricingVote==
-                                HistoricalPregamePricingVoteOption
-                                    .QUICK_START
-                        )
-                )
-            ),
+            slots=slots,
             evidenceStatus=
                 UiEvidenceStatus
                     .ENGINEERING_FALLBACK

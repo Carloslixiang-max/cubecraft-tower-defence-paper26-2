@@ -1,5 +1,6 @@
 package dev.cubecrafttd.testing
 
+import dev.cubecrafttd.match.ArmageddonType
 import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
 import dev.cubecrafttd.match.HistoricalPregamePricingVoteOption
 import dev.cubecrafttd.ui.*
@@ -28,9 +29,26 @@ object PregameVoteMenuFixture {
                     countdownRunning=true
                 )
             )
+        val restricted=
+            PregameVoteMenuProjection.menu(
+                PregameVoteMenuState(
+                    armageddonVote=null,
+                    pricingVote=null,
+                    waitingPosition=1,
+                    countdownRunning=false,
+                    runnableArmageddonTypes=
+                        setOf(
+                            ArmageddonType.WITHER
+                        )
+                )
+            )
 
         val actions=
             waiting.slots
+                .map { it.actionId }
+                .toSet()
+        val restrictedActions=
+            restricted.slots
                 .map { it.actionId }
                 .toSet()
 
@@ -47,6 +65,17 @@ object PregameVoteMenuFixture {
                         "pregame:pricing:double_income",
                         "pregame:pricing:quick_start"
                     )
+            ),
+            FixtureResult(
+                "pregame-vote-menu-hides-unrunnable-armageddon-modes",
+                "pregame:armageddon:random" in
+                    restrictedActions &&
+                    "pregame:armageddon:wither" in
+                        restrictedActions &&
+                    "pregame:armageddon:lightning" !in
+                        restrictedActions &&
+                    "pregame:armageddon:horde" !in
+                        restrictedActions
             ),
             FixtureResult(
                 "pregame-vote-menu-marks-own-selections",

@@ -13,8 +13,11 @@ import dev.cubecrafttd.match.HistoricalTowerDefenceStartCountdown
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import dev.cubecrafttd.ui.MenuActionInvocation
 import dev.cubecrafttd.ui.MenuDefinition
+import dev.cubecrafttd.ui.PregameQueueHudProjection
+import dev.cubecrafttd.ui.PregameQueueHudState
 import dev.cubecrafttd.ui.PregameVoteMenuProjection
 import dev.cubecrafttd.ui.PregameVoteMenuState
+import net.kyori.adventure.text.Component
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
 import java.util.UUID
@@ -278,7 +281,10 @@ class BukkitOneVsOneQueueService(
                             playerUuid
                         ),
                     countdownRunning=
-                        inCountdown
+                        inCountdown,
+                    runnableArmageddonTypes=
+                        controller
+                            .runnableArmageddonTypes()
                 )
             )
     }
@@ -353,6 +359,9 @@ class BukkitOneVsOneQueueService(
                 .remove(playerUuid)
             pregamePricingVotes
                 .remove(playerUuid)
+            clearQueueHud(
+                playerUuid
+            )
             return BukkitQueueLeaveReport(
                 removedFromWaiting=true,
                 cancelledStartCountdown=false,
@@ -374,6 +383,9 @@ class BukkitOneVsOneQueueService(
                 .remove(playerUuid)
             pregamePricingVotes
                 .remove(playerUuid)
+            clearQueueHud(
+                playerUuid
+            )
             cancelPendingCountdown(
                 dropPlayers=
                     setOf(playerUuid),
@@ -434,11 +446,23 @@ class BukkitOneVsOneQueueService(
             )
 
     fun close() {
+        (
+            queue.snapshot() +
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        ).distinct()
+            .forEach(
+                ::clearQueueHud
+            )
         task.cancel()
     }
 
     private fun tick() {
         pruneWaitingPlayers()
+        updateWaitingHud()
 
         val pair=
             pendingPair
@@ -557,13 +581,25 @@ class BukkitOneVsOneQueueService(
                 uuid ->
                 plugin.server
                     .getPlayer(uuid)
-                    ?.sendMessage(
-                        "Tower Defence is starting in " +
-                            seconds +
-                            " " +
-                            unit +
-                            "."
-                    )
+                    ?.let { player ->
+                        player.sendMessage(
+                            "Tower Defence is starting in " +
+                                seconds +
+                                " " +
+                                unit +
+                                "."
+                        )
+                        player.sendActionBar(
+                            Component.text(
+                                queueHudText(
+                                    uuid,
+                                    waitingPosition=null,
+                                    countdownSeconds=
+                                        seconds
+                                )
+                            )
+                        )
+                    }
             }
             return
         }
@@ -585,6 +621,9 @@ class BukkitOneVsOneQueueService(
         try {
             pair.players.forEach {
                 uuid ->
+                clearQueueHud(
+                    uuid
+                )
                 plugin.server
                     .getPlayer(uuid)
                     ?.closeInventory()
@@ -791,8 +830,10 @@ class BukkitOneVsOneQueueService(
                 .remove(it)
             pregamePricingVotes
                 .remove(it)
+            clearQueueHud(it)
         }
         pruneWaitingPlayers()
+        updateWaitingHud()
 
         pair.players
             .filterNot {
@@ -830,7 +871,61 @@ class BukkitOneVsOneQueueService(
                 .remove(it)
             pregamePricingVotes
                 .remove(it)
+            clearQueueHud(it)
         }
+    }
+
+    private fun updateWaitingHud() {
+        queue.snapshot()
+            .forEachIndexed {
+                index,uuid ->
+                plugin.server
+                    .getPlayer(uuid)
+                    ?.sendActionBar(
+                        Component.text(
+                            queueHudText(
+                                uuid,
+                                waitingPosition=
+                                    index+1,
+                                countdownSeconds=
+                                    null
+                            )
+                        )
+                    )
+            }
+    }
+
+    private fun queueHudText(
+        playerUuid: UUID,
+        waitingPosition: Int?,
+        countdownSeconds: Int?
+    ): String =
+        PregameQueueHudProjection
+            .text(
+                PregameQueueHudState(
+                    waitingPosition=
+                        waitingPosition,
+                    countdownSeconds=
+                        countdownSeconds,
+                    armageddonVote=
+                        pregameArmageddonVotes[
+                            playerUuid
+                        ],
+                    pricingVote=
+                        pregamePricingVotes[
+                            playerUuid
+                        ]
+                )
+            )
+
+    private fun clearQueueHud(
+        playerUuid: UUID
+    ) {
+        plugin.server
+            .getPlayer(playerUuid)
+            ?.sendActionBar(
+                Component.empty()
+            )
     }
 
     private fun eligibleForStart(
