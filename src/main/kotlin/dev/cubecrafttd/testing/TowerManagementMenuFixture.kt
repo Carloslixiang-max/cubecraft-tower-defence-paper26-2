@@ -19,15 +19,31 @@ object TowerManagementMenuFixture {
                         "tower-manage:42:sell"
             ),
             FixtureResult(
-                "tower-management-slots-remain-engineering",
+                "tower-management-layout-remains-engineering-but-upgrade-icon-is-historical",
                 menu.evidenceStatus==
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK &&
-                    menu.slots.all {
-                        it.evidenceStatus==
-                            UiEvidenceStatus
-                                .ENGINEERING_FALLBACK
-                    }
+                    menu.slots
+                        .first {
+                            it.actionId==
+                                "tower-manage:42:upgrade"
+                        }
+                        .let {
+                            it.evidenceStatus==
+                                UiEvidenceStatus
+                                    .HISTORICAL_DIRECT &&
+                            it.iconHint=="anvil"
+                        } &&
+                    menu.slots
+                        .filterNot {
+                            it.actionId==
+                                "tower-manage:42:upgrade"
+                        }
+                        .all {
+                            it.evidenceStatus==
+                                UiEvidenceStatus
+                                    .ENGINEERING_FALLBACK
+                        }
             )
         )
     }
