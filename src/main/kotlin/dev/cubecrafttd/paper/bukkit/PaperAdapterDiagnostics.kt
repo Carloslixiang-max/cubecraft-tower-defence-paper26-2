@@ -42,6 +42,7 @@ data class PaperAdapterDiagnostics(
                 "fail-closed corrupt recovery-journal readiness gate",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
+                "start-failure teardown residue feeds persistent Farm reuse interlock",
                 "route-facing live entity orientation",
                 "tracked-mob vanilla side-effect shielding",
                 "engineering Armageddon player vote bridge",

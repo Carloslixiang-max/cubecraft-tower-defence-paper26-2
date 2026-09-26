@@ -801,21 +801,109 @@ class BukkitNormalArenaController(
 
             return arenaId
         } catch(t:Throwable) {
-            runCatching {
-                end.finish(
-                    context,
-                    MatchOutcome.Tie(
-                        TimeoutTiePolicy
-                            .ENGINEERING_CUSTOM,
-                        "stage4_start_failure"
+            val cleanupReport=
+                runCatching {
+                    end.finish(
+                        context,
+                        MatchOutcome.Tie(
+                            TimeoutTiePolicy
+                                .ENGINEERING_CUSTOM,
+                            "stage4_start_failure"
+                        )
                     )
+                }.getOrElse {
+                    cleanupFailure ->
+                    t.addSuppressed(
+                        cleanupFailure
+                    )
+                    null
+                }
+
+            if(cleanupReport!=null) {
+                runCatching {
+                    farmReuseGate
+                        .record(
+                            cleanupReport
+                                .teardown
+                        )
+                    stage4Gate
+                        .recordArenaRoundTrip(
+                            cleanupReport
+                                .teardown
+                        )
+                }.onFailure {
+                    gateFailure ->
+                    t.addSuppressed(
+                        gateFailure
+                    )
+                    runCatching {
+                        farmReuseGate
+                            .markWorldIntegrityUnknown()
+                    }.onFailure {
+                        t.addSuppressed(it)
+                    }
+                }
+
+                if(
+                    !cleanupReport
+                        .teardown
+                        .fullyCleanNow
+                ) {
+                    plugin.logger.warning(
+                        "Arena " +
+                            arenaId.value +
+                            " failed during start and teardown reported residue/pending recovery: " +
+                            "towerConflicts=" +
+                            cleanupReport
+                                .teardown
+                                .towerBodyConflicts
+                                .size +
+                            " failedEntityRemovals=" +
+                            cleanupReport
+                                .teardown
+                                .failedEntityRemovals
+                                .size +
+                            " survivingTrackedEntities=" +
+                            cleanupReport
+                                .teardown
+                                .survivingTrackedEntities
+                                .size +
+                            " pendingPlayerRestores=" +
+                            cleanupReport
+                                .teardown
+                                .pendingPlayerRestores
+                                .size
+                    )
+                }
+            } else {
+                runCatching {
+                    farmReuseGate
+                        .markWorldIntegrityUnknown()
+                }.onFailure {
+                    t.addSuppressed(it)
+                }
+                plugin.logger.severe(
+                    "Arena " +
+                        arenaId.value +
+                        " failed during start and teardown itself failed. Farm world integrity is now UNKNOWN and reuse remains hard-blocked until verified reset."
                 )
             }
-            arenaService.close(arenaId) {}
+
+            runCatching {
+                arenaService.close(
+                    arenaId
+                ) {}
+            }.onFailure {
+                t.addSuppressed(it)
+            }
             handles.remove(arenaId)
-            isolationRegistry.release(
-                arenaId
-            )
+            runCatching {
+                isolationRegistry.release(
+                    arenaId
+                )
+            }.onFailure {
+                t.addSuppressed(it)
+            }
             throw t
         }
     }

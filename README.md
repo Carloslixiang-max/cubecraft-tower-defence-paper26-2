@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v65 engineering playtest shell**
+- Current shell lineage: **v66 engineering playtest shell**
 - Pure-domain baseline: **438/438 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
@@ -64,7 +64,8 @@ The codebase already contains substantial runtime work, including:
 - v62 hardens player-state transactions for repeated real-server rounds: a new match capture may replace only a fully RESTORED prior snapshot tombstone, so a player can safely enter a later round without weakening protection against unresolved CAPTURED/RESTORING snapshots. If `prepareForMatch` fails after a snapshot has been captured (and, for live play, durably journaled), recovery is attempted immediately. A successful rollback removes the durable journal entry; a failed rollback leaves the snapshot pending for reconnect/recovery instead of silently stranding partially-mutated player state;
 - v63 makes restart recovery fail closed without making one damaged snapshot crash the entire plugin. Valid recovery files are still loaded, unreadable `.snapshot` files are preserved byte-for-byte and reported, and startup latches a `RECOVERY_JOURNAL_CORRUPT` readiness blocker. Normal queue countdown/start and admin live-start paths therefore cannot begin another TD match until the damaged recovery file is repaired/restored and the server is restarted;
 - v64 closes the world-side crash-restart gap. Every live TD mob, Guard anchor and Engineering tower summon is marked with a persistent entity scoreboard tag. If the previous plugin process did not shut down cleanly, startup persists an unclean-restart Farm reuse hard gate instead of trusting an absent teardown report. The verified Farm reset now loads/scans the whole schematic volume, removes only persistently-tagged TD entities from that volume, applies block differences, fully verifies the map, verifies that no tagged TD entity survived, and only then clears the crash/reuse gate;
-- v65 separates the 1v1 queue's pre-start transaction from post-start presentation. Vote resolution and controller start failures still restore the matched pair to the front of the queue with a short retry cooldown. Once `startOneVsOneResolvedTest` returns successfully, the arena is committed: votes are cleared and later chat/UI presentation failures are logged only, never requeueing players who are already inside a live match.
+- v65 separates the 1v1 queue's pre-start transaction from post-start presentation. Vote resolution and controller start failures still restore the matched pair to the front of the queue with a short retry cooldown. Once `startOneVsOneResolvedTest` returns successfully, the arena is committed: votes are cleared and later chat/UI presentation failures are logged only, never requeueing players who are already inside a live match;
+- v66 makes partial arena-start failure teardown authoritative for Farm reuse. A failed start now records the teardown report into the same persistent residue gate used by normal match end, including surviving tracked entities and tower-body conflicts. If teardown itself fails, or if its residue report cannot be persisted, the Farm is conservatively marked with unknown world integrity and remains hard-blocked until the verified Farm reset proves the world clean.
 
 ## Build
 

@@ -420,7 +420,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v65 enabled; " +
+            "CubeCraftTowerDefence shell v66 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -485,7 +485,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v65 disabled; " +
+            "CubeCraftTowerDefence shell v66 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -519,7 +519,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v65, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v66, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -592,7 +592,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     reuse.uncleanRestartSuspectedResidue
                 ) {
                     sender.sendMessage(
-                        "Unclean restart residue is suspected. Run the verified Farm reset; it will remove persistently-tagged TD entities in the Farm volume and then verify the schematic before reuse is unlocked."
+                        "Farm world integrity is unknown (for example after an unclean restart or failed start cleanup). Run the verified Farm reset; it will remove persistently-tagged TD entities in the Farm volume and then verify the schematic before reuse is unlocked."
                     )
                 }
                 if(

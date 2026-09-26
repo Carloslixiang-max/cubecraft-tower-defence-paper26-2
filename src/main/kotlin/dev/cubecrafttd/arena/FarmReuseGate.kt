@@ -34,7 +34,7 @@ data class FarmReuseGateSnapshot(
         "blocked=" + blocked +
             ", resetInProgress=" +
             verifiedResetInProgress +
-            ", uncleanRestartResidue=" +
+            ", worldIntegrityUnknown=" +
             uncleanRestartSuspectedResidue +
             ", towerConflicts=" +
             hardTowerConflictKeys.size +
@@ -84,9 +84,13 @@ class FarmReuseGate(
     private var uncleanRestartSuspectedResidue=
         initial.uncleanRestartSuspectedResidue
 
-    fun markUncleanRestartSuspectedResidue() {
+    fun markWorldIntegrityUnknown() {
         uncleanRestartSuspectedResidue=true
         save()
+    }
+
+    fun markUncleanRestartSuspectedResidue() {
+        markWorldIntegrityUnknown()
     }
 
     fun beginVerifiedWorldReset() {
