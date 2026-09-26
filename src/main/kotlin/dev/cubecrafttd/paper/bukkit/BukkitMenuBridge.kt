@@ -15,7 +15,10 @@ import org.bukkit.plugin.Plugin
 import java.util.UUID
 
 fun interface BukkitMenuItemRenderer {
-    fun render(actionId: String): ItemStack
+    fun render(
+        actionId: String,
+        iconHint: String?
+    ): ItemStack
 }
 
 fun interface BukkitMenuActionSink {
@@ -71,7 +74,12 @@ class BukkitMenuBridge(
                 slot in 0 until menu.size
             )
             val item=
-                renderer.render(action)
+                renderer.render(
+                    action,
+                    menu.slotIconHints[
+                        slot
+                    ]
+                )
             menu.slotDisplayNames[slot]
                 ?.let { displayName ->
                     item.editMeta {

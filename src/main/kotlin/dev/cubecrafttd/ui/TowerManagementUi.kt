@@ -55,8 +55,9 @@ object TowerManagementMenus {
                     13,
                     "tower-manage:$towerInstanceId:upgrade",
                     UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Upgrade tower"
+                        .HISTORICAL_DIRECT,
+                    "Upgrade tower",
+                    "anvil"
                 ),
                 MenuSlot(
                     15,

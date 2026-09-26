@@ -85,6 +85,8 @@ data class PaperAdapterDiagnostics(
                 "admin-only 2v1/2v2 teammate-takeover live certification harness",
                 "2v2 team bootstrap/session/departure regression fixture",
                 "granular /ctdlivegate live-evidence status reporting",
+                "evidence-backed GUI icon-hint projection into Bukkit menus",
+                "historical direct Anvil upgrade icon in tower management",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

@@ -18,5 +18,12 @@ fun MenuDefinition.toLiveView():
                 slot.displayName?.let {
                     slot.slot to it
                 }
+            }.toMap(),
+        slotIconHints=
+            slots.mapNotNull {
+                slot ->
+                slot.iconHint?.let {
+                    slot.slot to it
+                }
             }.toMap()
     )

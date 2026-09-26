@@ -4,6 +4,7 @@ import dev.cubecrafttd.match.PlayerMatchSessionState
 import dev.cubecrafttd.paper.bukkit.toLiveView
 import dev.cubecrafttd.progression.TroopProgressionState
 import dev.cubecrafttd.ui.DynamicMatchMenus
+import dev.cubecrafttd.ui.TowerBuilderMenus
 import java.util.UUID
 
 object LiveMenuProjectionFixture {
@@ -29,6 +30,10 @@ object LiveMenuProjectionFixture {
             DynamicMatchMenus
                 .progression(player)
                 .toLiveView()
+        val builder=
+            TowerBuilderMenus
+                .threeByThree2021
+                .toLiveView()
 
         return listOf(
             FixtureResult(
@@ -45,6 +50,15 @@ object LiveMenuProjectionFixture {
                     "nav:summoner" &&
                     progression.slotDisplayNames[35] ==
                     "Back to Mob Summoner"
+            ),
+            FixtureResult(
+                "live-menu-projection-preserves-evidence-backed-icon-hints",
+                builder.slotIconHints[2]=="bow" &&
+                    builder.slotIconHints[6]=="tnt" &&
+                    builder.slotIconHints[12]=="beacon" &&
+                    builder.slotIconHints[14]=="dirt" &&
+                    builder.slotIconHints[15]=="potion" &&
+                    builder.slotIconHints[40]=="book"
             )
         )
     }

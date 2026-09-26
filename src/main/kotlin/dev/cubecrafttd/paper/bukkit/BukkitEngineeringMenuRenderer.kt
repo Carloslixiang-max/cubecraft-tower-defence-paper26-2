@@ -7,10 +7,14 @@ import org.bukkit.inventory.ItemStack
 class BukkitEngineeringMenuRenderer :
     BukkitMenuItemRenderer {
     override fun render(
-        actionId: String
+        actionId: String,
+        iconHint: String?
     ): ItemStack {
         val item=ItemStack(
-            materialFor(actionId),
+            materialFor(
+                actionId,
+                iconHint
+            ),
             1
         )
         item.editMeta {
@@ -24,9 +28,26 @@ class BukkitEngineeringMenuRenderer :
     }
 
     private fun materialFor(
-        actionId: String
+        actionId: String,
+        iconHint: String?
     ): Material =
-        when {
+        when(iconHint) {
+            "bow" -> Material.BOW
+            "tnt" -> Material.TNT
+            "beacon" -> Material.BEACON
+            "dirt" -> Material.DIRT
+            "potion" -> Material.POTION
+            "book" -> Material.BOOK
+            "anvil" -> Material.ANVIL
+
+            // These three 2021 builder identities are visual inference rather
+            // than direct item-name evidence. They stay weaker evidence in the
+            // MenuSlot model even though the renderer can now honor the hint.
+            "ice-like" -> Material.PACKED_ICE
+            "dark-block" -> Material.OBSIDIAN
+            "ender-like" -> Material.ENDER_PEARL
+
+            else -> when {
             actionId.startsWith(
                 "tower:"
             ) -> Material.STONE
@@ -69,5 +90,6 @@ class BukkitEngineeringMenuRenderer :
                 "hotbar:"
             ) -> Material.ITEM_FRAME
             else -> Material.PAPER
+            }
         }
 }
