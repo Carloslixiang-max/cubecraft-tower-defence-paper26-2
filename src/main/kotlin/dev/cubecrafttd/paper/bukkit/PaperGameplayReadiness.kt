@@ -238,11 +238,11 @@ class PaperGameplayReadinessService(
 
         val stage4=
             liveGate.status()
-        if(!stage4.certified) {
+        if(!stage4.coreCertified) {
             issues += ReadinessIssue(
                 "PAPER_LIVE_GATE_NOT_CERTIFIED",
                 ReadinessSeverity.BLOCKING,
-                "Stage-4 evidence incomplete: ${stage4.summary()}"
+                "Stage-4 core evidence incomplete: ${stage4.summary()}"
             )
         }
 

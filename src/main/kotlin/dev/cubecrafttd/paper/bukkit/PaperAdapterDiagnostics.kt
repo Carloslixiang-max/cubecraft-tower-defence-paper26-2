@@ -4,6 +4,31 @@ data class PaperAdapterDiagnostics(
     val sourceReady: Set<String>,
     val stillLiveGateRequired: Set<String>
 ) {
+    fun remainingLiveGates(
+        stage4: PaperStage4GateStatus
+    ): Set<String> =
+        stillLiveGateRequired
+            .filterTo(
+                linkedSetOf()
+            ) { gate ->
+                when(gate) {
+                    "player snapshot lossless roundtrip on real server" ->
+                        !stage4.playerSnapshotRoundTripPassed
+                    "restart recovery" ->
+                        !stage4.restartRecoveryPassed
+                    "60+ tower real-server performance certification" ->
+                        !stage4.towerStress60Passed
+                    else -> true
+                }
+            }
+
+    fun fullRealServerCertified(
+        stage4: PaperStage4GateStatus
+    ): Boolean =
+        stage4.coreCertified &&
+            remainingLiveGates(stage4)
+                .isEmpty()
+
     companion object {
         fun current() = PaperAdapterDiagnostics(
             sourceReady = linkedSetOf(
@@ -43,6 +68,7 @@ data class PaperAdapterDiagnostics(
                 "fail-closed corrupt recovery-journal readiness gate",
                 "durable journal delete-before-memory-restore commit ordering",
                 "bounded automatic retry for online pending player recovery",
+                "truthful Stage-4 core vs full real-server certification reporting",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

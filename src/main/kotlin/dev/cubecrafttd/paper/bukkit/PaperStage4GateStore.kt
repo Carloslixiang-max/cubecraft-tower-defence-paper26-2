@@ -21,7 +21,7 @@ data class PaperStage4GateStatus(
     val cleanArenaRoundTrips: Int,
     val previousBootWasUnclean: Boolean
 ) {
-    val certified: Boolean
+    val coreCertified: Boolean
         get() =
             domainFixturesPassed &&
             farmMapCheckPassed &&
@@ -33,8 +33,13 @@ data class PaperStage4GateStatus(
             cleanArenaRoundTrips >= 1 &&
             !previousBootWasUnclean
 
+    // Compatibility alias for existing readiness callers. This is only the
+    // automatically-recorded Stage-4 core, not full real-server certification.
+    val certified: Boolean
+        get() = coreCertified
+
     fun summary(): String =
-        "certified=$certified " +
+        "coreCertified=$coreCertified " +
             "fixtures=$domainFixturesPassed " +
             "farm=$farmMapCheckPassed " +
             "smoke=$adapterSmokePassed " +

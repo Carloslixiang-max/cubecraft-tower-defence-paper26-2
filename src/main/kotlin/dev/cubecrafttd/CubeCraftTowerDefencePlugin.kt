@@ -422,7 +422,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v69 enabled; " +
+            "CubeCraftTowerDefence shell v70 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -490,7 +490,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v69 disabled; " +
+            "CubeCraftTowerDefence shell v70 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -524,7 +524,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v69, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v70, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -559,10 +559,37 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
 
         "ctdlivegate" -> {
+            val stage4=
+                stage4Gate.status()
+            val diagnostics=
+                PaperAdapterDiagnostics.current()
+            val remaining=
+                diagnostics
+                    .remainingLiveGates(
+                        stage4
+                    )
+            val fullCertified=
+                diagnostics
+                    .fullRealServerCertified(
+                        stage4
+                    )
+
             sender.sendMessage(
-                "CubeCraft TD Stage-4: " +
-                    stage4Gate.status().summary()
+                "CubeCraft TD Stage-4 core: " +
+                    stage4.summary()
             )
+            sender.sendMessage(
+                "CubeCraft TD full real-server certification: certified=" +
+                    fullCertified +
+                    " remaining=" +
+                    remaining.size
+            )
+            remaining.forEach {
+                sender.sendMessage(
+                    " LIVE-GATE PENDING: " +
+                        it
+                )
+            }
             true
         }
 
