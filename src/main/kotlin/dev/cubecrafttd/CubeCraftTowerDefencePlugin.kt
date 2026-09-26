@@ -64,35 +64,46 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         )
         recoveryListener =
             BukkitRecoveryListener(
-                this,
-                recoveryCoordinator,
-                livePlayerState
-            ) { uuid,comparison ->
-                val passed=
-                    comparison?.passed==true
-                stage4Gate
-                    .recordRestartRecovery(
-                        passed
-                    )
-                if(passed) {
-                    logger.info(
-                        "Cross-restart recovery PASS for " +
-                            uuid
-                    )
-                } else {
-                    logger.warning(
-                        "Cross-restart recovery FAIL for " +
-                            uuid +
-                            ": " +
-                            (
-                                comparison
-                                    ?.mismatches
-                                    ?.joinToString()
-                                    ?: "live recapture error"
+                plugin=this,
+                recovery=
+                    recoveryCoordinator,
+                stateAdapter=
+                    livePlayerState,
+                restartEvidence=
+                    { uuid,comparison ->
+                        val passed=
+                            comparison?.passed==true
+                        stage4Gate
+                            .recordRestartRecovery(
+                                passed
                             )
-                    )
-                }
-            }
+                        if(passed) {
+                            logger.info(
+                                "Cross-restart recovery PASS for " +
+                                    uuid
+                            )
+                        } else {
+                            logger.warning(
+                                "Cross-restart recovery FAIL for " +
+                                    uuid +
+                                    ": " +
+                                    (
+                                        comparison
+                                            ?.mismatches
+                                            ?.joinToString()
+                                            ?: "live recapture error"
+                                    )
+                            )
+                        }
+                    },
+                recoverySuccessEvidence=
+                    { uuid ->
+                        stage4Gate
+                            .recordSuccessfulPendingRecovery(
+                                uuid
+                            )
+                    }
+            )
         recoveryListener.recoverAlreadyOnline()
         val recoveryJournalLoadFailures=
             recoveryJournal.loadFailures()
@@ -397,7 +408,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         matchDepartureListener =
             BukkitMatchDepartureListener(
                 this,
-                liveArenaController
+                liveArenaController,
+                stage4Gate
             )
         rangefinderService =
             BukkitEngineeringRangefinderService(
@@ -423,7 +435,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v73 enabled; " +
+            "CubeCraftTowerDefence shell v74 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -491,7 +503,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v73 disabled; " +
+            "CubeCraftTowerDefence shell v74 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -525,7 +537,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v73, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v74, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +

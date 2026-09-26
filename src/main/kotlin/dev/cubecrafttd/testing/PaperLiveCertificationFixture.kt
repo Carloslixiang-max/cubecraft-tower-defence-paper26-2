@@ -75,6 +75,17 @@ object PaperLiveCertificationFixture {
                     queuePassed
                 )
 
+        val departurePassed=
+            corePassed.copy(
+                departureReconnectObserved=true,
+                departedOwnerTeammateTakeoverObserved=true
+            )
+        val departurePassedRemaining=
+            diagnostics
+                .remainingLiveGates(
+                    departurePassed
+                )
+
         val manualStillRequired=
             "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" in
                 remaining &&
@@ -115,6 +126,13 @@ object PaperLiveCertificationFixture {
                     queuePassed.queueFlowPassed &&
                     "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" !in
                         queuePassedRemaining
+            ),
+            FixtureResult(
+                "live-certification-removes-departure-gate-only-after-reconnect-and-takeover",
+                !corePassed.departureFlowPassed &&
+                    departurePassed.departureFlowPassed &&
+                    "player departure/reconnect and teammate tower takeover certification" !in
+                        departurePassedRemaining
             )
         )
     }

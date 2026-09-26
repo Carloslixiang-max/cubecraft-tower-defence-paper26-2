@@ -1807,10 +1807,65 @@ class BukkitNormalArenaController(
                     ?: error(
                         "Tower management service is not initialized"
                     )
-            return service.handle(
-                invocation.playerUuid,
+
+            val actionParts=
                 invocation.actionId
-            )
+                    .split(':')
+            check(actionParts.size==3) {
+                "Invalid tower management action id"
+            }
+            val towerInstanceId=
+                TowerInstanceId(
+                    actionParts[1]
+                        .toLong()
+                )
+            val towerBefore=
+                handle.context.entityIndex
+                    .towersByInstanceId[
+                        towerInstanceId
+                    ] ?: error(
+                    "Unknown tower " +
+                        towerInstanceId.value
+                )
+            val departedOwnerTakeover=
+                towerBefore.identity
+                    .ownerUuid !=
+                    invocation.playerUuid &&
+                towerBefore.identity
+                    .ownerUuid in
+                    handle.departedPlayers
+
+            val result=
+                service.handle(
+                    invocation.playerUuid,
+                    invocation.actionId
+                )
+
+            if(
+                departedOwnerTakeover &&
+                (
+                    result is
+                        TowerManagementActionResult
+                            .Upgraded ||
+                    result is
+                        TowerManagementActionResult
+                            .Sold
+                )
+            ) {
+                runCatching {
+                    stage4Gate
+                        .recordDepartedOwnerTeammateTakeover()
+                }.onFailure {
+                    plugin.logger.warning(
+                        "Could not persist departed-owner teammate tower takeover evidence: " +
+                            it.javaClass.simpleName +
+                            ": " +
+                            it.message
+                    )
+                }
+            }
+
+            return result
         }
 
         val router=

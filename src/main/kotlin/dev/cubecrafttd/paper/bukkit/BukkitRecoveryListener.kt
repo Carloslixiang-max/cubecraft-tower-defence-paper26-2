@@ -18,7 +18,9 @@ class BukkitRecoveryListener(
     private val stateAdapter:
         PlayerStateAdapter,
     private val restartEvidence:
-        (UUID,PlayerSnapshotComparison?)->Unit
+        (UUID,PlayerSnapshotComparison?)->Unit,
+    private val recoverySuccessEvidence:
+        (UUID)->Unit = {}
 ) : Listener {
     companion object {
         private const val
@@ -222,6 +224,20 @@ class BukkitRecoveryListener(
                             .remove(uuid)
                         exhaustedAutoRetries
                             .remove(uuid)
+                        runCatching {
+                            recoverySuccessEvidence(
+                                uuid
+                            )
+                        }.onFailure {
+                            plugin.logger.warning(
+                                "Could not persist TD recovery-success live evidence for " +
+                                    uuid +
+                                    ": " +
+                                    it.javaClass.simpleName +
+                                    ": " +
+                                    it.message
+                            )
+                        }
                         plugin.logger.info(
                             "Restored pending CubeCraft TD snapshot for " +
                                 uuid +

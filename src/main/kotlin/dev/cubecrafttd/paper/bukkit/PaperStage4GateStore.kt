@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
+import java.util.UUID
 
 enum class PaperQueueLiveEvidence {
     JOIN,
@@ -44,8 +45,17 @@ data class PaperStage4GateStatus(
     val queueCountdownStartObserved:
         Boolean = false,
     val queueActiveLeaveObserved:
+        Boolean = false,
+    val departureReconnectObserved:
+        Boolean = false,
+    val departedOwnerTeammateTakeoverObserved:
         Boolean = false
 ) {
+    val departureFlowPassed: Boolean
+        get() =
+            departureReconnectObserved &&
+                departedOwnerTeammateTakeoverObserved
+
     val queueFlowPassed: Boolean
         get() =
             queueJoinObserved &&
@@ -83,6 +93,7 @@ data class PaperStage4GateStatus(
             "stress60=$towerStress60Passed " +
             "verifiedFarmReset=$verifiedFarmResetPassed " +
             "queueFlow=$queueFlowPassed " +
+            "departureFlow=$departureFlowPassed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
             "consecutiveCleanArenaRoundTrips=$consecutiveCleanArenaRoundTrips " +
@@ -323,6 +334,115 @@ class PaperStage4GateStore(
         }
     }
 
+    fun recordActiveDepartureForReconnect(
+        playerUuid: UUID
+    ) {
+        val key=
+            "departurePendingReconnect." +
+                playerUuid
+        if(bool(key)) return
+
+        val previous=
+            props.getProperty(key)
+        props.setProperty(
+            key,
+            "true"
+        )
+        try {
+            save()
+        } catch(t:Throwable) {
+            if(previous==null) {
+                props.remove(key)
+            } else {
+                props.setProperty(
+                    key,
+                    previous
+                )
+            }
+            throw t
+        }
+    }
+
+    fun recordSuccessfulPendingRecovery(
+        playerUuid: UUID
+    ): Boolean {
+        val pendingKey=
+            "departurePendingReconnect." +
+                playerUuid
+        if(!bool(pendingKey)) {
+            return false
+        }
+
+        val evidenceKey=
+            "departureReconnectObserved"
+        val previousPending=
+            props.getProperty(
+                pendingKey
+            )
+        val previousEvidence=
+            props.getProperty(
+                evidenceKey
+            )
+
+        props.remove(pendingKey)
+        props.setProperty(
+            evidenceKey,
+            "true"
+        )
+        try {
+            save()
+        } catch(t:Throwable) {
+            if(previousPending==null) {
+                props.remove(
+                    pendingKey
+                )
+            } else {
+                props.setProperty(
+                    pendingKey,
+                    previousPending
+                )
+            }
+            if(previousEvidence==null) {
+                props.remove(
+                    evidenceKey
+                )
+            } else {
+                props.setProperty(
+                    evidenceKey,
+                    previousEvidence
+                )
+            }
+            throw t
+        }
+        return true
+    }
+
+    fun recordDepartedOwnerTeammateTakeover() {
+        val key=
+            "departedOwnerTeammateTakeoverObserved"
+        if(bool(key)) return
+
+        val previous=
+            props.getProperty(key)
+        props.setProperty(
+            key,
+            "true"
+        )
+        try {
+            save()
+        } catch(t:Throwable) {
+            if(previous==null) {
+                props.remove(key)
+            } else {
+                props.setProperty(
+                    key,
+                    previous
+                )
+            }
+            throw t
+        }
+    }
+
     fun recordVerifiedFarmReset(
         passed: Boolean
     ) {
@@ -464,6 +584,14 @@ class PaperStage4GateStore(
             queueActiveLeaveObserved=
                 bool(
                     "queueActiveLeaveObserved"
+                ),
+            departureReconnectObserved=
+                bool(
+                    "departureReconnectObserved"
+                ),
+            departedOwnerTeammateTakeoverObserved=
+                bool(
+                    "departedOwnerTeammateTakeoverObserved"
                 )
         )
 

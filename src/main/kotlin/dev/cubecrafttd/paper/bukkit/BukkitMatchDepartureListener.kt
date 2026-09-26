@@ -21,7 +21,9 @@ import java.util.UUID
 class BukkitMatchDepartureListener(
     private val plugin: Plugin,
     private val controller:
-        BukkitNormalArenaController
+        BukkitNormalArenaController,
+    private val liveGate:
+        PaperStage4GateStore
 ) : Listener {
     init {
         plugin.server.pluginManager
@@ -62,6 +64,22 @@ class BukkitMatchDepartureListener(
                 ) ?: return
         if(!report.newlyDeparted) {
             return
+        }
+
+        runCatching {
+            liveGate
+                .recordActiveDepartureForReconnect(
+                    playerUuid
+                )
+        }.onFailure {
+            plugin.logger.warning(
+                "Could not persist TD departure/reconnect evidence marker for " +
+                    playerUuid +
+                    ": " +
+                    it.javaClass.simpleName +
+                    ": " +
+                    it.message
+            )
         }
 
         plugin.logger.info(

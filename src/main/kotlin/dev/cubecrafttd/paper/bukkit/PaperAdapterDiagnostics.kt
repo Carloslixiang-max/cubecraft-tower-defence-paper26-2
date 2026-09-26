@@ -24,6 +24,8 @@ data class PaperAdapterDiagnostics(
                         !stage4.verifiedFarmResetPassed
                     "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" ->
                         !stage4.queueFlowPassed
+                    "player departure/reconnect and teammate tower takeover certification" ->
+                        !stage4.departureFlowPassed
                     else -> true
                 }
             }
@@ -79,6 +81,7 @@ data class PaperAdapterDiagnostics(
                 "verified Farm reset real-server evidence recording",
                 "post-verify reset callback failures never roll back verified world state",
                 "observed regular-player queue/GUI/HUD/countdown/active-leave live evidence",
+                "observed disconnect/reconnect + departed-owner teammate tower takeover evidence",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",
