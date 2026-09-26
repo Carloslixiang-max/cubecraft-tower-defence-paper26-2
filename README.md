@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v72 engineering playtest shell**
-- Pure-domain baseline: **448/448 fixtures PASS**
+- Current shell lineage: **v73 engineering playtest shell**
+- Pure-domain baseline: **449/449 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -71,7 +71,8 @@ The codebase already contains substantial runtime work, including:
 - v69 adds bounded automatic recovery retry for online pending players. The recovery listener sweeps once per second, de-duplicates scheduled restores, and allows up to three online attempts before stopping automatic retries for that connection; reconnecting resets the budget. This covers transient Paper/IO restore failures after `/ctdleave`, match end, or restart recovery without requiring an immediate manual relog, while the durable journal remains authoritative whenever a retry still fails;
 - v70 separates automatically-recorded Stage-4 core evidence from full real-server certification. The existing durable core gate is now reported as `coreCertified`; `/ctdlivegate` also computes `fullCertified` and lists every still-unverified live gate. Snapshot round-trip, restart recovery, and 60+ tower evidence disappear from the remaining list only after their recorded gates pass, while GUI fidelity, queue/vote/countdown, departure/reconnect/tower takeover, verified Farm reset, consecutive reuse, movement/raytrace, and multi-arena certification remain visibly pending until dedicated real-server evidence exists;
 - v71 turns repeated-round reuse into consecutive evidence instead of an accumulated counter. Only normally completed arena teardowns participate in certification; a partial start that later cleans up no longer counts as a round. Fully clean normal teardowns increment both total and consecutive clean-round counters, any dirty teardown resets the consecutive counter, and an unclean restart resets it as well. Stage-4 core certification and the dynamic consecutive-reuse live gate now require two consecutive fully clean rounds;
-- v72 makes verified Farm reset a first-class real-server evidence gate and hardens reset completion semantics. Starting `/ctdresetfarm` invalidates any previous reset PASS; only a complete tagged-entity cleanup + block APPLY + full VERIFY + durable reuse-gate clear records PASS. Reset failure records/retains FAIL. Once the world has reached COMPLETE verification, a later control-plane callback failure no longer rolls verified blocks back to their pre-reset dirty snapshots. Reuse-gate clearing itself is persistence-first, so a failed durable clear cannot leave memory falsely reporting the Farm as reusable.
+- v72 makes verified Farm reset a first-class real-server evidence gate and hardens reset completion semantics. Starting `/ctdresetfarm` invalidates any previous reset PASS; only a complete tagged-entity cleanup + block APPLY + full VERIFY + durable reuse-gate clear records PASS. Reset failure records/retains FAIL. Once the world has reached COMPLETE verification, a later control-plane callback failure no longer rolls verified blocks back to their pre-reset dirty snapshots. Reuse-gate clearing itself is persistence-first, so a failed durable clear cannot leave memory falsely reporting the Farm as reusable;
+- v73 makes the regular-player queue path a first-class observed live gate. Stage-4 records six independent real interactions: a successful `/ctdjoin`, a live queue HUD projection, an Armageddon vote clicked through the pregame GUI action bridge, a Pricing vote clicked through that GUI bridge, a completed historical 3 -> 2 -> 1 countdown that successfully commits an arena start, and an active-match `/ctdleave`. Waiting-queue or countdown cancellation does not satisfy the active-leave evidence. Only after all six observations are durable does `/ctdlivegate` remove the queue/join/leave + GUI/HUD/vote/countdown certification item.
 
 ## Build
 

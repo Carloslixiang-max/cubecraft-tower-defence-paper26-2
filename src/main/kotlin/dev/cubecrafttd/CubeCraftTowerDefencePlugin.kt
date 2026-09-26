@@ -138,7 +138,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 this,
                 liveArenaController,
                 readinessService,
-                recoveryCoordinator
+                recoveryCoordinator,
+                stage4Gate
             )
         trackedDamageListener = BukkitTrackedMobDamageListener(
             this,
@@ -422,7 +423,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v72 enabled; " +
+            "CubeCraftTowerDefence shell v73 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -490,7 +491,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v72 disabled; " +
+            "CubeCraftTowerDefence shell v73 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -524,7 +525,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v72, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v73, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +

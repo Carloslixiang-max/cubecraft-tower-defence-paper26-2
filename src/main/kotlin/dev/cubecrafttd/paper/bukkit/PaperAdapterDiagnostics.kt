@@ -22,6 +22,8 @@ data class PaperAdapterDiagnostics(
                         stage4.consecutiveCleanArenaRoundTrips < 2
                     "verified Farm reset/repair real-server certification" ->
                         !stage4.verifiedFarmResetPassed
+                    "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" ->
+                        !stage4.queueFlowPassed
                     else -> true
                 }
             }
@@ -76,6 +78,7 @@ data class PaperAdapterDiagnostics(
                 "two-consecutive-clean-round reuse certification counter",
                 "verified Farm reset real-server evidence recording",
                 "post-verify reset callback failures never roll back verified world state",
+                "observed regular-player queue/GUI/HUD/countdown/active-leave live evidence",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

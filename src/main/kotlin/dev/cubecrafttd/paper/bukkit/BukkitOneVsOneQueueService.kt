@@ -65,7 +65,9 @@ class BukkitOneVsOneQueueService(
     private val readiness:
         PaperGameplayReadinessService,
     private val recovery:
-        JournaledPlayerRecoveryOrchestrator
+        JournaledPlayerRecoveryOrchestrator,
+    private val liveGate:
+        PaperStage4GateStore
 ) {
     private val queue=
         EngineeringOneVsOneQueueState()
@@ -149,6 +151,11 @@ class BukkitOneVsOneQueueService(
             queue.join(
                 playerUuid
             )
+        if(joined.added) {
+            recordLiveEvidence(
+                PaperQueueLiveEvidence.JOIN
+            )
+        }
 
         val reuse=
             controller
@@ -310,51 +317,69 @@ class BukkitOneVsOneQueueService(
                 invocation.actionId
         }
 
-        return when(parts[1]) {
-            "armageddon" ->
-                castArmageddonVote(
-                    invocation.playerUuid,
-                    when(parts[2]) {
-                        "random" ->
-                            HistoricalPregameArmageddonVoteOption.RANDOM
-                        "wither" ->
-                            HistoricalPregameArmageddonVoteOption.WITHER
-                        "lightning" ->
-                            HistoricalPregameArmageddonVoteOption.LIGHTNING
-                        "horde" ->
-                            HistoricalPregameArmageddonVoteOption.HORDE
-                        else ->
-                            error(
-                                "Unknown Armageddon vote option " +
-                                    parts[2]
-                            )
-                    }
-                )
+        val result=
+            when(parts[1]) {
+                "armageddon" ->
+                    castArmageddonVote(
+                        invocation.playerUuid,
+                        when(parts[2]) {
+                            "random" ->
+                                HistoricalPregameArmageddonVoteOption.RANDOM
+                            "wither" ->
+                                HistoricalPregameArmageddonVoteOption.WITHER
+                            "lightning" ->
+                                HistoricalPregameArmageddonVoteOption.LIGHTNING
+                            "horde" ->
+                                HistoricalPregameArmageddonVoteOption.HORDE
+                            else ->
+                                error(
+                                    "Unknown Armageddon vote option " +
+                                        parts[2]
+                                )
+                        }
+                    )
 
-            "pricing" ->
-                castPricingVote(
-                    invocation.playerUuid,
-                    when(parts[2]) {
-                        "normal" ->
-                            HistoricalPregamePricingVoteOption.NORMAL
-                        "double_income" ->
-                            HistoricalPregamePricingVoteOption.DOUBLE_INCOME
-                        "quick_start" ->
-                            HistoricalPregamePricingVoteOption.QUICK_START
-                        else ->
-                            error(
-                                "Unknown Pricing vote option " +
-                                    parts[2]
-                            )
-                    }
-                )
+                "pricing" ->
+                    castPricingVote(
+                        invocation.playerUuid,
+                        when(parts[2]) {
+                            "normal" ->
+                                HistoricalPregamePricingVoteOption.NORMAL
+                            "double_income" ->
+                                HistoricalPregamePricingVoteOption.DOUBLE_INCOME
+                            "quick_start" ->
+                                HistoricalPregamePricingVoteOption.QUICK_START
+                            else ->
+                                error(
+                                    "Unknown Pricing vote option " +
+                                        parts[2]
+                                )
+                        }
+                    )
 
-            else ->
-                error(
-                    "Unknown pregame vote category " +
-                        parts[1]
-                )
-        }
+                else ->
+                    error(
+                        "Unknown pregame vote category " +
+                            parts[1]
+                    )
+            }
+
+        recordLiveEvidence(
+            when(parts[1]) {
+                "armageddon" ->
+                    PaperQueueLiveEvidence
+                        .ARMAGEDDON_GUI_VOTE
+                "pricing" ->
+                    PaperQueueLiveEvidence
+                        .PRICING_GUI_VOTE
+                else ->
+                    error(
+                        "Unknown pregame vote category " +
+                            parts[1]
+                    )
+            }
+        )
+        return result
     }
 
     fun leave(
@@ -419,6 +444,10 @@ class BukkitOneVsOneQueueService(
                     restoredNow=false,
                     arenaCleaned=false
                 )
+
+        recordLiveEvidence(
+            PaperQueueLiveEvidence.ACTIVE_LEAVE
+        )
 
         return BukkitQueueLeaveReport(
             removedFromWaiting=false,
@@ -722,6 +751,10 @@ class BukkitOneVsOneQueueService(
                         resolvedPricing
                             .pricingMode
                     )
+                recordLiveEvidence(
+                    PaperQueueLiveEvidence
+                        .COUNTDOWN_START
+                )
 
                 resolved to
                     resolvedPricing
@@ -929,17 +962,22 @@ class BukkitOneVsOneQueueService(
                 index,uuid ->
                 plugin.server
                     .getPlayer(uuid)
-                    ?.sendActionBar(
-                        Component.text(
-                            queueHudText(
-                                uuid,
-                                waitingPosition=
-                                    index+1,
-                                countdownSeconds=
-                                    null
+                    ?.let { player ->
+                        player.sendActionBar(
+                            Component.text(
+                                queueHudText(
+                                    uuid,
+                                    waitingPosition=
+                                        index+1,
+                                    countdownSeconds=
+                                        null
+                                )
                             )
                         )
-                    )
+                        recordLiveEvidence(
+                            PaperQueueLiveEvidence.HUD
+                        )
+                    }
             }
     }
 
@@ -974,6 +1012,25 @@ class BukkitOneVsOneQueueService(
             ?.sendActionBar(
                 Component.empty()
             )
+    }
+
+    private fun recordLiveEvidence(
+        evidence: PaperQueueLiveEvidence
+    ) {
+        runCatching {
+            liveGate.recordQueueEvidence(
+                evidence
+            )
+        }.onFailure {
+            plugin.logger.warning(
+                "Could not persist TD queue live evidence " +
+                    evidence +
+                    ": " +
+                    it.javaClass.simpleName +
+                    ": " +
+                    it.message
+            )
+        }
     }
 
     private fun eligibleForStart(

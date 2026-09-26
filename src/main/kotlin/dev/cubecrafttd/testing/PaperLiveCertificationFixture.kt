@@ -60,6 +60,21 @@ object PaperLiveCertificationFixture {
                     resetNotPassed
                 )
 
+        val queuePassed=
+            corePassed.copy(
+                queueJoinObserved=true,
+                queueHudObserved=true,
+                queueArmageddonGuiVoteObserved=true,
+                queuePricingGuiVoteObserved=true,
+                queueCountdownStartObserved=true,
+                queueActiveLeaveObserved=true
+            )
+        val queuePassedRemaining=
+            diagnostics
+                .remainingLiveGates(
+                    queuePassed
+                )
+
         val manualStillRequired=
             "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" in
                 remaining &&
@@ -93,6 +108,13 @@ object PaperLiveCertificationFixture {
                 !resetNotPassed.coreCertified &&
                     "verified Farm reset/repair real-server certification" in
                         resetNotPassedRemaining
+            ),
+            FixtureResult(
+                "live-certification-removes-queue-gate-only-after-full-observed-flow",
+                !corePassed.queueFlowPassed &&
+                    queuePassed.queueFlowPassed &&
+                    "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" !in
+                        queuePassedRemaining
             )
         )
     }

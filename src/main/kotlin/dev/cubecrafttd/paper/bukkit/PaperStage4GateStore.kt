@@ -10,6 +10,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
 
+enum class PaperQueueLiveEvidence {
+    JOIN,
+    HUD,
+    ARMAGEDDON_GUI_VOTE,
+    PRICING_GUI_VOTE,
+    COUNTDOWN_START,
+    ACTIVE_LEAVE
+}
+
 data class PaperStage4GateStatus(
     val domainFixturesPassed: Boolean,
     val farmMapCheckPassed: Boolean,
@@ -23,8 +32,29 @@ data class PaperStage4GateStatus(
     val consecutiveCleanArenaRoundTrips:
         Int = 0,
     val verifiedFarmResetPassed:
+        Boolean = false,
+    val queueJoinObserved:
+        Boolean = false,
+    val queueHudObserved:
+        Boolean = false,
+    val queueArmageddonGuiVoteObserved:
+        Boolean = false,
+    val queuePricingGuiVoteObserved:
+        Boolean = false,
+    val queueCountdownStartObserved:
+        Boolean = false,
+    val queueActiveLeaveObserved:
         Boolean = false
 ) {
+    val queueFlowPassed: Boolean
+        get() =
+            queueJoinObserved &&
+                queueHudObserved &&
+                queueArmageddonGuiVoteObserved &&
+                queuePricingGuiVoteObserved &&
+                queueCountdownStartObserved &&
+                queueActiveLeaveObserved
+
     val coreCertified: Boolean
         get() =
             domainFixturesPassed &&
@@ -52,6 +82,7 @@ data class PaperStage4GateStatus(
             "restartRecovery=$restartRecoveryPassed " +
             "stress60=$towerStress60Passed " +
             "verifiedFarmReset=$verifiedFarmResetPassed " +
+            "queueFlow=$queueFlowPassed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
             "consecutiveCleanArenaRoundTrips=$consecutiveCleanArenaRoundTrips " +
@@ -251,6 +282,47 @@ class PaperStage4GateStore(
         save()
     }
 
+    fun recordQueueEvidence(
+        evidence: PaperQueueLiveEvidence
+    ) {
+        val key=
+            when(evidence) {
+                PaperQueueLiveEvidence.JOIN ->
+                    "queueJoinObserved"
+                PaperQueueLiveEvidence.HUD ->
+                    "queueHudObserved"
+                PaperQueueLiveEvidence.ARMAGEDDON_GUI_VOTE ->
+                    "queueArmageddonGuiVoteObserved"
+                PaperQueueLiveEvidence.PRICING_GUI_VOTE ->
+                    "queuePricingGuiVoteObserved"
+                PaperQueueLiveEvidence.COUNTDOWN_START ->
+                    "queueCountdownStartObserved"
+                PaperQueueLiveEvidence.ACTIVE_LEAVE ->
+                    "queueActiveLeaveObserved"
+            }
+        if(bool(key)) return
+
+        val previous=
+            props.getProperty(key)
+        props.setProperty(
+            key,
+            "true"
+        )
+        try {
+            save()
+        } catch(t:Throwable) {
+            if(previous==null) {
+                props.remove(key)
+            } else {
+                props.setProperty(
+                    key,
+                    previous
+                )
+            }
+            throw t
+        }
+    }
+
     fun recordVerifiedFarmReset(
         passed: Boolean
     ) {
@@ -368,6 +440,30 @@ class PaperStage4GateStore(
             verifiedFarmResetPassed=
                 bool(
                     "verifiedFarmResetPassed"
+                ),
+            queueJoinObserved=
+                bool(
+                    "queueJoinObserved"
+                ),
+            queueHudObserved=
+                bool(
+                    "queueHudObserved"
+                ),
+            queueArmageddonGuiVoteObserved=
+                bool(
+                    "queueArmageddonGuiVoteObserved"
+                ),
+            queuePricingGuiVoteObserved=
+                bool(
+                    "queuePricingGuiVoteObserved"
+                ),
+            queueCountdownStartObserved=
+                bool(
+                    "queueCountdownStartObserved"
+                ),
+            queueActiveLeaveObserved=
+                bool(
+                    "queueActiveLeaveObserved"
                 )
         )
 
