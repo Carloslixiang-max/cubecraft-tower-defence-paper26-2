@@ -48,21 +48,25 @@ object DynamicMatchMenus {
                 }
                 .toMutableList()
 
+        // Historical direct guide evidence: bottom-middle Nether Star opens
+        // mob upgrades; bottom-right Mob Spawner sends the queued mobs.
         slots += MenuSlot(
             slot=22,
-            actionId="summoner:send",
-            evidenceStatus=
-                UiEvidenceStatus
-                    .ENGINEERING_FALLBACK,
-            displayName="Send selected troops"
-        )
-        slots += MenuSlot(
-            slot=26,
             actionId="nav:progression",
             evidenceStatus=
                 UiEvidenceStatus
-                    .ENGINEERING_FALLBACK,
-            displayName="Troop upgrades"
+                    .HISTORICAL_DIRECT,
+            displayName="Upgrade mobs",
+            iconHint="nether-star"
+        )
+        slots += MenuSlot(
+            slot=26,
+            actionId="summoner:send",
+            evidenceStatus=
+                UiEvidenceStatus
+                    .HISTORICAL_DIRECT,
+            displayName="Send selected troops",
+            iconHint="spawner"
         )
 
         return MenuDefinition(

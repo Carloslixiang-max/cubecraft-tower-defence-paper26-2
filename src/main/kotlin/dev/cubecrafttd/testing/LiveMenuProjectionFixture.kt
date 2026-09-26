@@ -39,13 +39,13 @@ object LiveMenuProjectionFixture {
             FixtureResult(
                 "live-menu-projection-preserves-labels-and-navigation",
                 summoner.slotActionIds[22] ==
-                    "summoner:send" &&
-                    summoner.slotDisplayNames[22] ==
-                    "Send selected troops" &&
-                    summoner.slotActionIds[26] ==
                     "nav:progression" &&
+                    summoner.slotDisplayNames[22] ==
+                    "Upgrade mobs" &&
+                    summoner.slotActionIds[26] ==
+                    "summoner:send" &&
                     summoner.slotDisplayNames[26] ==
-                    "Troop upgrades" &&
+                    "Send selected troops" &&
                     progression.slotActionIds[35] ==
                     "nav:summoner" &&
                     progression.slotDisplayNames[35] ==
@@ -59,6 +59,13 @@ object LiveMenuProjectionFixture {
                     builder.slotIconHints[14]=="dirt" &&
                     builder.slotIconHints[15]=="potion" &&
                     builder.slotIconHints[40]=="book"
+            ),
+            FixtureResult(
+                "summoner-historical-bottom-controls-use-nether-star-and-spawner",
+                summoner.slotActionIds[22]=="nav:progression" &&
+                    summoner.slotIconHints[22]=="nether-star" &&
+                    summoner.slotActionIds[26]=="summoner:send" &&
+                    summoner.slotIconHints[26]=="spawner"
             )
         )
     }

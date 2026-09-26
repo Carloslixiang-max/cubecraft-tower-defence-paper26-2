@@ -39,6 +39,8 @@ class BukkitEngineeringMenuRenderer :
             "potion" -> Material.POTION
             "book" -> Material.BOOK
             "anvil" -> Material.ANVIL
+            "nether-star" -> Material.NETHER_STAR
+            "spawner" -> Material.SPAWNER
 
             // These three 2021 builder identities are visual inference rather
             // than direct item-name evidence. They stay weaker evidence in the

@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v78 engineering playtest shell**
-- Pure-domain baseline: **454/454 fixtures PASS**
+- Current shell lineage: **v79 engineering playtest shell**
+- Pure-domain baseline: **455/455 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -77,7 +77,8 @@ The codebase already contains substantial runtime work, including:
 - v75 adds an admin-only Engineering team certification harness without changing regular 1v1 matchmaking. `/ctdlivetest teamstart <arenaId> <red1[,red2]> <blue1[,blue2]> <wither|lightning|horde>` starts a bounded 1-2 player-per-team live arena using the same bootstrap, economy, tower lifecycle, recovery, isolation and teardown stack as 1v1. This makes the v74 teammate-takeover gate actually testable: e.g. start 2v1, have RED1 place a tower, disconnect RED1, have RED2 upgrade/sell that departed-owner tower, then reconnect RED1 and wait for durable snapshot recovery. The command is certification-only and does not alter `/ctdjoin` FIFO 1v1 behavior;
 - v76 adds pure-domain 2v2 bootstrap regression coverage beneath that live harness. The fixture proves all four players are captured and prepared, the two RED and two BLUE memberships are preserved in ArenaContext and MatchSessionState, one RED player can depart without removing the active teammate/opponents, and all four authoritative pre-match snapshots remain restorable. This keeps the certification-only team launcher backed by tested generic session/recovery behavior rather than only a Bukkit command path;
 - v77 makes `/ctdlivegate` directly actionable during real playtests. In addition to core/full certification and the remaining gate list, it now prints all six queue observations individually, the reconnect-restore and teammate-takeover observations separately, and the durable snapshot/restart/60+ tower/Farm-reset/consecutive-round/clean-restart evidence counters. This does not auto-certify visual fidelity; it only exposes which objective live observations are already durable and which still need a real server run;
-- v78 starts the post-stability fidelity pass by wiring evidence-backed `MenuSlot.iconHint` data all the way through `LiveMenuView` into the Bukkit renderer. The recovered 2021 builder projection can now render its known/inferred item identities instead of collapsing all tower entries to generic stone, while direct hints such as Archer/Bow, Artillery/TNT, Zeus/Beacon, Quake/Dirt, Poison/Potion and Tower information/Book are preserved end-to-end. The historically documented tower-upgrade action now renders with an Anvil icon. Exact unrecovered slots and weaker visual inferences remain explicitly tagged and are not promoted to direct CubeCraft truth.
+- v78 starts the post-stability fidelity pass by wiring evidence-backed `MenuSlot.iconHint` data all the way through `LiveMenuView` into the Bukkit renderer. The recovered 2021 builder projection can now render its known/inferred item identities instead of collapsing all tower entries to generic stone, while direct hints such as Archer/Bow, Artillery/TNT, Zeus/Beacon, Quake/Dirt, Poison/Potion and Tower information/Book are preserved end-to-end. The historically documented tower-upgrade action now renders with an Anvil icon. Exact unrecovered slots and weaker visual inferences remain explicitly tagged and are not promoted to direct CubeCraft truth;
+- v79 corrects a concrete historical Summoner GUI mismatch. Direct guide evidence places the mob-upgrade Nether Star in the bottom-middle slot and the send-queue Mob Spawner in the bottom-right slot. The old engineering menu had those controls reversed. The live menu now uses slot 22 for `nav:progression` with a Nether Star and slot 26 for `summoner:send` with a Mob Spawner, with a dedicated regression fixture locking the recovered layout.
 
 ## Build
 

@@ -87,6 +87,7 @@ data class PaperAdapterDiagnostics(
                 "granular /ctdlivegate live-evidence status reporting",
                 "evidence-backed GUI icon-hint projection into Bukkit menus",
                 "historical direct Anvil upgrade icon in tower management",
+                "historical direct Summoner bottom-middle Nether Star + bottom-right Mob Spawner controls",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",
