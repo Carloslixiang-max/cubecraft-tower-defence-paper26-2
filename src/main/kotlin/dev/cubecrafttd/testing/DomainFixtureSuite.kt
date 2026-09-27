@@ -48,6 +48,7 @@ object DomainFixtureSuite {
         addAll(ProgressionShareStatsFixture.run())
         addAll(MatchEndCostStatsFixture.run())
         addAll(HistoricalOverallScoreFixture.run())
+        addAll(HistoricalMatchEndLeaderboardFixture.run())
         addAll(ArenaTeardownFixture.run())
         addAll(FarmReuseGateFixture.run())
         addAll(NormalArenaLoopFixture.run())

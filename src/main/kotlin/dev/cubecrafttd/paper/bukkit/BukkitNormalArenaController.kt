@@ -2175,7 +2175,8 @@ class BukkitNormalArenaController(
                 )
             matchEndFeedback.present(
                 report.outcome,
-                activeTeamByPlayer
+                activeTeamByPlayer,
+                report.stats
             )
             report
         } finally {
