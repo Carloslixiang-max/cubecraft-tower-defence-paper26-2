@@ -288,9 +288,14 @@ class BukkitMobCombatVisualProjectionService(
                     Component.text(text)
                 )
                 display.teleport(anchor)
+                val displayState=
+                    state
+                        ?: error(
+                            "Health display state missing after display creation"
+                        )
                 reconcileVisibility(
                     display,
-                    state.viewers,
+                    displayState.viewers,
                     desiredViewers
                 )
             }
