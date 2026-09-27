@@ -43,28 +43,8 @@ class TowerPlacementInteractionService(
         val player=player(playerUuid)
         player.interaction.towerPlacement.chooseTower(towerId)
         return TowerPlacementInteractionResult.OpenPathSelector(
-            TowerBuilderMenus.pathSelectorEngineeringSlots,
+            TowerBuilderMenus.pathSelector2021,
             towerId
-        )
-    }
-
-    /**
-     * 2021 Mature flow: the tower item click itself chooses the path and
-     * commits placement. The older engineering path-selector inventory is not
-     * part of the ordinary live placement path anymore.
-     */
-    fun chooseTowerAndPlace(
-        playerUuid: UUID,
-        towerId: String,
-        path: TowerPath
-    ): TowerPlacementInteractionResult.Placed {
-        player(playerUuid)
-            .interaction
-            .towerPlacement
-            .chooseTower(towerId)
-        return choosePathAndPlace(
-            playerUuid,
-            path
         )
     }
 

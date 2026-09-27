@@ -1984,34 +1984,10 @@ class BukkitNormalArenaController(
         }
 
         if(placementPending && invocation.actionId.startsWith("tower:")) {
-            val towerId=
-                invocation.actionId
-                    .substringAfter("tower:")
-            val path=
-                when(invocation.click) {
-                    ClickKind.LEFT,
-                    ClickKind.SHIFT_LEFT ->
-                        dev.cubecrafttd.tower.visual.TowerPath.TOP
-                    ClickKind.RIGHT,
-                    ClickKind.SHIFT_RIGHT ->
-                        dev.cubecrafttd.tower.visual.TowerPath.BOTTOM
-                }
-            val result=
-                handle.towerPlacement
-                    ?.chooseTowerAndPlace(
-                        invocation.playerUuid,
-                        towerId,
-                        path
-                    )
-                    ?: error(
-                        "Tower placement service is not initialized"
-                    )
-            handle.stats
-                .recordTowerBuilt(
-                    invocation.playerUuid,
-                    result.result.receipt.cost
-                )
-            return result
+            val towerId=invocation.actionId.substringAfter("tower:")
+            return handle.towerPlacement
+                ?.chooseTower(invocation.playerUuid,towerId)
+                ?: error("Tower placement service is not initialized")
         }
         if(placementPending && invocation.actionId.startsWith("path:")) {
             val path=when(invocation.actionId.substringAfter("path:")) {

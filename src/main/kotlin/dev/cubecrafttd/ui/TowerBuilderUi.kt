@@ -17,9 +17,9 @@ object TowerBuilderMenus {
         slots = listOf(
             MenuSlot(2,"tower:archer",UiEvidenceStatus.MATURE_DIRECT,"Archer Tower","bow"),
             MenuSlot(3,"tower:ice",UiEvidenceStatus.MATURE_DIRECT,"Ice Tower","ice-like"),
-            MenuSlot(5,"tower:mage",UiEvidenceStatus.MATURE_DIRECT,"Mage Tower","dark-block"),
+            MenuSlot(5,"tower:mage",UiEvidenceStatus.MATURE_DIRECT,"Mage Tower","coal"),
             MenuSlot(6,"tower:artillery",UiEvidenceStatus.MATURE_DIRECT,"Artillery Tower","tnt"),
-            MenuSlot(11,"tower:sorcerer",UiEvidenceStatus.MATURE_DIRECT,"Sorcerer Tower","ender-like"),
+            MenuSlot(11,"tower:sorcerer",UiEvidenceStatus.MATURE_DIRECT,"Sorcerer Tower","ender-eye"),
             MenuSlot(12,"tower:zeus",UiEvidenceStatus.MATURE_DIRECT,"Zeus Tower","beacon"),
             MenuSlot(14,"tower:quake",UiEvidenceStatus.MATURE_DIRECT,"Quake Tower","dirt"),
             MenuSlot(15,"tower:poison",UiEvidenceStatus.MATURE_DIRECT,"Poison Tower","potion"),
@@ -59,17 +59,28 @@ object TowerBuilderMenus {
         )
     )
 
-    val pathSelectorEngineeringSlots = MenuDefinition(
+    /**
+     * The official January 2021 update screenshot directly recovers the
+     * 27-slot "Select an upgrade path" inventory and the two path positions:
+     * zero-based slots 11 and 15. Per-tower item names, icons and lore vary by
+     * tower and are not fully recovered, so those presentation details stay
+     * contextual rather than being promoted to exact truth.
+     */
+    val pathSelector2021 = MenuDefinition(
         title = "Select an upgrade path",
         size = 27,
-        evidenceStatus = UiEvidenceStatus.MATURE_CONTEXT,
+        evidenceStatus = UiEvidenceStatus.MATURE_DIRECT,
         slots = listOf(
-            // Two symmetric middle-row slots are known; exact indices still need
-            // direct measurement, so 11/15 are explicitly engineering fallback.
-            MenuSlot(11,"path:top",UiEvidenceStatus.ENGINEERING_FALLBACK,"Path 1"),
-            MenuSlot(15,"path:bottom",UiEvidenceStatus.ENGINEERING_FALLBACK,"Path 2")
+            MenuSlot(11,"path:top",UiEvidenceStatus.MATURE_CONTEXT,"Path 1"),
+            MenuSlot(15,"path:bottom",UiEvidenceStatus.MATURE_CONTEXT,"Path 2")
         )
     )
+
+    /**
+     * Compatibility alias for older fixtures/callers. The slots are no longer
+     * an engineering guess; see [pathSelector2021].
+     */
+    val pathSelectorEngineeringSlots = pathSelector2021
 }
 
 data class TowerBuilderSelection(

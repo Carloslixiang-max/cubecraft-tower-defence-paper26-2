@@ -66,9 +66,9 @@ object TowerPlacementAndRangefinderFixture {
         val flow=TowerPlacementInteractionService(session,world)
 
         val begin=flow.beginRegular(player,BlockPos(0,0,2))
-        val placed=flow.chooseTowerAndPlace(
+        val choose=flow.chooseTower(player,"archer")
+        val placed=flow.choosePathAndPlace(
             player,
-            "archer",
             TowerPath.BOTTOM
         )
 
@@ -91,21 +91,23 @@ object TowerPlacementAndRangefinderFixture {
                     begin.menu.size==45
             ),
             FixtureResult(
-                "placement-builder-click-commits-selected-path-directly",
+                "placement-tower-choice-opens-direct-2021-path-selector",
+                choose.towerId=="archer" &&
+                    choose.menu.title=="Select an upgrade path" &&
+                    choose.menu.size==27 &&
+                    choose.menu.actionAt(11)=="path:top" &&
+                    choose.menu.actionAt(15)=="path:bottom" &&
+                    choose.menu.evidenceStatus==
+                        UiEvidenceStatus.MATURE_DIRECT
+            ),
+            FixtureResult(
+                "placement-path-commit-builds-and-remembers-selected-path",
                 placed.result.selection.towerId=="archer" &&
                     placed.result.selection.path==TowerPath.BOTTOM &&
                     playerState.interaction
-                        .towerPlacement.pending==null
-            ),
-            FixtureResult(
-                "placement-direct-path-is-remembered-for-quick-place",
-                playerState.interaction
-                    .builder
-                    .quickPlaceSelection()
-                    ?.let {
-                        it.towerId=="archer" &&
-                            it.path==TowerPath.BOTTOM
-                    }==true
+                        .builder
+                        .quickPlaceSelection()
+                        ?.path==TowerPath.BOTTOM
             ),
             FixtureResult(
                 "rangefinder-shift-nearest-ten-plus-pinned",

@@ -59,6 +59,10 @@ class BukkitEngineeringMenuRenderer :
             // than direct item-name evidence. They stay weaker evidence in the
             // MenuSlot model even though the renderer can now honor the hint.
             "ice-like" -> Material.PACKED_ICE
+            "coal" -> Material.COAL
+            "ender-eye" -> Material.ENDER_EYE
+
+            // Compatibility aliases retained for older menu snapshots.
             "dark-block" -> Material.OBSIDIAN
             "ender-like" -> Material.ENDER_PEARL
 
