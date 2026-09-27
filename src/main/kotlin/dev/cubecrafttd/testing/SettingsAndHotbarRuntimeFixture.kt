@@ -128,6 +128,17 @@ object SettingsAndHotbarRuntimeFixture {
                 MatchMenuActionResult
                     .SettingsChanged
 
+        val pointPurchaseRejected=
+            runCatching {
+                router.handle(
+                    MenuActionInvocation(
+                        player,
+                        "settings:point-purchases",
+                        ClickKind.LEFT
+                    )
+                )
+            }.isFailure
+
         val menu=
             DynamicMatchMenus
                 .settings(playerState)
@@ -224,8 +235,23 @@ object SettingsAndHotbarRuntimeFixture {
                     } &&
                     menu.slots.any {
                         it.actionId==
-                            "settings:point-purchases"
+                            "noop:settings:point-purchases-unavailable" &&
+                        it.displayName==
+                            "In-game Point purchases: unavailable"
                     }
+            ),
+            FixtureResult(
+                "settings-point-purchase-backend-explicitly-unavailable",
+                !SettingsRuntimeCapabilities
+                    .IN_GAME_POINT_PURCHASES &&
+                    pointPurchaseRejected
+            ),
+            FixtureResult(
+                "settings-menu-does-not-expose-fake-point-purchase-toggle",
+                menu.slots.none {
+                    it.actionId==
+                        "settings:point-purchases"
+                }
             ),
             FixtureResult(
                 "hotbar-router-swap-and-custom-evidence",

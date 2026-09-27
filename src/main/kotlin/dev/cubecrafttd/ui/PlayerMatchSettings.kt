@@ -15,6 +15,17 @@ enum class ParticleDensitySetting(
         }
 }
 
+/**
+ * Runtime availability is deliberately separate from the historical Settings
+ * surface. The 2017 changelog proves that an in-game purchase preference
+ * existed, but the exact purchasable catalogue / profile-point transaction
+ * backend has not been recovered in this recreation yet.
+ */
+object SettingsRuntimeCapabilities {
+    const val IN_GAME_POINT_PURCHASES:
+        Boolean = false
+}
+
 data class PlayerMatchSettings(
     val lifetimeWins: Int,
     var autoCentreTowers: Boolean = true,
@@ -52,7 +63,9 @@ data class SettingsMenuModel(
         ParticleDensitySetting,
     val digitalMobHealth: Boolean,
     val damageIndicators: Boolean,
-    val allowInGamePointPurchases: Boolean
+    val allowInGamePointPurchases: Boolean,
+    val inGamePointPurchasesAvailable:
+        Boolean
 )
 
 object SettingsMenuProjector {
@@ -64,6 +77,8 @@ object SettingsMenuProjector {
         settings.particleDensity,
         settings.digitalMobHealth,
         settings.damageIndicators,
-        settings.allowInGamePointPurchases
+        settings.allowInGamePointPurchases,
+        SettingsRuntimeCapabilities
+            .IN_GAME_POINT_PURCHASES
     )
 }

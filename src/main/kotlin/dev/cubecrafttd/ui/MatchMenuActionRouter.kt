@@ -551,11 +551,19 @@ class MatchMenuActionRouter(
                     .damageIndicators=
                     !settings
                         .damageIndicators
-            "point-purchases" ->
+            "point-purchases" -> {
+                check(
+                    SettingsRuntimeCapabilities
+                        .IN_GAME_POINT_PURCHASES
+                ) {
+                    "In-game Point purchase backend is not recovered; " +
+                        "the historical Settings control remains disabled"
+                }
                 settings
                     .allowInGamePointPurchases=
                     !settings
                         .allowInGamePointPurchases
+            }
             else ->
                 error(
                     "Unknown settings action ${parts[1]}"

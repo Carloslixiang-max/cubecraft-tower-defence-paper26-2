@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v94 engineering playtest shell**
-- Pure-domain baseline: **493/493 fixtures PASS**
+- Current shell lineage: **v95 engineering playtest shell**
+- Pure-domain baseline: **495/495 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -94,6 +94,7 @@ The codebase already contains substantial runtime work, including:
 - v92 keeps stateful dynamic menus visually current without close/reopen flicker. `BukkitMenuBridge` can now refresh an inventory it still owns in place, and the main match bridge enables a bounded 10-tick Engineering refresh cadence for stable-title menus: Summoner, troop upgrades, Bazaar, Settings and the hotbar editor. This means send cooldown expiry, queue/Coins changes, newly earned EXP and rollback-window expiry become visible while the GUI stays open. Inventory close immediately removes refresh ownership, volatile Armageddon/tower/pregame menus are excluded, and same-menu action refreshes also redraw in place before falling back to a normal reopen when the menu identity changes;
 - v93 expands the Settings model toward the official 2017 surface without inventing the unresolved Fast Fly semantics. Player settings now include the recovered particle modes `500/sec`, `100/sec` and `minimum`, plus Digital mob health and Damage indicators toggles alongside the existing in-game purchase toggle. The Settings GUI routes those controls through real match-session state and refreshes in place through v92. The particle preference also drives the per-player Engineering tower-rangefinder sampling density; this is an adapter mapping for the current rangefinder, not a claim that the original global particle-cap implementation used the same sample counts.
 - v94 completes the Paper projection for Digital mob health and Damage indicators. Digital health is rendered as viewer-scoped numeric TextDisplays above live tracked mobs only for players who enabled the setting. Damage indicators are derived from authoritative TD health deltas rather than vanilla entity HP, are viewer-scoped through the same per-player setting, and are bounded to at most one active indicator display per tracked mob so this fidelity layer does not create an unbounded transient-entity burst under heavy tower fire. Exact original CubeCraft text styling, vertical offset and indicator lifetime remain unrecovered, so those presentation details are explicitly Engineering fallback rather than claimed historical truth.
+- v95 removes the remaining fake Settings control. The official 2017 changelog confirms that an In-game purchase preference existed, but it does not recover the exact in-match catalogue, profile-point persistence or transaction semantics. Until that backend is implemented from stronger evidence, the Settings entry is still visible for historical surface fidelity but is explicitly unavailable and projects a `noop:` action; forged legacy `settings:point-purchases` actions fail closed instead of toggling inert state. Auto-centre remains a real tower-placement input, so it is not treated as a fake control.
 
 ## Build
 

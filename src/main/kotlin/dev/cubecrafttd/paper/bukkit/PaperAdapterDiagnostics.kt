@@ -99,6 +99,7 @@ data class PaperAdapterDiagnostics(
                 "particle density setting drives per-player Engineering rangefinder sampling",
                 "per-player Digital mob health TextDisplay projection",
                 "per-player bounded Damage indicators TextDisplay projection",
+                "official in-game purchase setting kept fail-closed until its profile shop backend is recovered",
                 "historical end-of-match Top players list + hover stats presentation",
                 "historical Castle Health bossbar projection + lifecycle cleanup",
                 "historical Tower Defence Coins/EXP sidebar with conservative scoreboard ownership",

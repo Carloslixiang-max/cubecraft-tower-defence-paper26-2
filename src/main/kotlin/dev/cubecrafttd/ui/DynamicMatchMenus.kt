@@ -311,10 +311,20 @@ object DynamicMatchMenus {
                 ),
                 MenuSlot(
                     15,
-                    "settings:point-purchases",
+                    if(
+                        model.inGamePointPurchasesAvailable
+                    )
+                        "settings:point-purchases"
+                    else
+                        "noop:settings:point-purchases-unavailable",
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
-                    "In-game Point purchases: ${model.allowInGamePointPurchases}"
+                    if(
+                        model.inGamePointPurchasesAvailable
+                    )
+                        "In-game Point purchases: ${model.allowInGamePointPurchases}"
+                    else
+                        "In-game Point purchases: unavailable"
                 ),
                 MenuSlot(
                     18,
