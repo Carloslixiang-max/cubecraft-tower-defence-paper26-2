@@ -34,10 +34,13 @@ object PlayerSnapshotCodecV2Fixture {
         potionEffectsPayload=byteArrayOf(5),
         velocityPayload=byteArrayOf(6),
         heldItemSlot=7,
-        cursorItemPayload=byteArrayOf(9,8,7)
+        cursorItemPayload=byteArrayOf(9,8,7),
+        flySpeed=0.35f
     )
 
-    private fun encodeV2(s:PlayerSnapshot):ByteArray =
+    private fun encodeCurrent(
+        s:PlayerSnapshot
+    ):ByteArray =
         ByteArrayOutputStream().use { bytes ->
             DataOutputStream(bytes).use {
                 PlayerSnapshotBinaryCodec
@@ -46,14 +49,75 @@ object PlayerSnapshotCodecV2Fixture {
             bytes.toByteArray()
         }
 
-    private fun decode(bytes:ByteArray):PlayerSnapshot =
+    private fun decode(
+        bytes:ByteArray
+    ):PlayerSnapshot =
         DataInputStream(
             ByteArrayInputStream(bytes)
-        ).use(PlayerSnapshotBinaryCodec::read)
+        ).use(
+            PlayerSnapshotBinaryCodec::read
+        )
 
-    /**
-     * Exact legacy v1 wire format to prove upgrade compatibility.
-     */
+    private fun payload(
+        out:DataOutputStream,
+        value:ByteArray
+    ) {
+        out.writeInt(value.size)
+        out.write(value)
+    }
+
+    private fun writeLegacyCommon(
+        out:DataOutputStream,
+        s:PlayerSnapshot
+    ) {
+        out.writeLong(
+            s.playerUuid.mostSignificantBits
+        )
+        out.writeLong(
+            s.playerUuid.leastSignificantBits
+        )
+        out.writeLong(
+            s.capturedAtArenaTick
+        )
+        payload(out,s.locationPayload)
+        out.writeUTF(s.gameModeName)
+        payload(out,s.inventoryPayload)
+        payload(out,s.armorPayload)
+        payload(out,s.offhandPayload)
+        out.writeInt(s.level)
+        out.writeFloat(s.expProgress)
+        out.writeInt(s.totalExperience)
+        out.writeDouble(s.health)
+        out.writeDouble(s.absorption)
+        out.writeInt(s.foodLevel)
+        out.writeFloat(s.saturation)
+        out.writeFloat(s.exhaustion)
+        out.writeInt(s.fireTicks)
+        out.writeInt(s.remainingAir)
+        out.writeBoolean(s.allowFlight)
+        out.writeBoolean(s.flying)
+        out.writeFloat(s.fallDistance)
+        payload(out,s.potionEffectsPayload)
+        payload(out,s.velocityPayload)
+    }
+
+    private fun encodeLegacyV2(
+        s:PlayerSnapshot
+    ):ByteArray =
+        ByteArrayOutputStream().use { bytes ->
+            DataOutputStream(bytes).use { out ->
+                out.writeInt(0x43544453)
+                out.writeInt(2)
+                writeLegacyCommon(out,s)
+                out.writeInt(s.heldItemSlot)
+                payload(
+                    out,
+                    s.cursorItemPayload
+                )
+            }
+            bytes.toByteArray()
+        }
+
     private fun encodeLegacyV1(
         s:PlayerSnapshot
     ):ByteArray =
@@ -61,79 +125,65 @@ object PlayerSnapshotCodecV2Fixture {
             DataOutputStream(bytes).use { out ->
                 out.writeInt(0x43544453)
                 out.writeInt(1)
-                out.writeLong(
-                    s.playerUuid.mostSignificantBits
-                )
-                out.writeLong(
-                    s.playerUuid.leastSignificantBits
-                )
-                out.writeLong(
-                    s.capturedAtArenaTick
-                )
-                fun payload(v:ByteArray) {
-                    out.writeInt(v.size)
-                    out.write(v)
-                }
-                payload(s.locationPayload)
-                out.writeUTF(s.gameModeName)
-                payload(s.inventoryPayload)
-                payload(s.armorPayload)
-                payload(s.offhandPayload)
-                out.writeInt(s.level)
-                out.writeFloat(s.expProgress)
-                out.writeInt(s.totalExperience)
-                out.writeDouble(s.health)
-                out.writeDouble(s.absorption)
-                out.writeInt(s.foodLevel)
-                out.writeFloat(s.saturation)
-                out.writeFloat(s.exhaustion)
-                out.writeInt(s.fireTicks)
-                out.writeInt(s.remainingAir)
-                out.writeBoolean(s.allowFlight)
-                out.writeBoolean(s.flying)
-                out.writeFloat(s.fallDistance)
-                payload(s.potionEffectsPayload)
-                payload(s.velocityPayload)
+                writeLegacyCommon(out,s)
             }
             bytes.toByteArray()
         }
 
     fun run():List<FixtureResult> {
         val original=snapshot()
-        val v2=decode(encodeV2(original))
+        val v3=decode(
+            encodeCurrent(original)
+        )
+        val v2=decode(
+            encodeLegacyV2(original)
+        )
         val v1=decode(
             encodeLegacyV1(original)
         )
 
         return listOf(
             FixtureResult(
-                "snapshot-v2-roundtrip-new-fields",
+                "snapshot-v3-roundtrip-preserves-fly-speed",
+                v3.playerUuid==uuid &&
+                    v3.heldItemSlot==7 &&
+                    v3.cursorItemPayload
+                        .contentEquals(
+                            byteArrayOf(9,8,7)
+                        ) &&
+                    v3.flySpeed==0.35f
+            ),
+            FixtureResult(
+                "snapshot-v2-backward-compatible-default-fly-speed",
                 v2.playerUuid==uuid &&
                     v2.heldItemSlot==7 &&
                     v2.cursorItemPayload
                         .contentEquals(
                             byteArrayOf(9,8,7)
-                        )
+                        ) &&
+                    v2.flySpeed==0.1f
             ),
             FixtureResult(
                 "snapshot-v1-backward-compatible",
                 v1.playerUuid==uuid &&
                     v1.level==5 &&
                     v1.heldItemSlot==0 &&
-                    v1.cursorItemPayload.isEmpty()
+                    v1.cursorItemPayload
+                        .isEmpty() &&
+                    v1.flySpeed==0.1f
             ),
             FixtureResult(
-                "snapshot-v2-existing-fields-preserved",
-                v2.locationPayload
+                "snapshot-v3-existing-fields-preserved",
+                v3.locationPayload
                     .contentEquals(
                         original.locationPayload
                     ) &&
-                    v2.inventoryPayload
+                    v3.inventoryPayload
                         .contentEquals(
                             original.inventoryPayload
-                        ) &&
-                    v2.health==18.0 &&
-                    v2.flying
+                    ) &&
+                    v3.health==18.0 &&
+                    v3.flying
             )
         )
     }

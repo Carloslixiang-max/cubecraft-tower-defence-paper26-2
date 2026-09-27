@@ -155,6 +155,11 @@ object PlayerSnapshotComparator {
             expected.cursorItemPayload,
             actual.cursorItemPayload
         )
+        scalar(
+            "flySpeed",
+            expected.flySpeed,
+            actual.flySpeed
+        )
 
         return PlayerSnapshotComparison(
             out

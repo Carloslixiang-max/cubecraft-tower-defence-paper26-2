@@ -138,7 +138,8 @@ object PlayerSnapshotBinaryCodec {
     private const val MAGIC = 0x43544453 // CTDS
     private const val VERSION_V1 = 1
     private const val VERSION_V2 = 2
-    private const val CURRENT_VERSION = VERSION_V2
+    private const val VERSION_V3 = 3
+    private const val CURRENT_VERSION = VERSION_V3
 
     fun write(out: DataOutputStream, s: PlayerSnapshot) {
         out.writeInt(MAGIC)
@@ -146,6 +147,7 @@ object PlayerSnapshotBinaryCodec {
         writeCommon(out,s)
         out.writeInt(s.heldItemSlot)
         bytes(out,s.cursorItemPayload)
+        out.writeFloat(s.flySpeed)
     }
 
     fun read(input: DataInputStream): PlayerSnapshot {
@@ -155,6 +157,7 @@ object PlayerSnapshotBinaryCodec {
         return when(val version=input.readInt()) {
             VERSION_V1 -> readV1(input)
             VERSION_V2 -> readV2(input)
+            VERSION_V3 -> readV3(input)
             else -> error(
                 "Unsupported player snapshot version $version"
             )
@@ -210,7 +213,28 @@ object PlayerSnapshotBinaryCodec {
         val cursor=bytes(input)
         return common.toSnapshot(
             heldItemSlot=slot,
-            cursorItemPayload=cursor
+            cursorItemPayload=cursor,
+            flySpeed=0.1f
+        )
+    }
+
+    private fun readV3(
+        input: DataInputStream
+    ): PlayerSnapshot {
+        val common=readCommonValues(input)
+        val slot=input.readInt()
+        require(slot in 0..8) {
+            "Invalid held item slot $slot"
+        }
+        val cursor=bytes(input)
+        val flySpeed=input.readFloat()
+        require(flySpeed in 0.0f..1.0f) {
+            "Invalid fly speed $flySpeed"
+        }
+        return common.toSnapshot(
+            heldItemSlot=slot,
+            cursorItemPayload=cursor,
+            flySpeed=flySpeed
         )
     }
 
@@ -221,7 +245,8 @@ object PlayerSnapshotBinaryCodec {
     ): PlayerSnapshot =
         readCommonValues(input).toSnapshot(
             heldItemSlot,
-            cursorItemPayload
+            cursorItemPayload,
+            0.1f
         )
 
     private data class CommonValues(
@@ -250,7 +275,8 @@ object PlayerSnapshotBinaryCodec {
     ) {
         fun toSnapshot(
             heldItemSlot: Int,
-            cursorItemPayload: ByteArray
+            cursorItemPayload: ByteArray,
+            flySpeed: Float
         )=PlayerSnapshot(
             playerUuid=playerUuid,
             capturedAtArenaTick=capturedAtArenaTick,
@@ -275,7 +301,8 @@ object PlayerSnapshotBinaryCodec {
             potionEffectsPayload=potionEffectsPayload,
             velocityPayload=velocityPayload,
             heldItemSlot=heldItemSlot,
-            cursorItemPayload=cursorItemPayload
+            cursorItemPayload=cursorItemPayload,
+            flySpeed=flySpeed
         )
     }
 

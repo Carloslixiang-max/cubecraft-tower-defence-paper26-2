@@ -30,10 +30,12 @@ data class PlayerSnapshot(
     val potionEffectsPayload: ByteArray,
     val velocityPayload: ByteArray,
     val heldItemSlot: Int = 0,
-    val cursorItemPayload: ByteArray = ByteArray(0)
+    val cursorItemPayload: ByteArray = ByteArray(0),
+    val flySpeed: Float = 0.1f
 ) {
     init {
         require(heldItemSlot in 0..8)
+        require(flySpeed in 0.0f..1.0f)
     }
 }
 

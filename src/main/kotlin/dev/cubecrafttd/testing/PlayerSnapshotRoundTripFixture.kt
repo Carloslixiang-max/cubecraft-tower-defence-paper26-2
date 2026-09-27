@@ -88,7 +88,8 @@ private class RoundTripFixtureAdapter(
                 heldItemSlot=
                     heldItemSlot,
                 cursorItemPayload=
-                    byteArrayOf(11)
+                    byteArrayOf(11),
+                flySpeed=0.35f
             )
     }
 }
@@ -134,6 +135,14 @@ object PlayerSnapshotRoundTripFixture {
         val direct=
             PlayerSnapshotComparator
                 .compare(a,b)
+        val flySpeedDrift=
+            PlayerSnapshotComparator
+                .compare(
+                    a,
+                    a.copy(
+                        flySpeed=0.2f
+                    )
+                )
 
         return listOf(
             FixtureResult(
@@ -153,6 +162,13 @@ object PlayerSnapshotRoundTripFixture {
                 direct.mismatches==
                     listOf(
                         "inventory"
+                    )
+            ),
+            FixtureResult(
+                "snapshot-comparator-identifies-fly-speed-drift",
+                flySpeedDrift.mismatches==
+                    listOf(
+                        "flySpeed"
                     )
             )
         )

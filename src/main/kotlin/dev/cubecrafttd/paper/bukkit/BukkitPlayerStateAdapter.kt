@@ -49,7 +49,9 @@ class BukkitPlayerStateAdapter(
             heldItemSlot =
                 p.inventory.heldItemSlot,
             cursorItemPayload =
-                p.itemOnCursor.serializeAsBytes()
+                p.itemOnCursor.serializeAsBytes(),
+            flySpeed=
+                p.flySpeed
         )
     }
 
@@ -119,6 +121,7 @@ class BukkitPlayerStateAdapter(
         p.fireTicks = snapshot.fireTicks
         p.remainingAir = snapshot.remainingAir
         p.allowFlight = snapshot.allowFlight
+        p.flySpeed = snapshot.flySpeed
         p.isFlying = snapshot.flying && snapshot.allowFlight
         p.fallDistance = snapshot.fallDistance
 
