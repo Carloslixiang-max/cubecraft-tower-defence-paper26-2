@@ -66,8 +66,11 @@ object TowerPlacementAndRangefinderFixture {
         val flow=TowerPlacementInteractionService(session,world)
 
         val begin=flow.beginRegular(player,BlockPos(0,0,2))
-        val choose=flow.chooseTower(player,"archer")
-        val placed=flow.choosePathAndPlace(player,TowerPath.TOP)
+        val placed=flow.chooseTowerAndPlace(
+            player,
+            "archer",
+            TowerPath.BOTTOM
+        )
 
         val ids=(1L..12L).associate {
             TowerInstanceId(it) to it.toDouble()
@@ -88,14 +91,21 @@ object TowerPlacementAndRangefinderFixture {
                     begin.menu.size==45
             ),
             FixtureResult(
-                "placement-tower-choice-requires-path-step",
-                choose.towerId=="archer" &&
-                    choose.menu.title=="Select an upgrade path"
+                "placement-builder-click-commits-selected-path-directly",
+                placed.result.selection.towerId=="archer" &&
+                    placed.result.selection.path==TowerPath.BOTTOM &&
+                    playerState.interaction
+                        .towerPlacement.pending==null
             ),
             FixtureResult(
-                "placement-path-commit-builds-at-pending-click",
-                placed.result.selection.towerId=="archer" &&
-                    placed.result.selection.path==TowerPath.TOP
+                "placement-direct-path-is-remembered-for-quick-place",
+                playerState.interaction
+                    .builder
+                    .quickPlaceSelection()
+                    ?.let {
+                        it.towerId=="archer" &&
+                            it.path==TowerPath.BOTTOM
+                    }==true
             ),
             FixtureResult(
                 "rangefinder-shift-nearest-ten-plus-pinned",

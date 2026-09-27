@@ -228,10 +228,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     invocation.playerUuid,
                                     result.menu.toLiveView()
                                 )
-                            is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.Placed ->
+                            is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.Placed -> {
+                                player?.closeInventory()
                                 player?.sendMessage(
                                     "Tower placed: ${result.result.selection.towerId}"
                                 )
+                            }
                             is dev.cubecrafttd.ui.MatchMenuActionResult.PotionUsePurchased -> {
                                 player?.closeInventory()
                                 player?.sendMessage(
