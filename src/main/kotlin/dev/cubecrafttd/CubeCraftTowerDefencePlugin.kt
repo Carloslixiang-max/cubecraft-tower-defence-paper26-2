@@ -284,10 +284,20 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                                 refreshKind
                                             )
                                     }.onSuccess { menu ->
-                                        menuBridge.open(
-                                            invocation.playerUuid,
+                                        val view=
                                             menu.toLiveView()
-                                        )
+                                        if(
+                                            !menuBridge
+                                                .refreshIfOpen(
+                                                    invocation.playerUuid,
+                                                    view
+                                                )
+                                        ) {
+                                            menuBridge.open(
+                                                invocation.playerUuid,
+                                                view
+                                            )
+                                        }
                                     }
                                 }
                                 player?.sendMessage(
@@ -319,6 +329,19 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         )
                     }
                 }
+            }
+        )
+        menuBridge.enableDynamicRefresh(
+            BukkitDynamicMenuRefreshProvider {
+                playerUuid,kind ->
+                runCatching {
+                    liveArenaController
+                        .dynamicMenuForPlayer(
+                            playerUuid,
+                            kind
+                        )
+                        .toLiveView()
+                }.getOrNull()
             }
         )
         pregameVoteMenuBridge =
@@ -435,7 +458,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v91 enabled; " +
+            "CubeCraftTowerDefence shell v92 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -503,7 +526,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v91 disabled; " +
+            "CubeCraftTowerDefence shell v92 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -537,7 +560,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v91, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v92, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +

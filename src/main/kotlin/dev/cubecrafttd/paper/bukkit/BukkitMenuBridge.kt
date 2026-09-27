@@ -10,6 +10,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.Plugin
 import java.util.UUID
@@ -27,6 +28,13 @@ fun interface BukkitMenuActionSink {
     )
 }
 
+fun interface BukkitDynamicMenuRefreshProvider {
+    fun project(
+        playerUuid: UUID,
+        kind: String
+    ): LiveMenuView?
+}
+
 class BukkitMenuBridge(
     private val plugin: Plugin,
     private val renderer:
@@ -39,11 +47,40 @@ class BukkitMenuBridge(
             UUID,
             Map<Int,String>
         >()
+    private val openRefreshKinds=
+        linkedMapOf<UUID,String>()
+    private var refreshProvider:
+        BukkitDynamicMenuRefreshProvider? =
+        null
+    private var refreshTaskStarted=
+        false
 
     init {
         plugin.server.pluginManager
             .registerEvents(
                 this,plugin
+            )
+    }
+
+    fun enableDynamicRefresh(
+        provider:
+            BukkitDynamicMenuRefreshProvider
+    ) {
+        check(!refreshTaskStarted) {
+            "Dynamic menu refresh already enabled"
+        }
+        refreshProvider=provider
+        refreshTaskStarted=true
+        plugin.server.scheduler
+            .runTaskTimer(
+                plugin,
+                Runnable {
+                    refreshDynamicMenus()
+                },
+                DynamicMenuRefreshPolicy
+                    .INTERVAL_TICKS,
+                DynamicMenuRefreshPolicy
+                    .INTERVAL_TICKS
             )
     }
 
@@ -54,10 +91,7 @@ class BukkitMenuBridge(
         val player = plugin.server
             .getPlayer(playerUuid)
             ?: return
-        require(
-            menu.size > 0 &&
-                menu.size % 9 == 0
-        )
+        requireValidMenu(menu)
 
         val inventory =
             Bukkit.createInventory(
@@ -67,12 +101,150 @@ class BukkitMenuBridge(
                     menu.title
                 )
             )
+        populate(
+            inventory,
+            menu
+        )
 
+        // Opening a replacement inventory closes the previous view and may fire
+        // InventoryCloseEvent synchronously. Register the NEW state only after
+        // that transition so the old close cannot delete the refreshed state.
+        player.openInventory(
+            inventory
+        )
+        rememberOpenMenu(
+            playerUuid,
+            menu
+        )
+    }
+
+    /**
+     * Redraws an already-owned menu in-place. This avoids close/open flicker
+     * for affordability, rollback-window and send-cooldown state changes.
+     */
+    fun refreshIfOpen(
+        playerUuid: UUID,
+        menu: LiveMenuView
+    ): Boolean {
+        val player=
+            plugin.server
+                .getPlayer(
+                    playerUuid
+                ) ?: return false
+        if(
+            playerUuid !in
+                openActions
+        ) {
+            return false
+        }
+        requireValidMenu(menu)
+
+        val top=
+            player.openInventory
+                .topInventory
+        if(
+            top.size!=menu.size
+        ) {
+            return false
+        }
+
+        val previousKind=
+            openRefreshKinds[
+                playerUuid
+            ]
+        val nextKind=
+            DynamicMenuRefreshPolicy
+                .kindForTitle(
+                    menu.title
+                )
+        if(
+            previousKind!=null &&
+            previousKind!=nextKind
+        ) {
+            return false
+        }
+
+        populate(
+            top,
+            menu
+        )
+        rememberOpenMenu(
+            playerUuid,
+            menu
+        )
+        return true
+    }
+
+    private fun refreshDynamicMenus() {
+        val provider=
+            refreshProvider
+                ?: return
+
+        openRefreshKinds
+            .toMap()
+            .forEach {
+                (playerUuid,kind) ->
+                val player=
+                    plugin.server
+                        .getPlayer(
+                            playerUuid
+                        )
+                if(
+                    player==null ||
+                    !player.isOnline ||
+                    playerUuid !in
+                        openActions
+                ) {
+                    openActions.remove(
+                        playerUuid
+                    )
+                    openRefreshKinds
+                        .remove(
+                            playerUuid
+                        )
+                    return@forEach
+                }
+
+                val next=
+                    runCatching {
+                        provider.project(
+                            playerUuid,
+                            kind
+                        )
+                    }.getOrNull()
+                        ?: return@forEach
+
+                refreshIfOpen(
+                    playerUuid,
+                    next
+                )
+            }
+    }
+
+    private fun requireValidMenu(
+        menu: LiveMenuView
+    ) {
+        require(
+            menu.size > 0 &&
+                menu.size % 9 == 0
+        )
+        require(
+            menu.slotActionIds.keys
+                .all {
+                    it in
+                        0 until
+                        menu.size
+                }
+        )
+    }
+
+    private fun populate(
+        inventory: Inventory,
+        menu: LiveMenuView
+    ) {
+        inventory.clear()
         menu.slotActionIds.forEach {
             (slot,action) ->
-            require(
-                slot in 0 until menu.size
-            )
             val item=
                 renderer.render(
                     action,
@@ -80,33 +252,48 @@ class BukkitMenuBridge(
                         slot
                     ]
                 )
-            menu.slotDisplayNames[slot]
-                ?.let { displayName ->
-                    item.editMeta {
-                        meta ->
-                        meta.displayName(
-                            Component.text(
-                                displayName
-                            )
+            menu.slotDisplayNames[
+                slot
+            ]?.let {
+                displayName ->
+                item.editMeta {
+                    meta ->
+                    meta.displayName(
+                        Component.text(
+                            displayName
                         )
-                    }
+                    )
                 }
+            }
             inventory.setItem(
                 slot,
                 item
             )
         }
+    }
 
-        // Opening a replacement inventory closes the previous view and may fire
-        // InventoryCloseEvent synchronously. Register the NEW action map only
-        // after that transition so the old close cannot delete the refreshed map.
-        player.openInventory(
-            inventory
-        )
+    private fun rememberOpenMenu(
+        playerUuid: UUID,
+        menu: LiveMenuView
+    ) {
         openActions[playerUuid] =
             LinkedHashMap(
                 menu.slotActionIds
             )
+        val kind=
+            DynamicMenuRefreshPolicy
+                .kindForTitle(
+                    menu.title
+                )
+        if(kind==null) {
+            openRefreshKinds.remove(
+                playerUuid
+            )
+        } else {
+            openRefreshKinds[
+                playerUuid
+            ]=kind
+        }
     }
 
     @EventHandler
@@ -165,8 +352,13 @@ class BukkitMenuBridge(
     fun onClose(
         event: InventoryCloseEvent
     ) {
-        openActions.remove(
+        val uuid=
             event.player.uniqueId
+        openActions.remove(
+            uuid
+        )
+        openRefreshKinds.remove(
+            uuid
         )
     }
 }
