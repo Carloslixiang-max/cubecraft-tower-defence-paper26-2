@@ -90,6 +90,8 @@ data class BukkitLiveArenaHandle(
         DeterministicCooldownTracker,
     val liveTickProfiler:
         ArenaTickProfiler,
+    val mobCombatVisuals:
+        BukkitMobCombatVisualProjectionService,
     val departedPlayers:
         MutableSet<UUID>,
     var session:
@@ -585,6 +587,11 @@ class BukkitNormalArenaController(
                     armageddonRuntime
             )
 
+        val mobCombatVisuals=
+            BukkitMobCombatVisualProjectionService(
+                plugin
+            )
+
         val handle=
             BukkitLiveArenaHandle(
                 context=context,
@@ -608,6 +615,8 @@ class BukkitNormalArenaController(
                 aoeCooldowns=aoeCooldowns,
                 liveTickProfiler=
                     ArenaTickProfiler(),
+                mobCombatVisuals=
+                    mobCombatVisuals,
                 departedPlayers=
                     departedPlayers,
                 nextTransactionId=
@@ -967,8 +976,20 @@ class BukkitNormalArenaController(
         val liveTickStart=
             System.nanoTime()
         try {
+            handle.mobCombatVisuals
+                .beginTick(context)
+
             handle.composition.engine
                 .tick(context)
+
+            handle.session
+                ?.let { session ->
+                    handle.mobCombatVisuals
+                        .project(
+                            context,
+                            session
+                        )
+                }
 
             val clockReport=
                 handle.matchClock.tick(

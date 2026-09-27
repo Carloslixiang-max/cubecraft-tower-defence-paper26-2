@@ -97,6 +97,8 @@ data class PaperAdapterDiagnostics(
                 "owned dynamic menus refresh in-place on bounded cadence for live state changes",
                 "official 2017 Settings surface: particle density / digital mob health / damage indicators / in-game purchases",
                 "particle density setting drives per-player Engineering rangefinder sampling",
+                "per-player Digital mob health TextDisplay projection",
+                "per-player bounded Damage indicators TextDisplay projection",
                 "historical end-of-match Top players list + hover stats presentation",
                 "historical Castle Health bossbar projection + lifecycle cleanup",
                 "historical Tower Defence Coins/EXP sidebar with conservative scoreboard ownership",

@@ -96,6 +96,7 @@ object DomainFixtureSuite {
         addAll(TowerManagementActionServiceFixture.run())
         addAll(DynamicMatchMenusFixture.run())
         addAll(SettingsAndHotbarRuntimeFixture.run())
+        addAll(MobCombatVisualProjectionFixture.run())
         addAll(MatchHotbarProjectionFixture.run())
         addAll(TowerPlacementAndRangefinderFixture.run())
         addAll(EngineeringPlaytestProfileFixture.run())
