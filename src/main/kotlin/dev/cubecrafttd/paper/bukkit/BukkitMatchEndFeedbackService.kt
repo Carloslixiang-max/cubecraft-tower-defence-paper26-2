@@ -5,6 +5,7 @@ import dev.cubecrafttd.match.MatchOutcome
 import dev.cubecrafttd.stats.MatchStatsSnapshot
 import dev.cubecrafttd.ui.EngineeringMatchEndProjector
 import dev.cubecrafttd.ui.HistoricalMatchEndLeaderboardProjector
+import dev.cubecrafttd.ui.MatchEndFeedbackPolicy
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.NamedTextColor
@@ -50,11 +51,13 @@ class BukkitMatchEndFeedbackService(
                 .project(
                     stats
                 )
+        val showEngineeringOverlay=
+            MatchEndFeedbackPolicy
+                .showEngineeringOverlay(
+                    outcome
+                )
         val showHistoricalTopPlayers=
-            outcome !is MatchOutcome.Tie ||
-                outcome.policy !=
-                    TimeoutTiePolicy
-                        .ENGINEERING_CUSTOM
+            !showEngineeringOverlay
 
         teamByPlayer
             .entries
@@ -66,28 +69,29 @@ class BukkitMatchEndFeedbackService(
                 val player=
                     server.getPlayer(uuid)
                         ?: return@forEach
-                val view=
-                    EngineeringMatchEndProjector
-                        .project(
-                            outcome,
-                            team
-                        )
-
-                player.showTitle(
-                    Title.title(
-                        Component.text(
-                            view.title
-                        ),
-                        Component.text(
-                            view.subtitle
+                if(showEngineeringOverlay) {
+                    val view=
+                        EngineeringMatchEndProjector
+                            .project(
+                                outcome,
+                                team
+                            )
+                    player.showTitle(
+                        Title.title(
+                            Component.text(
+                                view.title
+                            ),
+                            Component.text(
+                                view.subtitle
+                            )
                         )
                     )
-                )
-                player.sendMessage(
-                    Component.text(
-                        view.chatLine
+                    player.sendMessage(
+                        Component.text(
+                            view.chatLine
+                        )
                     )
-                )
+                }
 
                 if(showHistoricalTopPlayers) {
                     player.sendMessage(
