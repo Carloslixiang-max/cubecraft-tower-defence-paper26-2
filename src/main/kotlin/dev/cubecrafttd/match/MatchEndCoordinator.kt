@@ -2,6 +2,7 @@ package dev.cubecrafttd.match
 
 import dev.cubecrafttd.arena.*
 import dev.cubecrafttd.stats.*
+import dev.cubecrafttd.economy.EconomyLedger
 import java.util.UUID
 
 data class MatchEndReport(
@@ -14,7 +15,9 @@ class MatchEndCoordinator(
     private val stats:
         MatchStatsRecorder,
     private val teardownService:
-        ArenaTeardownService
+        ArenaTeardownService,
+    private val ledger:
+        EconomyLedger? = null
 ) {
     fun finish(
         context: ArenaContext,
@@ -52,6 +55,12 @@ class MatchEndCoordinator(
             TeamId.BLUE,
             context.blueTeam.players
         )
+
+        ledger?.let {
+            stats.synchronizeHistoricalOverallScores(
+                it
+            )
+        }
 
         val snapshot =
             stats.snapshot()

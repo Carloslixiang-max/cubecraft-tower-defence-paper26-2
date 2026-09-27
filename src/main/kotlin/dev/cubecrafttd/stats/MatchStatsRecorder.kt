@@ -4,6 +4,7 @@ import dev.cubecrafttd.match.MatchOutcome
 import java.util.UUID
 
 data class MatchPlayerStats(
+    var overallScore: Long = 0,
     var coinsEarned: Long = 0,
     var expEarned: Long = 0,
     var troopsSent: Int = 0,
@@ -35,6 +36,28 @@ class MatchStatsRecorder {
         stats.getOrPut(playerUuid) {
             MatchPlayerStats()
         }
+
+    fun synchronizeHistoricalOverallScores(
+        ledger:
+            dev.cubecrafttd.economy
+                .EconomyLedger
+    ) {
+        val scores=
+            HistoricalOverallScoreCalculator
+                .byPlayer(
+                    ledger
+                )
+
+        (
+            stats.keys +
+                scores.keys
+        ).forEach { playerUuid ->
+            forPlayer(playerUuid)
+                .overallScore=
+                scores[playerUuid]
+                    ?: 0L
+        }
+    }
 
     fun recordCoinsEarned(
         playerUuid: UUID,
