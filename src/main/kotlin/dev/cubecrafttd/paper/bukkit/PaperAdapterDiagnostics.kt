@@ -98,7 +98,7 @@ data class PaperAdapterDiagnostics(
                 "official 2017 Settings surface: particle density / digital mob health / damage indicators / in-game purchases",
                 "particle density setting drives per-player Engineering rangefinder sampling",
                 "per-player Digital mob health TextDisplay projection",
-                "per-player bounded Damage indicators TextDisplay projection",
+                "source-attributed per-player bounded Damage indicators TextDisplay projection",
                 "official in-game purchase setting kept fail-closed until its profile shop backend is recovered",
                 "historical end-of-match Top players list + hover stats presentation",
                 "historical Castle Health bossbar projection + lifecycle cleanup",
