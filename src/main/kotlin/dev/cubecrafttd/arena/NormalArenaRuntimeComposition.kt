@@ -37,6 +37,9 @@ data class NormalArenaRuntimeDependencies(
         MobDeathFinalizationPort =
         NoOpMobDeathFinalizationPort,
     val resolved: ResolvedNormalGameplayConfig,
+    val playerDamageEvents:
+        PlayerMobDamageEventPort =
+        NoOpPlayerMobDamageEventPort,
     val mobIdAllocator: MobInstanceIdAllocator =
         MobInstanceIdAllocator()
 )
@@ -85,7 +88,9 @@ object NormalArenaRuntimeCompositionFactory {
                     lethalResolver=
                         combat.lethalResolver,
                     feedback=
-                        deps.aoePotionFeedback
+                        deps.aoePotionFeedback,
+                    playerDamageEvents=
+                        deps.playerDamageEvents
                 ),
                 MobMovementTickPhase(
                     movementRate=
@@ -117,7 +122,9 @@ object NormalArenaRuntimeCompositionFactory {
                         deps.resolved
                             .leachCharge,
                     lethalResolver=
-                        combat.lethalResolver
+                        combat.lethalResolver,
+                    playerDamageEvents=
+                        deps.playerDamageEvents
                 ),
                 TowerSummonMaintenancePhase(
                     counts=
@@ -137,13 +144,17 @@ object NormalArenaRuntimeCompositionFactory {
                     feedbackPort=
                         deps.towerAttackFeedback,
                     lethalResolver=
-                        combat.lethalResolver
+                        combat.lethalResolver,
+                    playerDamageEvents=
+                        deps.playerDamageEvents
                 ),
                 MobStatusDamageTickPhase(
                     config=
                         deps.resolved.statusDamage,
                     lethalResolver=
-                        combat.lethalResolver
+                        combat.lethalResolver,
+                    playerDamageEvents=
+                        deps.playerDamageEvents
                 ),
                 GuardCombatTickPhase(
                     config=

@@ -446,6 +446,11 @@ class BukkitNormalArenaController(
                 chainTargets
             )
 
+        val mobCombatVisuals=
+            BukkitMobCombatVisualProjectionService(
+                plugin
+            )
+
         val composition=
             NormalArenaRuntimeCompositionFactory
                 .create(
@@ -508,7 +513,9 @@ class BukkitNormalArenaController(
                         mobDeathFinalization=
                             deathFinalizer,
                         resolved=
-                            preflight.gameplay
+                            preflight.gameplay,
+                        playerDamageEvents=
+                            mobCombatVisuals
                     )
                 )
 
@@ -585,11 +592,6 @@ class BukkitNormalArenaController(
                     TimeoutTiePolicy.DRAW,
                 armageddonPort=
                     armageddonRuntime
-            )
-
-        val mobCombatVisuals=
-            BukkitMobCombatVisualProjectionService(
-                plugin
             )
 
         val handle=
@@ -976,9 +978,6 @@ class BukkitNormalArenaController(
         val liveTickStart=
             System.nanoTime()
         try {
-            handle.mobCombatVisuals
-                .beginTick(context)
-
             handle.composition.engine
                 .tick(context)
 
@@ -2192,7 +2191,8 @@ class BukkitNormalArenaController(
                 handle.context.entityIndex,
                 handle.composition
                     .combatBindings
-                    .lethalResolver
+                    .lethalResolver,
+                handle.mobCombatVisuals
             )
         val result=
             service.hit(

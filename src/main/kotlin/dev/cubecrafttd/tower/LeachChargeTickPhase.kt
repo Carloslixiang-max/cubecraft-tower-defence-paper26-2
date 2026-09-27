@@ -19,7 +19,10 @@ class LeachChargeTickPhase(
         MobLethalHitResolver,
     private val definitions:
         TowerDefinitionRepository =
-        RecommendedMatureTowerDefinitions
+        RecommendedMatureTowerDefinitions,
+    private val playerDamageEvents:
+        dev.cubecrafttd.mob.PlayerMobDamageEventPort =
+        dev.cubecrafttd.mob.NoOpPlayerMobDamageEventPort
 ) : ArenaTickPhase {
     override val order: Int =
         NormalArenaPhaseOrder.LEACH_CHARGE
@@ -167,7 +170,9 @@ class LeachChargeTickPhase(
                     AttackBatchApplier(
                         context.entityIndex,
                         lethalResolver=
-                            lethalResolver
+                            lethalResolver,
+                        playerDamageEvents=
+                            playerDamageEvents
                     ).apply(batch)
                     metrics.beamsFired++
                     metrics.beamTargets +=

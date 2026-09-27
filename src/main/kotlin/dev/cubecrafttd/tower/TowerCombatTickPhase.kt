@@ -100,6 +100,9 @@ class TowerCombatTickPhase(
     private val lethalResolver:
         dev.cubecrafttd.mob.MobLethalHitResolver =
         dev.cubecrafttd.mob.MobLethalHitResolver(),
+    private val playerDamageEvents:
+        dev.cubecrafttd.mob.PlayerMobDamageEventPort =
+        dev.cubecrafttd.mob.NoOpPlayerMobDamageEventPort,
     private val metrics: TowerCombatTickMetrics =
         TowerCombatTickMetrics()
 ) : ArenaTickPhase {
@@ -115,7 +118,9 @@ class TowerCombatTickPhase(
             context.rng,
             AttackBatchApplier(
                 context.entityIndex,
-                lethalResolver=lethalResolver
+                lethalResolver=lethalResolver,
+                playerDamageEvents=
+                    playerDamageEvents
             )
         )
 

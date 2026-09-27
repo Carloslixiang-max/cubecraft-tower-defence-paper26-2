@@ -2,7 +2,8 @@ package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.arena.ArenaContext
 import dev.cubecrafttd.match.MatchSessionState
-import dev.cubecrafttd.mob.MobRuntimeState
+import dev.cubecrafttd.mob.PlayerMobDamageEvent
+import dev.cubecrafttd.mob.PlayerMobDamageEventPort
 import dev.cubecrafttd.ui.MobCombatVisualProjection
 import net.kyori.adventure.text.Component
 import org.bukkit.Location
@@ -15,80 +16,74 @@ import java.util.UUID
 
 /**
  * Paper projection for the recovered Digital mob health / Damage indicators
- * settings.
+ * Settings options.
  *
- * Visibility is viewer-scoped. Exact CubeCraft styling/timing is still
- * UNKNOWN, so the text layout and lifetime below remain Engineering fallback.
+ * Damage indicators consume authoritative player-owned damage events. Exact
+ * original styling, offsets and lifetime remain Engineering fallback.
  */
 class BukkitMobCombatVisualProjectionService(
     private val plugin: Plugin
-) {
-    private data class ObservedMob(
-        val state: MobRuntimeState,
-        var lastHealth: Double,
-        var lastDamageAnchor: Location?
-    )
-
+) : PlayerMobDamageEventPort {
     private data class ViewerScopedDisplay(
         val displayUuid: UUID,
-        val viewers:
-            MutableSet<UUID> =
+        val viewers: MutableSet<UUID> =
             linkedSetOf()
+    )
+
+    private data class DamageDisplayKey(
+        val mobUuid: UUID,
+        val playerUuid: UUID
+    )
+
+    private data class PendingDamage(
+        var amount: Double,
+        var anchor: Location
     )
 
     private data class DamageDisplay(
         val displayUuid: UUID,
-        val viewers:
-            MutableSet<UUID> =
+        val viewers: MutableSet<UUID> =
             linkedSetOf(),
         var accumulatedDamage: Double,
         var expiresAtTick: Long
     )
 
-    private val server=
-        plugin.server
-
-    private val observedMobs=
-        linkedMapOf<UUID,ObservedMob>()
-
+    private val server=plugin.server
     private val healthDisplays=
-        linkedMapOf<
-            UUID,
-            ViewerScopedDisplay
-        >()
+        linkedMapOf<UUID,ViewerScopedDisplay>()
+    private val pendingDamage=
+        linkedMapOf<DamageDisplayKey,PendingDamage>()
 
     /**
-     * Keyed by target mob, not display UUID. This deliberately bounds the
-     * runtime to one active damage display per mob even under rapid tower fire.
+     * Bounded by tracked mobs x active players: repeated hits aggregate into
+     * one display per mob/player pair instead of spawning an entity per hit.
      */
     private val damageDisplays=
-        linkedMapOf<
-            UUID,
-            DamageDisplay
-        >()
+        linkedMapOf<DamageDisplayKey,DamageDisplay>()
 
-    fun beginTick(
-        context: ArenaContext
+    override fun record(
+        event: PlayerMobDamageEvent
     ) {
-        context.entityIndex
-            .mobsByUuid
-            .forEach { (uuid,mob) ->
-                val anchor=
-                    damageAnchor(uuid)
-                val existing=
-                    observedMobs[uuid]
-                if(existing==null) {
-                    observedMobs[uuid]=
-                        ObservedMob(
-                            mob,
-                            mob.combat.health,
-                            anchor
-                        )
-                } else if(anchor!=null) {
-                    existing.lastDamageAnchor=
-                        anchor
-                }
-            }
+        if(event.amount<=1.0e-9) return
+        val anchor=
+            damageAnchor(event.targetMobUuid)
+                ?: return
+        val key=
+            DamageDisplayKey(
+                event.targetMobUuid,
+                event.playerUuid
+            )
+        val pending=pendingDamage[key]
+        if(pending==null) {
+            pendingDamage[key]=
+                PendingDamage(
+                    event.amount,
+                    anchor
+                )
+        } else {
+            pending.amount += event.amount
+            pending.anchor=anchor
+        }
     }
 
     fun project(
@@ -96,13 +91,11 @@ class BukkitMobCombatVisualProjectionService(
         session: MatchSessionState
     ) {
         val healthViewers=
-            session.players
-                .values
+            session.players.values
                 .filter {
                     MobCombatVisualProjection
                         .digitalHealthEnabled(
-                            it.interaction
-                                .settings
+                            it.interaction.settings
                         )
                 }
                 .mapTo(linkedSetOf()) {
@@ -110,103 +103,36 @@ class BukkitMobCombatVisualProjectionService(
                 }
 
         val damageViewers=
-            session.players
-                .values
+            session.players.values
                 .filter {
                     MobCombatVisualProjection
                         .damageIndicatorsEnabled(
-                            it.interaction
-                                .settings
+                            it.interaction.settings
                         )
                 }
                 .mapTo(linkedSetOf()) {
                     it.playerUuid
                 }
 
-        val currentMobIds=
-            context.entityIndex
-                .mobsByUuid.keys
-                .toSet()
-
-        observedMobs
-            .values
-            .toList()
-            .forEach { observed ->
-                val uuid=
-                    observed.state
-                        .identity
-                        .entityUuid
-                val currentHealth=
-                    observed.state
-                        .combat
-                        .health
-                val damage=
-                    MobCombatVisualProjection
-                        .damageAmount(
-                            observed.lastHealth,
-                            currentHealth
-                        )
-
-                if(
-                    damage > 1.0e-9 &&
-                    damageViewers.isNotEmpty()
-                ) {
-                    val anchor=
-                        damageAnchor(uuid)
-                            ?: observed
-                                .lastDamageAnchor
-                    if(anchor!=null) {
-                        upsertDamageDisplay(
-                            context,
-                            uuid,
-                            damage,
-                            anchor,
-                            damageViewers
-                        )
-                    }
-                }
-
-                observed.lastHealth=
-                    currentHealth
-                damageAnchor(uuid)
-                    ?.let {
-                        observed
-                            .lastDamageAnchor=
-                            it
-                    }
-
-                if(uuid !in currentMobIds) {
-                    observedMobs
-                        .remove(uuid)
-                }
-            }
-
-        // Mobs spawned during this same core tick become the baseline for the
-        // next projection. They do not inherit synthetic damage from 0 HP.
-        context.entityIndex
-            .mobsByUuid
-            .forEach { (uuid,mob) ->
-                observedMobs
-                    .putIfAbsent(
-                        uuid,
-                        ObservedMob(
-                            mob,
-                            mob.combat.health,
-                            damageAnchor(uuid)
-                        )
+        pendingDamage.toList()
+            .forEach { (key,pending) ->
+                if(key.playerUuid in damageViewers) {
+                    upsertDamageDisplay(
+                        context,
+                        key,
+                        pending.amount,
+                        pending.anchor
                     )
+                }
             }
+        pendingDamage.clear()
 
-        if(
-            context.gameTick % 2L ==
-            0L
-        ) {
+        if(context.gameTick%2L==0L) {
             syncHealthDisplays(
                 context,
                 healthViewers
             )
         }
-
         syncDamageDisplays(
             context,
             damageViewers
@@ -218,31 +144,23 @@ class BukkitMobCombatVisualProjectionService(
         desiredViewers: Set<UUID>
     ) {
         val currentMobIds=
-            context.entityIndex
-                .mobsByUuid.keys
-                .toSet()
+            context.entityIndex.mobsByUuid.keys.toSet()
 
-        healthDisplays
-            .keys
+        healthDisplays.keys
             .filter {
                 it !in currentMobIds ||
-                    desiredViewers
-                        .isEmpty()
+                    desiredViewers.isEmpty()
             }
             .toList()
-            .forEach { mobUuid ->
+            .forEach {
                 removeHealthDisplay(
-                    context,
-                    mobUuid
+                    context,it
                 )
             }
 
-        if(desiredViewers.isEmpty()) {
-            return
-        }
+        if(desiredViewers.isEmpty()) return
 
-        context.entityIndex
-            .mobsByUuid
+        context.entityIndex.mobsByUuid
             .forEach { (uuid,mob) ->
                 val anchor=
                     healthAnchor(uuid)
@@ -253,9 +171,7 @@ class BukkitMobCombatVisualProjectionService(
                             mob.combat.health,
                             mob.combat.maxHealth
                         )
-
-                var state=
-                    healthDisplays[uuid]
+                var state=healthDisplays[uuid]
                 var display=
                     state?.displayUuid
                         ?.let(server::getEntity)
@@ -265,37 +181,27 @@ class BukkitMobCombatVisualProjectionService(
                     state?.let {
                         context.entityIndex
                             .transientDisplays
-                            .remove(
-                                it.displayUuid
-                            )
+                            .remove(it.displayUuid)
                     }
                     display=
                         spawnTextDisplay(
                             context,
                             anchor,
                             text,
-                            teleportDuration=2
+                            2
                         )
                     state=
                         ViewerScopedDisplay(
                             display.uniqueId
                         )
-                    healthDisplays[uuid]=
-                        state
+                    healthDisplays[uuid]=state
                 }
 
-                display.text(
-                    Component.text(text)
-                )
+                display.text(Component.text(text))
                 display.teleport(anchor)
-                val displayState=
-                    state
-                        ?: error(
-                            "Health display state missing after display creation"
-                        )
                 reconcileVisibility(
                     display,
-                    displayState.viewers,
+                    requireNotNull(state).viewers,
                     desiredViewers
                 )
             }
@@ -303,33 +209,26 @@ class BukkitMobCombatVisualProjectionService(
 
     private fun upsertDamageDisplay(
         context: ArenaContext,
-        mobUuid: UUID,
+        key: DamageDisplayKey,
         damage: Double,
-        anchor: Location,
-        desiredViewers: Set<UUID>
+        anchor: Location
     ) {
-        val current=
-            damageDisplays[mobUuid]
+        val current=damageDisplays[key]
         val live=
             current?.displayUuid
                 ?.let(server::getEntity)
                 as? TextDisplay
 
-        if(
-            current!=null &&
-            live!=null
-        ) {
-            current.accumulatedDamage +=
-                damage
+        if(current!=null && live!=null) {
+            current.accumulatedDamage += damage
             current.expiresAtTick=
-                context.gameTick +
+                context.gameTick+
                     DAMAGE_LIFETIME_TICKS
             live.text(
                 Component.text(
                     MobCombatVisualProjection
                         .damageText(
-                            current
-                                .accumulatedDamage
+                            current.accumulatedDamage
                         )
                 )
             )
@@ -337,17 +236,14 @@ class BukkitMobCombatVisualProjectionService(
             reconcileVisibility(
                 live,
                 current.viewers,
-                desiredViewers
+                setOf(key.playerUuid)
             )
             return
         }
 
         current?.let {
-            context.entityIndex
-                .transientDisplays
-                .remove(
-                    it.displayUuid
-                )
+            context.entityIndex.transientDisplays
+                .remove(it.displayUuid)
         }
 
         val display=
@@ -356,45 +252,40 @@ class BukkitMobCombatVisualProjectionService(
                 anchor,
                 MobCombatVisualProjection
                     .damageText(damage),
-                teleportDuration=0
+                0
             )
         val state=
             DamageDisplay(
-                displayUuid=
-                    display.uniqueId,
-                accumulatedDamage=
-                    damage,
+                display.uniqueId,
+                accumulatedDamage=damage,
                 expiresAtTick=
-                    context.gameTick +
+                    context.gameTick+
                         DAMAGE_LIFETIME_TICKS
             )
-        damageDisplays[mobUuid]=
-            state
+        damageDisplays[key]=state
         reconcileVisibility(
             display,
             state.viewers,
-            desiredViewers
+            setOf(key.playerUuid)
         )
     }
 
     private fun syncDamageDisplays(
         context: ArenaContext,
-        desiredViewers: Set<UUID>
+        enabledViewers: Set<UUID>
     ) {
-        damageDisplays
-            .toList()
-            .forEach { (mobUuid,state) ->
+        damageDisplays.toList()
+            .forEach { (key,state) ->
                 if(
-                    context.gameTick >=
-                    state.expiresAtTick
+                    key.playerUuid !in enabledViewers ||
+                    server.getPlayer(key.playerUuid)==null ||
+                    context.gameTick>=state.expiresAtTick
                 ) {
                     removeDamageDisplay(
-                        context,
-                        mobUuid
+                        context,key
                     )
                     return@forEach
                 }
-
                 val display=
                     server.getEntity(
                         state.displayUuid
@@ -402,18 +293,14 @@ class BukkitMobCombatVisualProjectionService(
                 if(display==null) {
                     context.entityIndex
                         .transientDisplays
-                        .remove(
-                            state.displayUuid
-                        )
-                    damageDisplays
-                        .remove(mobUuid)
+                        .remove(state.displayUuid)
+                    damageDisplays.remove(key)
                     return@forEach
                 }
-
                 reconcileVisibility(
                     display,
                     state.viewers,
-                    desiredViewers
+                    setOf(key.playerUuid)
                 )
             }
     }
@@ -429,9 +316,7 @@ class BukkitMobCombatVisualProjectionService(
                 location,
                 TextDisplay::class.java
             ) { spawned ->
-                spawned.text(
-                    Component.text(text)
-                )
+                spawned.text(Component.text(text))
                 spawned.setBillboard(
                     Display.Billboard.CENTER
                 )
@@ -445,8 +330,7 @@ class BukkitMobCombatVisualProjectionService(
                     teleportDuration
                 )
             }
-        context.entityIndex
-            .transientDisplays +=
+        context.entityIndex.transientDisplays +=
             display.uniqueId
         return display
     }
@@ -456,27 +340,20 @@ class BukkitMobCombatVisualProjectionService(
         current: MutableSet<UUID>,
         desired: Set<UUID>
     ) {
-        (
-            current - desired
-        ).toList()
+        (current-desired).toList()
             .forEach { uuid ->
                 server.getPlayer(uuid)
                     ?.hideEntity(
-                        plugin,
-                        display
+                        plugin,display
                     )
                 current.remove(uuid)
             }
-
-        (
-            desired - current
-        ).forEach { uuid ->
+        (desired-current).forEach { uuid ->
             val player=
                 server.getPlayer(uuid)
                     ?: return@forEach
             player.showEntity(
-                plugin,
-                display
+                plugin,display
             )
             current += uuid
         }
@@ -486,27 +363,21 @@ class BukkitMobCombatVisualProjectionService(
         context: ArenaContext,
         mobUuid: UUID
     ) {
-        val state=
-            healthDisplays
-                .remove(mobUuid)
-                ?: return
+        val state=healthDisplays.remove(mobUuid)
+            ?: return
         removeDisplay(
-            context,
-            state.displayUuid
+            context,state.displayUuid
         )
     }
 
     private fun removeDamageDisplay(
         context: ArenaContext,
-        mobUuid: UUID
+        key: DamageDisplayKey
     ) {
-        val state=
-            damageDisplays
-                .remove(mobUuid)
-                ?: return
+        val state=damageDisplays.remove(key)
+            ?: return
         removeDisplay(
-            context,
-            state.displayUuid
+            context,state.displayUuid
         )
     }
 
@@ -514,11 +385,8 @@ class BukkitMobCombatVisualProjectionService(
         context: ArenaContext,
         displayUuid: UUID
     ) {
-        server.getEntity(
-            displayUuid
-        )?.remove()
-        context.entityIndex
-            .transientDisplays
+        server.getEntity(displayUuid)?.remove()
+        context.entityIndex.transientDisplays
             .remove(displayUuid)
     }
 
@@ -543,33 +411,21 @@ class BukkitMobCombatVisualProjectionService(
         verticalGap: Double
     ): Location? {
         val living=
-            server.getEntity(
-                mobUuid
-            ) as? LivingEntity
+            server.getEntity(mobUuid)
+                as? LivingEntity
                 ?: return null
-        return living.location
-            .clone()
+        return living.location.clone()
             .add(
                 0.0,
-                living.boundingBox.height +
+                living.boundingBox.height+
                     verticalGap,
                 0.0
             )
     }
 
     companion object {
-        /**
-         * Engineering presentation values. Historical evidence confirms the
-         * toggles, not the exact original TextDisplay offsets/lifetime.
-         */
-        private const val
-            HEALTH_VERTICAL_GAP =
-            0.35
-        private const val
-            DAMAGE_VERTICAL_GAP =
-            0.85
-        private const val
-            DAMAGE_LIFETIME_TICKS =
-            12L
+        private const val HEALTH_VERTICAL_GAP=0.35
+        private const val DAMAGE_VERTICAL_GAP=0.85
+        private const val DAMAGE_LIFETIME_TICKS=12L
     }
 }
