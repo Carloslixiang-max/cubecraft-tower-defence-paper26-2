@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v86 engineering playtest shell**
-- Pure-domain baseline: **468/468 fixtures PASS**
+- Current shell lineage: **v87 engineering playtest shell**
+- Pure-domain baseline: **470/470 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -85,7 +85,8 @@ The codebase already contains substantial runtime work, including:
 - v83 restores the directly evidenced in-match `Castle Health` bossbar. `HistoricalCastleHealthHudProjector` maps the viewer's own castle health to a safe 0..1 bossbar ratio with the recovered title, while the Bukkit HUD adapter owns one green solid bar per active player. Departure immediately removes that player's bar and match teardown clears every remaining bar before snapshot restoration, so historical HUD fidelity does not leave UI residue behind;
 - v84 restores the historically evidenced right-side match sidebar with `Tower Defence`, live Coins, live EXP and `play.cubecraft.net`. The Bukkit adapter is deliberately conservative: it only replaces Bukkit's main scoreboard, never a custom scoreboard already owned by another plugin. Players with custom scoreboards keep the Engineering action-bar fallback instead. TD-owned scoreboards are restored to main on normal clear, and an offline clear is completed on the next join so disconnects cannot strand the temporary sidebar;
 - v85 removes the normal mixed HUD state. When the historical Tower Defence sidebar successfully owns the player's scoreboard, the old ENG action-bar HUD is suppressed and cleared; when another plugin already owns a custom scoreboard, TD still refuses to steal it and keeps the ENG action-bar as a compatibility fallback. This preserves interoperability without showing two competing match HUDs to ordinary players;
-- v86 extends the authoritative player snapshot to include Bukkit `flySpeed` before any historical Fast Fly work is enabled. Recovery journal format advances to v3 and persists the exact speed, while legacy v1/v2 files remain readable with the Minecraft default `0.1f`. Capture/restore and the live round-trip comparator now include `flySpeed`, with fixtures proving current-format preservation, legacy compatibility and explicit drift detection. This keeps future Settings fidelity subordinate to lossless player-state recovery rather than changing movement state unsafely.
+- v86 extends the authoritative player snapshot to include Bukkit `flySpeed` before any historical Fast Fly work is enabled. Recovery journal format advances to v3 and persists the exact speed, while legacy v1/v2 files remain readable with the Minecraft default `0.1f`. Capture/restore and the live round-trip comparator now include `flySpeed`, with fixtures proving current-format preservation, legacy compatibility and explicit drift detection. This keeps future Settings fidelity subordinate to lossless player-state recovery rather than changing movement state unsafely;
+- v87 removes the last normal-match Engineering result overlay. Historical evidence supports the end-of-match Top players presentation, but the exact original victory/defeat/draw title wording and timing remain unrecovered. Normal Winner/Draw outcomes therefore no longer display `ENG VICTORY`, `ENG DEFEAT`, `ENG DRAW` or the corresponding Engineering chat line; they keep the recovered Top players UI only. Explicit `ENGINEERING_CUSTOM` stop/failure outcomes still show the clearly-labelled Engineering overlay so administrators retain useful diagnostics without exposing placeholder UI to ordinary matches.
 
 ## Build
 

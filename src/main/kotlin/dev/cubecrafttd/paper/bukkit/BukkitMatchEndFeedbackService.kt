@@ -2,7 +2,6 @@ package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.arena.TeamId
 import dev.cubecrafttd.match.MatchOutcome
-import dev.cubecrafttd.match.TimeoutTiePolicy
 import dev.cubecrafttd.stats.MatchStatsSnapshot
 import dev.cubecrafttd.ui.EngineeringMatchEndProjector
 import dev.cubecrafttd.ui.HistoricalMatchEndLeaderboardProjector

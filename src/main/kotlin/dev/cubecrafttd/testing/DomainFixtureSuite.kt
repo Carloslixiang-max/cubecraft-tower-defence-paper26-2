@@ -99,6 +99,7 @@ object DomainFixtureSuite {
         addAll(EngineeringPlaytestProfileFixture.run())
         addAll(EngineeringMatchHudFixture.run())
         addAll(EngineeringMatchEndPresentationFixture.run())
+        addAll(MatchEndFeedbackPolicyFixture.run())
         addAll(LiveMenuProjectionFixture.run())
         addAll(MobStatusMovementFixture.run())
         addAll(MobStatusDamageFixture.run())
