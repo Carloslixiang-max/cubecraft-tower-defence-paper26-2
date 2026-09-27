@@ -68,8 +68,15 @@ object PlayerCombatPotionFixture {
             enemy1,enemy2,enemy3
         ).forEach(index::registerMob)
 
+        val weaponDamageEvents=mutableListOf<PlayerMobDamageEvent>()
         val combat=
-            PlayerWeaponCombatService(index)
+            PlayerWeaponCombatService(
+                index,
+                playerDamageEvents=
+                    PlayerMobDamageEventPort(
+                        weaponDamageEvents::add
+                    )
+            )
         val sword=combat.hit(
             PlayerWeaponHitCommand(
                 player,
@@ -184,6 +191,17 @@ object PlayerCombatPotionFixture {
                     sword.attribution
                         ?.awardsPlayerKillCoins==
                         true
+            ),
+            FixtureResult(
+                "player-weapon-damage-events-owner-scoped",
+                weaponDamageEvents.size==2 &&
+                    weaponDamageEvents.all { it.playerUuid==player } &&
+                    weaponDamageEvents.first {
+                        it.targetMobUuid==swordTarget.identity.entityUuid
+                    }.amount==8.0 &&
+                    weaponDamageEvents.first {
+                        it.targetMobUuid==bowTarget.identity.entityUuid
+                    }.amount==4.5
             ),
             FixtureResult(
                 "player-bow-partial-damage",

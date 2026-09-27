@@ -28,7 +28,10 @@ class AttackBatchApplier(
         RecommendedMatureTowerDefinitions,
     private val lethalResolver:
         MobLethalHitResolver =
-        MobLethalHitResolver()
+        MobLethalHitResolver(),
+    private val playerDamageEvents:
+        PlayerMobDamageEventPort =
+        NoOpPlayerMobDamageEventPort
 ) {
     fun apply(batch: AttackBatch): AttackApplicationReport {
         val towerType = batch.metadata["tower"]
@@ -110,9 +113,23 @@ class AttackBatchApplier(
             } ?: DamageSourceIdentity.System(
                 "tower-without-owner"
             )
+            val healthBefore=mob.combat.health
             mob.combat.lastEligibleDamageSource = source
             mob.combat.health =
                 (mob.combat.health - damage).coerceAtLeast(0.0)
+            val appliedDamage=
+                (healthBefore-mob.combat.health).coerceAtLeast(0.0)
+            source.playerUuidOrNull()?.let { playerUuid ->
+                if(appliedDamage>0.0) {
+                    playerDamageEvents.record(
+                        PlayerMobDamageEvent(
+                            impact.targetUuid,
+                            playerUuid,
+                            appliedDamage
+                        )
+                    )
+                }
+            }
 
             if(
                 mob.combat.health <= 0.0 &&

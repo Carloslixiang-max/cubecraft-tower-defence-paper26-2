@@ -40,7 +40,12 @@ object AttackApplicationFixture {
         index.registerMob(pigman)
         index.registerMob(caveSpider)
 
-        val applier = AttackBatchApplier(index)
+        val damageEvents=mutableListOf<PlayerMobDamageEvent>()
+        val applier = AttackBatchApplier(
+            index,
+            playerDamageEvents=
+                PlayerMobDamageEventPort(damageEvents::add)
+        )
         val ctx = TowerAttackContext(71,owner,100)
 
         val archerKill = BasicTowerProcessors.archer(
@@ -106,6 +111,14 @@ object AttackApplicationFixture {
                         .attribution?.creditedPlayerUuid == owner &&
                     zombie.combat.lifecycle ==
                         MobLifecycleState.DEAD
+            ),
+            FixtureResult(
+                "tower-damage-event-owner-scoped-and-overkill-clipped",
+                damageEvents.any {
+                    it.targetMobUuid==zombie.identity.entityUuid &&
+                    it.playerUuid==owner &&
+                    it.amount==5.0
+                }
             ),
             FixtureResult(
                 "pigman-fire-immune-no-damage-no-burn",

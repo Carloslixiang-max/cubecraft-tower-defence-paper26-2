@@ -35,7 +35,10 @@ class PlayerWeaponCombatService(
     private val index: ArenaEntityIndex,
     private val lethalResolver:
         MobLethalHitResolver =
-        MobLethalHitResolver()
+        MobLethalHitResolver(),
+    private val playerDamageEvents:
+        PlayerMobDamageEventPort =
+        NoOpPlayerMobDamageEventPort
 ) {
     fun hit(
         command: PlayerWeaponHitCommand
@@ -63,6 +66,7 @@ class PlayerWeaponCombatService(
                 )
         }
 
+        val healthBefore=mob.combat.health
         mob.combat.lastEligibleDamageSource =
             source
         mob.combat.health =
@@ -70,6 +74,17 @@ class PlayerWeaponCombatService(
                 mob.combat.health -
                     command.actualDamage
             ).coerceAtLeast(0.0)
+        val appliedDamage=
+            (healthBefore-mob.combat.health).coerceAtLeast(0.0)
+        if(appliedDamage>0.0) {
+            playerDamageEvents.record(
+                PlayerMobDamageEvent(
+                    command.targetMobUuid,
+                    command.playerUuid,
+                    appliedDamage
+                )
+            )
+        }
 
         var killed = false
         var attribution:
