@@ -44,11 +44,11 @@ class BukkitHistoricalSidebarService(
     fun push(
         playerUuid: UUID,
         view: HistoricalMatchSidebarView
-    ) {
+    ): Boolean {
         val player=
             server.getPlayer(
                 playerUuid
-            ) ?: return
+            ) ?: return false
         val manager=
             server.scoreboardManager
 
@@ -65,7 +65,7 @@ class BukkitHistoricalSidebarService(
             playerUuid in
                 customScoreboardOptOut
         ) {
-            return
+            return false
         }
 
         var board=
@@ -79,7 +79,7 @@ class BukkitHistoricalSidebarService(
             ) {
                 customScoreboardOptOut +=
                     playerUuid
-                return
+                return false
             }
 
             board=
@@ -104,7 +104,7 @@ class BukkitHistoricalSidebarService(
         val objective=
             board.getObjective(
                 "ctd"
-            ) ?: return
+            ) ?: return false
 
         board.entries
             .toList()
@@ -126,6 +126,7 @@ class BukkitHistoricalSidebarService(
                 )
                 .score=score
         }
+        return true
     }
 
     fun clear(

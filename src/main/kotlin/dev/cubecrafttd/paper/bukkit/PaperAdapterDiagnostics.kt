@@ -94,6 +94,7 @@ data class PaperAdapterDiagnostics(
                 "historical end-of-match Top players list + hover stats presentation",
                 "historical Castle Health bossbar projection + lifecycle cleanup",
                 "historical Tower Defence Coins/EXP sidebar with conservative scoreboard ownership",
+                "historical-sidebar-first HUD delivery with Engineering action-bar compatibility fallback",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

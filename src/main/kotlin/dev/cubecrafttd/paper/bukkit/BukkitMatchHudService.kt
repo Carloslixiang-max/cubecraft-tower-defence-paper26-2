@@ -92,14 +92,15 @@ class BukkitMatchHudService(
                             ownCastle.health,
                             ownCastle.maxHealth
                         )
-                sidebar.push(
-                    playerUuid,
-                    HistoricalMatchSidebarProjector
-                        .project(
-                            coins,
-                            exp
-                        )
-                )
+                val historicalSidebarActive=
+                    sidebar.push(
+                        playerUuid,
+                        HistoricalMatchSidebarProjector
+                            .project(
+                                coins,
+                                exp
+                            )
+                    )
 
                 server.getPlayer(
                     playerUuid
@@ -156,7 +157,10 @@ class BukkitMatchHudService(
 
                 actionBar.send(
                     playerUuid,
-                    text
+                    if(historicalSidebarActive)
+                        ""
+                    else
+                        text
                 )
             }
     }
