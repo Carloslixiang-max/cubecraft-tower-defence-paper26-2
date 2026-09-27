@@ -120,7 +120,7 @@ class BukkitNormalArenaController(
 ) {
     private val matchHud=
         BukkitMatchHudService(
-            plugin.server
+            plugin
         )
 
     private val matchEndFeedback=

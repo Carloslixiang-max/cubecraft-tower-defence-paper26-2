@@ -10,7 +10,8 @@ import dev.cubecrafttd.match.NormalMatchClockRuntime
 import dev.cubecrafttd.ui.EngineeringMatchHudProjector
 import dev.cubecrafttd.ui.EngineeringMatchHudSnapshot
 import dev.cubecrafttd.ui.HistoricalCastleHealthHudProjector
-import org.bukkit.Server
+import dev.cubecrafttd.ui.HistoricalMatchSidebarProjector
+import org.bukkit.plugin.Plugin
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -23,10 +24,16 @@ import java.util.UUID
  * original CubeCraft UI wording.
  */
 class BukkitMatchHudService(
-    private val server: Server
+    private val plugin: Plugin
 ) {
+    private val server=
+        plugin.server
     private val actionBar =
         BukkitActionBarPort(server)
+    private val sidebar=
+        BukkitHistoricalSidebarService(
+            plugin
+        )
     private val castleHealthBars=
         linkedMapOf<UUID,BossBar>()
 
@@ -63,12 +70,37 @@ class BukkitMatchHudService(
                     context.castles
                         .getValue(enemyTeam)
 
+                val coins=
+                    balance(
+                        ledger,
+                        team,
+                        playerUuid,
+                        EconomyCurrency
+                            .MATCH_COINS
+                    )
+                val exp=
+                    balance(
+                        ledger,
+                        team,
+                        playerUuid,
+                        EconomyCurrency
+                            .MATCH_EXP
+                    )
                 val castleHud=
                     HistoricalCastleHealthHudProjector
                         .project(
                             ownCastle.health,
                             ownCastle.maxHealth
                         )
+                sidebar.push(
+                    playerUuid,
+                    HistoricalMatchSidebarProjector
+                        .project(
+                            coins,
+                            exp
+                        )
+                )
+
                 server.getPlayer(
                     playerUuid
                 )?.let { player ->
@@ -107,22 +139,8 @@ class BukkitMatchHudService(
                                     enemyCastle.health,
                                 enemyCastleMaxHealth=
                                     enemyCastle.maxHealth,
-                                coins=
-                                    balance(
-                                        ledger,
-                                        team,
-                                        playerUuid,
-                                        EconomyCurrency
-                                            .MATCH_COINS
-                                    ),
-                                exp=
-                                    balance(
-                                        ledger,
-                                        team,
-                                        playerUuid,
-                                        EconomyCurrency
-                                            .MATCH_EXP
-                                    ),
+                                coins=coins,
+                                exp=exp,
                                 elapsedTicks=
                                     clock.elapsedTicks(
                                         context
@@ -151,6 +169,9 @@ class BukkitMatchHudService(
                 playerUuid
             )
             ?.removeAll()
+        sidebar.clear(
+            playerUuid
+        )
     }
 
     fun clear(

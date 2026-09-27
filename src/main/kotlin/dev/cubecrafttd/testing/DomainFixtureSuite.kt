@@ -50,6 +50,7 @@ object DomainFixtureSuite {
         addAll(HistoricalOverallScoreFixture.run())
         addAll(HistoricalMatchEndLeaderboardFixture.run())
         addAll(HistoricalCastleHealthHudFixture.run())
+        addAll(HistoricalMatchSidebarFixture.run())
         addAll(ArenaTeardownFixture.run())
         addAll(FarmReuseGateFixture.run())
         addAll(NormalArenaLoopFixture.run())

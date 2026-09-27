@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v83 engineering playtest shell**
-- Pure-domain baseline: **464/464 fixtures PASS**
+- Current shell lineage: **v84 engineering playtest shell**
+- Pure-domain baseline: **466/466 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -82,7 +82,8 @@ The codebase already contains substantial runtime work, including:
 - v80 adds exact cumulative-cost instrumentation for the three historically visible match-end detail categories. Successful tower placement records its real `TowerPlacementReceipt.cost`; Summoner sends record `TroopBatchSendReceipt.totalCost`; final mob deaths record the killed troop's own `mobId + level -> sendCoins` value. Kill statistics are finalized once per logical mob through the shared death-finalization path, so tower, sword, bow and player-potion final blows can contribute without the old direct-hit-only blind spot or duplicate finalization. These cumulative-cost fields are supplemental diagnostics; later historical evidence established that they are not themselves the CubeCraft Overall score formula;
 - v81 recovers the historical Overall score rule from 2018/2019 end-screen evidence and contemporary player explanation: the scoreboard rank uses Coins spent during the round, while the hover detail separately shows Towers placed, Troops sent and Enemies killed. `HistoricalOverallScoreCalculator` therefore derives score only from authoritative negative player `MATCH_COINS` purchases for troop sending, tower placement/upgrades and Bazaar purchases. Team sharing, EXP spending, admin/debug debits, refunds and rollback flows do not contribute. `MatchEndCoordinator` synchronizes this ledger-derived value into the final stats snapshot. Exact equal-score tie ordering is still unrecovered and remains explicitly unresolved rather than guessed;
 - v82 restores the historical end-of-match Top players presentation path. `HistoricalMatchEndLeaderboardProjector` selects the three highest `overallScore` values and preserves the recovered hover-detail fields `Towers placed`, `Troops sent`, `Enemies killed` and `Overall score`. Bukkit renders the heading `Top players:` and hoverable player names after a normal result, while Engineering manual-stop outcomes intentionally skip the historical leaderboard. Equal-score ordering still uses an explicitly labelled deterministic UUID fallback until direct tie evidence is recovered;
-- v83 restores the directly evidenced in-match `Castle Health` bossbar. `HistoricalCastleHealthHudProjector` maps the viewer's own castle health to a safe 0..1 bossbar ratio with the recovered title, while the Bukkit HUD adapter owns one green solid bar per active player. Departure immediately removes that player's bar and match teardown clears every remaining bar before snapshot restoration, so historical HUD fidelity does not leave UI residue behind.
+- v83 restores the directly evidenced in-match `Castle Health` bossbar. `HistoricalCastleHealthHudProjector` maps the viewer's own castle health to a safe 0..1 bossbar ratio with the recovered title, while the Bukkit HUD adapter owns one green solid bar per active player. Departure immediately removes that player's bar and match teardown clears every remaining bar before snapshot restoration, so historical HUD fidelity does not leave UI residue behind;
+- v84 restores the historically evidenced right-side match sidebar with `Tower Defence`, live Coins, live EXP and `play.cubecraft.net`. The Bukkit adapter is deliberately conservative: it only replaces Bukkit's main scoreboard, never a custom scoreboard already owned by another plugin. Players with custom scoreboards keep the Engineering action-bar fallback instead. TD-owned scoreboards are restored to main on normal clear, and an offline clear is completed on the next join so disconnects cannot strand the temporary sidebar.
 
 ## Build
 
