@@ -92,6 +92,7 @@ data class PaperAdapterDiagnostics(
                 "unified player kill-cost attribution across tower / weapon / potion final deaths",
                 "historical Overall score = qualifying MATCH_COINS spent from authoritative ledger history",
                 "historical end-of-match Top players list + hover stats presentation",
+                "historical Castle Health bossbar projection + lifecycle cleanup",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

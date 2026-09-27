@@ -9,7 +9,11 @@ import dev.cubecrafttd.match.MatchSessionState
 import dev.cubecrafttd.match.NormalMatchClockRuntime
 import dev.cubecrafttd.ui.EngineeringMatchHudProjector
 import dev.cubecrafttd.ui.EngineeringMatchHudSnapshot
+import dev.cubecrafttd.ui.HistoricalCastleHealthHudProjector
 import org.bukkit.Server
+import org.bukkit.boss.BarColor
+import org.bukkit.boss.BarStyle
+import org.bukkit.boss.BossBar
 import java.util.UUID
 
 /**
@@ -19,10 +23,12 @@ import java.util.UUID
  * original CubeCraft UI wording.
  */
 class BukkitMatchHudService(
-    server: Server
+    private val server: Server
 ) {
     private val actionBar =
         BukkitActionBarPort(server)
+    private val castleHealthBars=
+        linkedMapOf<UUID,BossBar>()
 
     fun push(
         context: ArenaContext,
@@ -56,6 +62,37 @@ class BukkitMatchHudService(
                 val enemyCastle =
                     context.castles
                         .getValue(enemyTeam)
+
+                val castleHud=
+                    HistoricalCastleHealthHudProjector
+                        .project(
+                            ownCastle.health,
+                            ownCastle.maxHealth
+                        )
+                server.getPlayer(
+                    playerUuid
+                )?.let { player ->
+                    val bar=
+                        castleHealthBars
+                            .getOrPut(
+                                playerUuid
+                            ) {
+                                server.createBossBar(
+                                    castleHud.title,
+                                    BarColor.GREEN,
+                                    BarStyle.SOLID
+                                )
+                            }
+                    bar.setTitle(
+                        castleHud.title
+                    )
+                    bar.setProgress(
+                        castleHud.progress
+                    )
+                    bar.addPlayer(
+                        player
+                    )
+                }
 
                 val text =
                     EngineeringMatchHudProjector
@@ -104,6 +141,24 @@ class BukkitMatchHudService(
                     text
                 )
             }
+    }
+
+    fun clear(
+        playerUuid: UUID
+    ) {
+        castleHealthBars
+            .remove(
+                playerUuid
+            )
+            ?.removeAll()
+    }
+
+    fun clear(
+        playerUuids: Collection<UUID>
+    ) {
+        playerUuids.forEach(
+            ::clear
+        )
     }
 
     private fun balance(

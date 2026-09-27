@@ -1625,6 +1625,9 @@ class BukkitNormalArenaController(
                 ?: return null
 
         if(departure.newlyDeparted) {
+            matchHud.clear(
+                playerUuid
+            )
             isolationRegistry.releasePlayer(
                 handle.context.arenaId,
                 playerUuid
@@ -2150,6 +2153,9 @@ class BukkitNormalArenaController(
                     }
                 } ?: emptyMap()
 
+        matchHud.clear(
+            activeTeamByPlayer.keys
+        )
         matchEndFeedback
             .beforeRestore(
                 activeTeamByPlayer
