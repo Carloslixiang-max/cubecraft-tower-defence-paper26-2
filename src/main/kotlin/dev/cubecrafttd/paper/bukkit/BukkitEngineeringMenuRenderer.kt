@@ -47,6 +47,7 @@ class BukkitEngineeringMenuRenderer :
             "potion" -> Material.POTION
             "book" -> Material.BOOK
             "anvil" -> Material.ANVIL
+            "stick" -> Material.STICK
             "nether-star" -> Material.NETHER_STAR
             "spawner" -> Material.SPAWNER
             "spawner-glow" ->

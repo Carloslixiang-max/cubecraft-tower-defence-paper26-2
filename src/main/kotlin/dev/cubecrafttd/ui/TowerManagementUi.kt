@@ -30,16 +30,26 @@ object TowerWorldInteractionSemantics {
 
 object TowerManagementMenus {
     /**
-     * The existence of statistics / upgrade / sell actions is historical
-     * direct CubeCraft evidence. Exact Mature slot indices are not recovered,
-     * so this functional Stage-4 layout stays ENGINEERING_FALLBACK.
+     * Mixed-evidence 2021 tower menu shell.
+     *
+     * Direct official screenshot evidence recovers a 54-slot inventory, a
+     * concrete title example ("Zeus Tower I"), and the rangefinder control in
+     * zero-based slot 45. Statistics / upgrade / sell exist historically, but
+     * their exact 2021 slots remain unrecovered, so those controls intentionally
+     * retain the previous Engineering fallback positions.
      */
-    fun engineering(
-        towerInstanceId: Long
+    fun mature2021(
+        towerInstanceId: Long,
+        towerDisplayName: String,
+        level: Int,
+        rangefinderPinned: Boolean
     ): MenuDefinition =
         MenuDefinition(
-            title="Tower management",
-            size=27,
+            title=
+                towerDisplayName +
+                    " " +
+                    romanLevel(level),
+            size=54,
             evidenceStatus=
                 UiEvidenceStatus
                     .ENGINEERING_FALLBACK,
@@ -67,12 +77,41 @@ object TowerManagementMenus {
                     "Sell tower"
                 ),
                 MenuSlot(
-                    22,
+                    45,
                     "tower-manage:$towerInstanceId:rangefinder",
                     UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Toggle permanent rangefinder"
+                        .MATURE_DIRECT,
+                    if(rangefinderPinned)
+                        "Click to Disable this tower's rangefinder"
+                    else
+                        "Click to Enable this tower's rangefinder",
+                    "stick"
                 )
             )
         )
+
+    /**
+     * Compatibility entry point for older callers. Runtime Paper menus use
+     * [mature2021] with the real tower name, level and pin state.
+     */
+    fun engineering(
+        towerInstanceId: Long
+    ): MenuDefinition =
+        mature2021(
+            towerInstanceId,
+            "Tower",
+            1,
+            false
+        )
+
+    private fun romanLevel(
+        level: Int
+    ): String =
+        when(level) {
+            1 -> "I"
+            2 -> "II"
+            3 -> "III"
+            4 -> "IV"
+            else -> level.toString()
+        }
 }

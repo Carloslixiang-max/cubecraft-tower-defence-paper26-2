@@ -1442,16 +1442,34 @@ class BukkitNormalArenaController(
                 ?: error(
                     "Player is not in an active live arena"
                 )
-        check(
-            towerId in
-                handle.context.entityIndex
-                    .towersByInstanceId
-        ) {
-            "Unknown tower ${towerId.value}"
-        }
+        val tower=
+            handle.context.entityIndex
+                .towersByInstanceId[
+                    towerId
+                ] ?: error(
+                    "Unknown tower ${towerId.value}"
+                )
+        val playerState=
+            handle.session
+                ?.players
+                ?.get(playerUuid)
+                ?: error(
+                    "Player match session is missing"
+                )
+        val displayName=
+            RecommendedMatureTowerDefinitions
+                .get(
+                    tower.identity.towerId
+                )
+                .displayName
         return TowerManagementMenus
-            .engineering(
-                towerId.value
+            .mature2021(
+                towerId.value,
+                displayName,
+                tower.upgrade.level,
+                towerId.value in
+                    playerState.interaction
+                        .pinnedRangefinderTowers
             )
     }
 

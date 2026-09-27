@@ -6,11 +6,24 @@ object TowerManagementMenuFixture {
     fun run():List<FixtureResult> {
         val menu=
             TowerManagementMenus
-                .engineering(42)
+                .mature2021(
+                    42,
+                    "Zeus Tower",
+                    1,
+                    false
+                )
+        val pinned=
+            TowerManagementMenus
+                .mature2021(
+                    42,
+                    "Zeus Tower",
+                    4,
+                    true
+                )
 
         return listOf(
             FixtureResult(
-                "tower-management-functional-actions",
+                "tower-management-functional-actions-remain-available",
                 menu.actionAt(11)==
                     "tower-manage:42:stats" &&
                     menu.actionAt(13)==
@@ -19,7 +32,37 @@ object TowerManagementMenuFixture {
                         "tower-manage:42:sell"
             ),
             FixtureResult(
-                "tower-management-layout-remains-engineering-but-upgrade-icon-is-historical",
+                "tower-management-2021-shell-recovers-size-title-and-rangefinder-slot",
+                menu.size==54 &&
+                    menu.title=="Zeus Tower I" &&
+                    menu.actionAt(45)==
+                        "tower-manage:42:rangefinder" &&
+                    menu.slots
+                        .first {
+                            it.slot==45
+                        }
+                        .let {
+                            it.evidenceStatus==
+                                UiEvidenceStatus
+                                    .MATURE_DIRECT &&
+                            it.iconHint=="stick" &&
+                            it.displayName==
+                                "Click to Enable this tower's rangefinder"
+                        }
+            ),
+            FixtureResult(
+                "tower-management-rangefinder-state-and-roman-level-project",
+                pinned.title==
+                    "Zeus Tower IV" &&
+                    pinned.slots
+                        .first {
+                            it.slot==45
+                        }
+                        .displayName==
+                    "Click to Disable this tower's rangefinder"
+            ),
+            FixtureResult(
+                "tower-management-unrecovered-controls-stay-weaker-evidence",
                 menu.evidenceStatus==
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK &&
@@ -35,9 +78,13 @@ object TowerManagementMenuFixture {
                             it.iconHint=="anvil"
                         } &&
                     menu.slots
-                        .filterNot {
-                            it.actionId==
-                                "tower-manage:42:upgrade"
+                        .filter {
+                            it.actionId.endsWith(
+                                ":stats"
+                            ) ||
+                            it.actionId.endsWith(
+                                ":sell"
+                            )
                         }
                         .all {
                             it.evidenceStatus==
