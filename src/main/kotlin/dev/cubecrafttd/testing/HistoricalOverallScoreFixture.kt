@@ -1,7 +1,5 @@
 package dev.cubecrafttd.testing
 
-import dev.cubecrafttd.arena.TeamId
-import dev.cubecrafttd.economy.*
 import dev.cubecrafttd.stats.*
 import java.util.UUID
 
@@ -13,160 +11,91 @@ object HistoricalOverallScoreFixture {
         val p2=UUID.fromString(
             "00000000-0000-0000-0000-000000081002"
         )
-        val ledger=EconomyLedger()
 
-        fun apply(
-            id: Long,
-            player: UUID,
-            currency: EconomyCurrency,
-            delta: Long,
-            reason: EconomyReason,
-            correlation: String
-        ) {
-            check(
-                ledger.apply(
-                    EconomyTransaction(
-                        id,
-                        id,
-                        EconomyAccount(
-                            TeamId.RED,
-                            player,
-                            currency
-                        ),
-                        delta,
-                        reason,
-                        correlation
-                    ),
-                    allowNegative=false
-                )
-            )
-        }
+        val stats=
+            MatchStatsRecorder()
 
-        apply(
-            1,p1,
-            EconomyCurrency.MATCH_COINS,
-            5_000L,
-            EconomyReason.MATCH_INITIALIZATION,
-            "seed-p1-coins"
+        stats.recordTowerBuilt(
+            p1,
+            200L
         )
-        apply(
-            2,p2,
-            EconomyCurrency.MATCH_COINS,
-            5_000L,
-            EconomyReason.MATCH_INITIALIZATION,
-            "seed-p2-coins"
+        stats.recordTroopsSent(
+            p1,
+            12,
+            360L
         )
-        apply(
-            3,p1,
-            EconomyCurrency.MATCH_EXP,
-            1_000L,
-            EconomyReason.MATCH_INITIALIZATION,
-            "seed-p1-exp"
+        stats.recordTroopKill(
+            p1,
+            45L
         )
 
-        apply(
-            10,p1,
-            EconomyCurrency.MATCH_COINS,
-            -100L,
-            EconomyReason.TROOP_PURCHASE,
-            "score-troops"
+        stats.recordTowerBuilt(
+            p2,
+            75L
         )
-        apply(
-            11,p1,
-            EconomyCurrency.MATCH_COINS,
-            -200L,
-            EconomyReason.TOWER_PURCHASE,
-            "score-tower"
+        stats.recordTroopsSent(
+            p2,
+            2,
+            40L
         )
-        apply(
-            12,p1,
-            EconomyCurrency.MATCH_COINS,
-            -300L,
-            EconomyReason.TOWER_UPGRADE,
-            "score-upgrade"
-        )
-        apply(
-            13,p1,
-            EconomyCurrency.MATCH_COINS,
-            -400L,
-            EconomyReason.BAZAAR,
-            "score-bazaar"
+        stats.recordTroopKill(
+            p2,
+            15L
         )
 
-        // Transfers move Coins but are not player spending for historical MVP.
-        apply(
-            14,p1,
-            EconomyCurrency.MATCH_COINS,
-            -500L,
-            EconomyReason.TEAM_SHARE,
-            "share-debit"
+        // These unrelated match statistics must not alter the official
+        // cumulative-cost contribution score.
+        stats.recordCoinsEarned(
+            p1,
+            99_999L
+        )
+        stats.recordExpEarned(
+            p1,
+            88_888L
+        )
+        stats.recordTowerSold(
+            p1
+        )
+        stats.recordCastleDamageDone(
+            p1,
+            123.0
         )
 
-        // EXP spending is intentionally outside Overall score.
-        apply(
-            15,p1,
-            EconomyCurrency.MATCH_EXP,
-            -125L,
-            EconomyReason.BAZAAR,
-            "goldmine-exp"
-        )
-
-        // Admin/debug debits must never leak into a real leaderboard score.
-        apply(
-            16,p1,
-            EconomyCurrency.MATCH_COINS,
-            -75L,
-            EconomyReason.ADMIN_TEST,
-            "admin-debit"
-        )
-
-        apply(
-            20,p2,
-            EconomyCurrency.MATCH_COINS,
-            -250L,
-            EconomyReason.BAZAAR,
-            "p2-bazaar"
-        )
-
+        stats.synchronizeHistoricalOverallScores()
+        val snapshot=
+            stats.snapshot()
         val scores=
             HistoricalOverallScoreCalculator
                 .byPlayer(
-                    ledger
+                    snapshot
                 )
-        val stats=
-            MatchStatsRecorder()
-        stats.synchronizeHistoricalOverallScores(
-            ledger
-        )
-        val snapshot=
-            stats.snapshot()
 
         return listOf(
             FixtureResult(
-                "historical-overall-score-counts-only-real-coin-purchases",
-                scores[p1]==1_000L &&
-                    scores[p2]==250L
+                "historical-overall-score-sums-three-official-cumulative-cost-buckets",
+                scores[p1]==605L &&
+                    scores[p2]==130L
             ),
             FixtureResult(
-                "historical-overall-score-excludes-share-exp-and-admin-flows",
-                scores[p1]!=1_700L &&
-                    HistoricalOverallScoreCalculator
-                        .qualifyingReasons==
-                    setOf(
-                        EconomyReason.TROOP_PURCHASE,
-                        EconomyReason.TOWER_PURCHASE,
-                        EconomyReason.TOWER_UPGRADE,
-                        EconomyReason.BAZAAR
-                    )
-            ),
-            FixtureResult(
-                "historical-overall-score-synchronizes-into-match-stats",
+                "historical-overall-score-ignores-unrelated-match-stats",
                 snapshot.byPlayer
                     .getValue(p1)
-                    .overallScore==1_000L &&
+                    .overallScore==605L &&
+                    snapshot.byPlayer
+                        .getValue(p1)
+                        .coinsEarned==99_999L &&
+                    snapshot.byPlayer
+                        .getValue(p1)
+                        .expEarned==88_888L
+            ),
+            FixtureResult(
+                "historical-overall-score-synchronizes-into-final-player-stats",
+                snapshot.byPlayer
+                    .getValue(p1)
+                    .overallScore==605L &&
                     snapshot.byPlayer
                         .getValue(p2)
-                        .overallScore==250L
+                        .overallScore==130L
             )
         )
     }

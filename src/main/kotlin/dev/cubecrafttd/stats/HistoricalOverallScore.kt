@@ -1,62 +1,34 @@
 package dev.cubecrafttd.stats
 
-import dev.cubecrafttd.economy.*
 import java.util.UUID
 
 /**
  * Historical CubeCraft Tower Defence end-of-match score.
  *
- * Community evidence from the live Java game identifies Overall score as the
- * amount of Coins spent during the round. Keep the eligible purchase reasons
- * explicit so transfers/admin/fallback transactions cannot silently become
- * leaderboard score when the economy grows.
+ * Direct official 2017 update evidence says the Top 3 is based on towers built,
+ * mobs sent and mobs killed, using cumulative cost. The most faithful direct
+ * projection is therefore the sum of those three already-recorded cumulative
+ * cost buckets. Later community posts describing the score as generic Coins
+ * spent are lower-confidence and do not override the official rule.
  */
 object HistoricalOverallScoreCalculator {
-    val qualifyingReasons: Set<EconomyReason> =
-        setOf(
-            EconomyReason.TROOP_PURCHASE,
-            EconomyReason.TOWER_PURCHASE,
-            EconomyReason.TOWER_UPGRADE,
-            EconomyReason.BAZAAR
+    fun forPlayer(
+        stats: MatchPlayerStats
+    ): Long =
+        Math.addExact(
+            Math.addExact(
+                stats.towersBuiltCumulativeCost,
+                stats.troopsSentCumulativeCost
+            ),
+            stats.troopsKilledCumulativeCost
         )
 
     fun byPlayer(
-        ledger: EconomyLedger
-    ): Map<UUID,Long> {
-        val score=
-            linkedMapOf<UUID,Long>()
-
-        ledger.history()
-            .forEach { tx ->
-                val player=
-                    tx.account.playerUuid
-                        ?: return@forEach
-                if(
-                    tx.account.currency !=
-                        EconomyCurrency.MATCH_COINS ||
-                    tx.delta >= 0L ||
-                    tx.reason !in
-                        qualifyingReasons
-                ) {
-                    return@forEach
-                }
-
-                score[player]=
-                    Math.addExact(
-                        score[player] ?: 0L,
-                        Math.negateExact(
-                            tx.delta
-                        )
-                    )
+        snapshot: MatchStatsSnapshot
+    ): Map<UUID,Long> =
+        snapshot.byPlayer
+            .mapValues {
+                (_,stats) ->
+                forPlayer(stats)
             }
-
-        return score
-    }
-
-    fun forPlayer(
-        ledger: EconomyLedger,
-        playerUuid: UUID
-    ): Long =
-        byPlayer(ledger)[playerUuid]
-            ?: 0L
 }

@@ -558,8 +558,7 @@ class BukkitNormalArenaController(
         val end=
             MatchEndCoordinator(
                 stats,
-                teardown,
-                ledger
+                teardown
             )
 
         val progressionService=

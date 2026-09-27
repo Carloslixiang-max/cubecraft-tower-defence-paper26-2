@@ -37,25 +37,14 @@ class MatchStatsRecorder {
             MatchPlayerStats()
         }
 
-    fun synchronizeHistoricalOverallScores(
-        ledger:
-            dev.cubecrafttd.economy
-                .EconomyLedger
-    ) {
-        val scores=
-            HistoricalOverallScoreCalculator
-                .byPlayer(
-                    ledger
-                )
-
-        (
-            stats.keys +
-                scores.keys
-        ).forEach { playerUuid ->
-            forPlayer(playerUuid)
-                .overallScore=
-                scores[playerUuid]
-                    ?: 0L
+    fun synchronizeHistoricalOverallScores() {
+        stats.values.forEach {
+            player ->
+            player.overallScore=
+                HistoricalOverallScoreCalculator
+                    .forPlayer(
+                        player
+                    )
         }
     }
 
