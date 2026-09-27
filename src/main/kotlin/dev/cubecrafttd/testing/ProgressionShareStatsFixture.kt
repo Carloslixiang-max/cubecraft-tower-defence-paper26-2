@@ -111,9 +111,15 @@ object ProgressionShareStatsFixture {
         val stats=MatchStatsRecorder()
         stats.recordCoinsEarned(p1,15)
         stats.recordExpEarned(p1,7)
-        stats.recordTroopsSent(p1,12)
-        stats.recordTroopKill(p1)
-        stats.recordTowerBuilt(p1)
+        stats.recordTroopsSent(
+            p1,12,360L
+        )
+        stats.recordTroopKill(
+            p1,45L
+        )
+        stats.recordTowerBuilt(
+            p1,200L
+        )
         stats.recordTowerSold(p1)
         stats.recordCastleDamageDone(p1,2.5)
         stats.recordOutcome(
@@ -162,8 +168,11 @@ object ProgressionShareStatsFixture {
                 snap.coinsEarned==15L &&
                     snap.expEarned==7L &&
                     snap.troopsSent==12 &&
+                    snap.troopsSentCumulativeCost==360L &&
                     snap.troopsKilled==1 &&
+                    snap.troopsKilledCumulativeCost==45L &&
                     snap.towersBuilt==1 &&
+                    snap.towersBuiltCumulativeCost==200L &&
                     snap.towersSold==1 &&
                     snap.castleDamageDone==2.5 &&
                     snap.win==1

@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "dev.cubecrafttd"
-version = "0.79.0-SNAPSHOT"
+version = "0.80.0-SNAPSHOT"
 
 repositories {
     mavenCentral()

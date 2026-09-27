@@ -88,6 +88,8 @@ data class PaperAdapterDiagnostics(
                 "evidence-backed GUI icon-hint projection into Bukkit menus",
                 "historical direct Anvil upgrade icon in tower management",
                 "historical direct Summoner bottom-middle Nether Star + bottom-right Mob Spawner controls",
+                "historical match-end tower-build / mob-send / mob-kill cumulative-cost instrumentation",
+                "unified player kill-cost attribution across tower / weapon / potion final deaths",
                 "unclean-restart Farm hard gate with persistent tagged-entity cleanup",
                 "queue start commit boundary prevents post-start ghost requeue",
                 "start-failure teardown residue feeds persistent Farm reuse interlock",

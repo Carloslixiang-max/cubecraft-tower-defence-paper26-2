@@ -1092,9 +1092,27 @@ class BukkitNormalArenaController(
         check(canBeginTowerPlacement(playerUuid,clickedBlock)) {
             "Clicked block is not a legal tower placement surface"
         }
-        return handle.towerPlacement
-            ?.quickPlace(playerUuid,clickedBlock)
-            ?: error("Tower placement service is not initialized")
+        val result=
+            handle.towerPlacement
+                ?.quickPlace(
+                    playerUuid,
+                    clickedBlock
+                )
+                ?: error(
+                    "Tower placement service is not initialized"
+                )
+        if(
+            result is
+                TowerPlacementInteractionResult
+                    .Placed
+        ) {
+            handle.stats
+                .recordTowerBuilt(
+                    playerUuid,
+                    result.result.receipt.cost
+                )
+        }
+        return result
     }
 
     fun dynamicMenuForPlayer(
@@ -1832,9 +1850,21 @@ class BukkitNormalArenaController(
                 "bottom" -> dev.cubecrafttd.tower.visual.TowerPath.BOTTOM
                 else -> error("Unknown tower path action")
             }
-            return handle.towerPlacement
-                ?.choosePathAndPlace(invocation.playerUuid,path)
-                ?: error("Tower placement service is not initialized")
+            val result=
+                handle.towerPlacement
+                    ?.choosePathAndPlace(
+                        invocation.playerUuid,
+                        path
+                    )
+                    ?: error(
+                        "Tower placement service is not initialized"
+                    )
+            handle.stats
+                .recordTowerBuilt(
+                    invocation.playerUuid,
+                    result.result.receipt.cost
+                )
+            return result
         }
 
         if(
@@ -1919,6 +1949,19 @@ class BukkitNormalArenaController(
             router.handle(
                 invocation
             )
+
+        if(
+            result is
+                MatchMenuActionResult
+                    .SummonerBatchSent
+        ) {
+            handle.stats
+                .recordTroopsSent(
+                    invocation.playerUuid,
+                    result.receipt.totalUnits,
+                    result.receipt.totalCost
+                )
+        }
 
         if(
             result is
@@ -2057,10 +2100,6 @@ class BukkitNormalArenaController(
                             handle.nextTransactionId
                                 .getAndIncrement()
                         )
-                handle.stats
-                    .recordTroopKill(
-                        hit.playerUuid
-                    )
                 if(awarded>0L) {
                     handle.stats
                         .recordCoinsEarned(

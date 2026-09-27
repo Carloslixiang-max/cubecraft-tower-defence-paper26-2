@@ -4,6 +4,8 @@ import dev.cubecrafttd.arena.ArenaContext
 import dev.cubecrafttd.combat.KillAttributionService
 import dev.cubecrafttd.mob.MobDeathFinalizationPort
 import dev.cubecrafttd.mob.MobRuntimeState
+import dev.cubecrafttd.mob.MobDefinitionRepository
+import dev.cubecrafttd.mob.RecommendedMatureMobDefinitions
 import dev.cubecrafttd.stats.MatchStatsRecorder
 import java.util.concurrent.atomic.AtomicLong
 
@@ -22,8 +24,14 @@ class MatchMobDeathFinalizer(
     private val stats:
         MatchStatsRecorder,
     private val nextTransactionId:
-        AtomicLong
+        AtomicLong,
+    private val definitions:
+        MobDefinitionRepository =
+        RecommendedMatureMobDefinitions
 ) : MobDeathFinalizationPort {
+    private val statsFinalizedMobIds=
+        linkedSetOf<Long>()
+
     override fun finalize(
         context: ArenaContext,
         mob: MobRuntimeState
@@ -57,11 +65,29 @@ class MatchMobDeathFinalizer(
 
         if(
             player!=null &&
+            statsFinalizedMobIds.add(
+                mob.identity.instanceId.value
+            )
+        ) {
+            val killValue=
+                definitions
+                    .get(
+                        mob.identity.mobId
+                    )
+                    .level(
+                        mob.identity.level
+                    )
+                    .sendCoins
+            stats.recordTroopKill(
+                player,
+                killValue
+            )
+        }
+
+        if(
+            player!=null &&
             awarded>0L
         ) {
-            stats.recordTroopKill(
-                player
-            )
             stats.recordCoinsEarned(
                 player,
                 awarded

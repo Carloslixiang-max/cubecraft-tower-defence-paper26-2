@@ -7,8 +7,11 @@ data class MatchPlayerStats(
     var coinsEarned: Long = 0,
     var expEarned: Long = 0,
     var troopsSent: Int = 0,
+    var troopsSentCumulativeCost: Long = 0,
     var troopsKilled: Int = 0,
+    var troopsKilledCumulativeCost: Long = 0,
     var towersBuilt: Int = 0,
+    var towersBuiltCumulativeCost: Long = 0,
     var towersSold: Int = 0,
     var castleDamageDone: Double = 0.0,
     var castleDamageTaken: Double = 0.0,
@@ -53,25 +56,43 @@ class MatchStatsRecorder {
 
     fun recordTroopsSent(
         playerUuid: UUID,
-        amount: Int
+        amount: Int,
+        cumulativeCost: Long = 0L
     ) {
         require(amount>=0)
+        require(cumulativeCost>=0L)
         forPlayer(playerUuid)
-            .troopsSent += amount
+            .also {
+                it.troopsSent += amount
+                it.troopsSentCumulativeCost +=
+                    cumulativeCost
+            }
     }
 
     fun recordTroopKill(
-        playerUuid: UUID
+        playerUuid: UUID,
+        cumulativeCost: Long = 0L
     ) {
+        require(cumulativeCost>=0L)
         forPlayer(playerUuid)
-            .troopsKilled++
+            .also {
+                it.troopsKilled++
+                it.troopsKilledCumulativeCost +=
+                    cumulativeCost
+            }
     }
 
     fun recordTowerBuilt(
-        playerUuid: UUID
+        playerUuid: UUID,
+        cumulativeCost: Long = 0L
     ) {
+        require(cumulativeCost>=0L)
         forPlayer(playerUuid)
-            .towersBuilt++
+            .also {
+                it.towersBuilt++
+                it.towersBuiltCumulativeCost +=
+                    cumulativeCost
+            }
     }
 
     fun recordTowerSold(
