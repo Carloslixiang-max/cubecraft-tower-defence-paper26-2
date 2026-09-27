@@ -282,11 +282,32 @@ object DynamicMatchMenus {
                     .ENGINEERING_FALLBACK,
             slots=listOf(
                 MenuSlot(
+                    10,
+                    "settings:particle-density",
+                    UiEvidenceStatus
+                        .ENGINEERING_FALLBACK,
+                    "Particles: ${model.particleDensity.label}"
+                ),
+                MenuSlot(
                     11,
                     "settings:auto-centre",
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
                     "Auto-centre towers: ${model.autoCentreEnabled}"
+                ),
+                MenuSlot(
+                    12,
+                    "settings:digital-mob-health",
+                    UiEvidenceStatus
+                        .ENGINEERING_FALLBACK,
+                    "Digital mob health: ${model.digitalMobHealth}"
+                ),
+                MenuSlot(
+                    13,
+                    "settings:damage-indicators",
+                    UiEvidenceStatus
+                        .ENGINEERING_FALLBACK,
+                    "Damage indicators: ${model.damageIndicators}"
                 ),
                 MenuSlot(
                     15,

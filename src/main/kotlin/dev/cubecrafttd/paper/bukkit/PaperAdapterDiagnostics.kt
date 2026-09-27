@@ -95,6 +95,8 @@ data class PaperAdapterDiagnostics(
                 "progression rollback buttons reflect live 10-second eligibility and suppress invalid clicks",
                 "historical Summoner send cage glow follows live draft/cooldown/queue/Coins preflight",
                 "owned dynamic menus refresh in-place on bounded cadence for live state changes",
+                "official 2017 Settings surface: particle density / digital mob health / damage indicators / in-game purchases",
+                "particle density setting drives per-player Engineering rangefinder sampling",
                 "historical end-of-match Top players list + hover stats presentation",
                 "historical Castle Health bossbar projection + lifecycle cleanup",
                 "historical Tower Defence Coins/EXP sidebar with conservative scoreboard ownership",

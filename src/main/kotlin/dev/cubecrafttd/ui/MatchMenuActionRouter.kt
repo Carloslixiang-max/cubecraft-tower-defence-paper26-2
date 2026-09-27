@@ -526,7 +526,7 @@ class MatchMenuActionRouter(
         parts: List<String>
     ): MatchMenuActionResult {
         check(parts.size==2) {
-            "settings:<auto-centre|point-purchases>"
+            "settings:<auto-centre|particle-density|digital-mob-health|damage-indicators|point-purchases>"
         }
         val settings=
             playerState.interaction
@@ -538,6 +538,19 @@ class MatchMenuActionRouter(
                     !settings
                         .autoCentreTowers
                 )
+            "particle-density" ->
+                settings
+                    .cycleParticleDensity()
+            "digital-mob-health" ->
+                settings
+                    .digitalMobHealth=
+                    !settings
+                        .digitalMobHealth
+            "damage-indicators" ->
+                settings
+                    .damageIndicators=
+                    !settings
+                        .damageIndicators
             "point-purchases" ->
                 settings
                     .allowInGamePointPurchases=

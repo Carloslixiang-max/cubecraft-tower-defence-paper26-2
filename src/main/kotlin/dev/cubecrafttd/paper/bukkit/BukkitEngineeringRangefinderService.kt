@@ -3,6 +3,7 @@ package dev.cubecrafttd.paper.bukkit
 import dev.cubecrafttd.map.BlockPos
 import dev.cubecrafttd.map.Vec3
 import dev.cubecrafttd.tower.TowerInstanceId
+import dev.cubecrafttd.ui.ParticleDensitySetting
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.plugin.Plugin
@@ -24,8 +25,10 @@ data class BukkitTowerRangefinderView(
  * Engineering adapter for the evidence-backed rangefinder semantics.
  *
  * Core decides WHICH tower ranges are visible. This class only projects those
- * ranges into Paper as a lightweight particle ring. The particle choice and
- * sampling density are Engineering Playtest presentation, not original truth.
+ * ranges into Paper as a lightweight particle ring. The official settings
+ * expose 500/sec, 100/sec and minimum particle modes; this adapter only maps
+ * those modes onto the Engineering rangefinder's per-ring sample density.
+ * Particle type and exact sampling are not claimed as original truth.
  */
 class BukkitEngineeringRangefinderService(
     private val plugin: Plugin,
@@ -73,10 +76,27 @@ class BukkitEngineeringRangefinderService(
                             p.x,p.y,p.z
                         )
 
+                val samples=
+                    when(
+                        controller
+                            .particleDensityForPlayer(
+                                player.uniqueId
+                            )
+                    ) {
+                        ParticleDensitySetting
+                            .HIGH_500 -> 32
+                        ParticleDensitySetting
+                            .REDUCED_100 -> 8
+                        ParticleDensitySetting
+                            .MINIMUM -> 2
+                        null -> 32
+                    }
+
                 views.forEach { view ->
                     renderRing(
                         player,
-                        view
+                        view,
+                        samples
                     )
                 }
             }
@@ -84,9 +104,10 @@ class BukkitEngineeringRangefinderService(
 
     private fun renderRing(
         player: org.bukkit.entity.Player,
-        view: BukkitTowerRangefinderView
+        view: BukkitTowerRangefinderView,
+        samples: Int
     ) {
-        val samples=32
+        require(samples>0)
         repeat(samples) { index ->
             val angle=
                 2.0 * PI *

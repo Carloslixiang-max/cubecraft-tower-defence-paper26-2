@@ -1271,6 +1271,24 @@ class BukkitNormalArenaController(
     }
 
 
+    fun particleDensityForPlayer(
+        playerUuid: UUID
+    ): ParticleDensitySetting? {
+        val handle=
+            handleForPlayer(
+                playerUuid
+            ) ?: return null
+        val player=
+            handle.session
+                ?.players
+                ?.get(
+                    playerUuid
+                ) ?: return null
+        return player.interaction
+            .settings
+            .particleDensity
+    }
+
     fun hotbarActionAt(
         playerUuid: UUID,
         zeroBasedSlot: Int

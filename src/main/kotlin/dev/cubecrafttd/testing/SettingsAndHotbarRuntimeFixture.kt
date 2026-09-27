@@ -95,6 +95,39 @@ object SettingsAndHotbarRuntimeFixture {
                 MatchMenuActionResult
                     .SettingsChanged
 
+        val particle=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "settings:particle-density",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .SettingsChanged
+
+        val digitalHealth=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "settings:digital-mob-health",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .SettingsChanged
+
+        val damageIndicators=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "settings:damage-indicators",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .SettingsChanged
+
         val menu=
             DynamicMatchMenus
                 .settings(playerState)
@@ -139,6 +172,60 @@ object SettingsAndHotbarRuntimeFixture {
                 menu.evidenceStatus==
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK
+            ),
+            FixtureResult(
+                "settings-router-particle-density-cycles-official-three-state-model",
+                particle.settings
+                    .particleDensity==
+                    ParticleDensitySetting
+                        .REDUCED_100 &&
+                    ParticleDensitySetting
+                        .HIGH_500.next()==
+                    ParticleDensitySetting
+                        .REDUCED_100 &&
+                    ParticleDensitySetting
+                        .REDUCED_100.next()==
+                    ParticleDensitySetting
+                        .MINIMUM &&
+                    ParticleDensitySetting
+                        .MINIMUM.next()==
+                    ParticleDensitySetting
+                        .HIGH_500
+            ),
+            FixtureResult(
+                "settings-router-digital-mob-health-toggle",
+                digitalHealth.settings
+                    .digitalMobHealth
+            ),
+            FixtureResult(
+                "settings-router-damage-indicators-toggle",
+                damageIndicators.settings
+                    .damageIndicators
+            ),
+            FixtureResult(
+                "settings-menu-projects-official-2017-options",
+                menu.slots.any {
+                    it.actionId==
+                        "settings:particle-density" &&
+                    it.displayName==
+                        "Particles: 100/sec"
+                } &&
+                    menu.slots.any {
+                        it.actionId==
+                            "settings:digital-mob-health" &&
+                        it.displayName==
+                            "Digital mob health: true"
+                    } &&
+                    menu.slots.any {
+                        it.actionId==
+                            "settings:damage-indicators" &&
+                        it.displayName==
+                            "Damage indicators: true"
+                    } &&
+                    menu.slots.any {
+                        it.actionId==
+                            "settings:point-purchases"
+                    }
             ),
             FixtureResult(
                 "hotbar-router-swap-and-custom-evidence",
