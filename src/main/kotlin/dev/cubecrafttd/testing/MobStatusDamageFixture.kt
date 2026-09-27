@@ -122,6 +122,10 @@ object MobStatusDamageFixture {
             context.entityIndex::registerMob
         )
 
+        val statusDamageEvents=
+            mutableListOf<
+                PlayerMobDamageEvent
+            >()
         val phase=
             MobStatusDamageTickPhase(
                 MobStatusDamageResolvedConfig(
@@ -130,7 +134,11 @@ object MobStatusDamageFixture {
                         ResolutionSource
                             .ENGINEERING_FALLBACK
                     )
-                )
+                ),
+                playerDamageEvents=
+                    PlayerMobDamageEventPort(
+                        statusDamageEvents::add
+                    )
             )
 
         phase.tick(context)
@@ -149,6 +157,16 @@ object MobStatusDamageFixture {
             FixtureResult(
                 "status-damage-respects-off-cadence",
                 offCadence.combat.health==10.0
+            ),
+            FixtureResult(
+                "status-damage-events-preserve-source-player",
+                statusDamageEvents.size==3 &&
+                    statusDamageEvents.all {
+                        it.playerUuid==owner
+                    } &&
+                    statusDamageEvents.sumOf {
+                        it.amount
+                    }==7.0
             ),
             FixtureResult(
                 "status-damage-lethal-preserves-player-tower-attribution",

@@ -31,7 +31,10 @@ class MobStatusDamageTickPhase(
         MobStatusDamageResolvedConfig,
     private val lethalResolver:
         MobLethalHitResolver =
-        MobLethalHitResolver()
+        MobLethalHitResolver(),
+    private val playerDamageEvents:
+        PlayerMobDamageEventPort =
+        NoOpPlayerMobDamageEventPort
 ) : ArenaTickPhase {
     override val order: Int =
         NormalArenaPhaseOrder.STATUS_DAMAGE
@@ -130,6 +133,8 @@ class MobStatusDamageTickPhase(
                                     )
                         }
 
+                    val healthBefore=
+                        mob.combat.health
                     mob.combat
                         .lastEligibleDamageSource=
                         source
@@ -138,6 +143,23 @@ class MobStatusDamageTickPhase(
                             mob.combat.health -
                                 damage
                         ).coerceAtLeast(0.0)
+                    val appliedDamage=
+                        (
+                            healthBefore -
+                                mob.combat.health
+                        ).coerceAtLeast(0.0)
+                    source.playerUuidOrNull()
+                        ?.let { playerUuid ->
+                            if(appliedDamage>0.0) {
+                                playerDamageEvents.record(
+                                    PlayerMobDamageEvent(
+                                        mob.identity.entityUuid,
+                                        playerUuid,
+                                        appliedDamage
+                                    )
+                                )
+                            }
+                        }
                     metrics.pulsesApplied++
                     metrics.totalDamage += damage
 

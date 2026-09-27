@@ -116,7 +116,10 @@ class AoEPotionTickPhase(
         MobLethalHitResolver(),
     private val feedback:
         AoEPotionFeedbackPort =
-        NoOpAoEPotionFeedbackPort
+        NoOpAoEPotionFeedbackPort,
+    private val playerDamageEvents:
+        PlayerMobDamageEventPort =
+        NoOpPlayerMobDamageEventPort
 ) : ArenaTickPhase {
     override val order: Int =
         NormalArenaPhaseOrder.AOE_POTION
@@ -216,6 +219,8 @@ class AoEPotionTickPhase(
                                 scheduled
                                     .awardsPlayerKillCoins
                             )
+                    val healthBefore=
+                        mob.combat.health
                     mob.combat
                         .lastEligibleDamageSource=
                         source
@@ -224,6 +229,20 @@ class AoEPotionTickPhase(
                             mob.combat.health -
                                 damage
                         ).coerceAtLeast(0.0)
+                    val appliedDamage=
+                        (
+                            healthBefore -
+                                mob.combat.health
+                        ).coerceAtLeast(0.0)
+                    if(appliedDamage>0.0) {
+                        playerDamageEvents.record(
+                            PlayerMobDamageEvent(
+                                uuid,
+                                scheduled.ownerUuid,
+                                appliedDamage
+                            )
+                        )
+                    }
                     damaged++
 
                     if(

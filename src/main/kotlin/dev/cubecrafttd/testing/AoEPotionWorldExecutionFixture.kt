@@ -177,8 +177,16 @@ object AoEPotionWorldExecutionFixture {
             100L,
             true
         )
+        val potionDamageEvents=
+            mutableListOf<
+                PlayerMobDamageEvent
+            >()
         AoEPotionTickPhase(
-            damageQueue
+            damageQueue,
+            playerDamageEvents=
+                PlayerMobDamageEventPort(
+                    potionDamageEvents::add
+                )
         ).tick(
             damageContext
         )
@@ -412,6 +420,18 @@ object AoEPotionWorldExecutionFixture {
                         redPlayer &&
                     damageCredit
                         .awardsPlayerKillCoins
+            ),
+            FixtureResult(
+                "aoe-damage-event-owner-scoped-and-overkill-clipped",
+                potionDamageEvents
+                    .singleOrNull()
+                    ?.let {
+                        it.targetMobUuid==
+                            damageMob.identity.entityUuid &&
+                        it.playerUuid==
+                            redPlayer &&
+                        it.amount==5.0
+                    } == true
             ),
             FixtureResult(
                 "aoe-heal-caps-at-max-health",
