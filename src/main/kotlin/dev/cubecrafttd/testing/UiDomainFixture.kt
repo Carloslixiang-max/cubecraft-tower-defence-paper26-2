@@ -71,11 +71,20 @@ object UiDomainFixture {
                     swapped.slot(HotbarAction.SETTINGS) == 2
             ),
             FixtureResult(
-                "ui-path-selector-exact-slot-gap-remains-labelled",
-                TowerBuilderMenus.pathSelectorEngineeringSlots
-                    .slots.all {
-                        it.evidenceStatus ==
-                            UiEvidenceStatus.ENGINEERING_FALLBACK
+                "ui-2021-path-selector-direct-layout-with-contextual-items",
+                TowerBuilderMenus.pathSelector2021
+                    .let { menu ->
+                        menu.title==
+                            "Select an upgrade path" &&
+                        menu.size==27 &&
+                        menu.evidenceStatus==
+                            UiEvidenceStatus.MATURE_DIRECT &&
+                        menu.actionAt(11)=="path:top" &&
+                        menu.actionAt(15)=="path:bottom" &&
+                        menu.slots.all {
+                            it.evidenceStatus==
+                                UiEvidenceStatus.MATURE_CONTEXT
+                        }
                     }
             )
         )
