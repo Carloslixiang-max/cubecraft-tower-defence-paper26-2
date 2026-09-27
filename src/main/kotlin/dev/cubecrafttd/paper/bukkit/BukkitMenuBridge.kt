@@ -132,6 +132,14 @@ class BukkitMenuBridge(
             actions[raw]
                 ?: return
 
+        if(
+            action.startsWith(
+                "noop:"
+            )
+        ) {
+            return
+        }
+
         val click=when(event.click) {
             ClickType.LEFT ->
                 ClickKind.LEFT

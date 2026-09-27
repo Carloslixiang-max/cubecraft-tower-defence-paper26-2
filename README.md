@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v88 engineering playtest shell**
-- Pure-domain baseline: **470/470 fixtures PASS**
+- Current shell lineage: **v89 engineering playtest shell**
+- Pure-domain baseline: **473/473 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -87,7 +87,8 @@ The codebase already contains substantial runtime work, including:
 - v85 removes the normal mixed HUD state. When the historical Tower Defence sidebar successfully owns the player's scoreboard, the old ENG action-bar HUD is suppressed and cleared; when another plugin already owns a custom scoreboard, TD still refuses to steal it and keeps the ENG action-bar as a compatibility fallback. This preserves interoperability without showing two competing match HUDs to ordinary players;
 - v86 extends the authoritative player snapshot to include Bukkit `flySpeed` before any historical Fast Fly work is enabled. Recovery journal format advances to v3 and persists the exact speed, while legacy v1/v2 files remain readable with the Minecraft default `0.1f`. Capture/restore and the live round-trip comparator now include `flySpeed`, with fixtures proving current-format preservation, legacy compatibility and explicit drift detection. This keeps future Settings fidelity subordinate to lossless player-state recovery rather than changing movement state unsafely;
 - v87 removes the last normal-match Engineering result overlay. Historical evidence supports the end-of-match Top players presentation, but the exact original victory/defeat/draw title wording and timing remain unrecovered. Normal Winner/Draw outcomes therefore no longer display `ENG VICTORY`, `ENG DEFEAT`, `ENG DRAW` or the corresponding Engineering chat line; they keep the recovered Top players UI only. Explicit `ENGINEERING_CUSTOM` stop/failure outcomes still show the clearly-labelled Engineering overlay so administrators retain useful diagnostics without exposing placeholder UI to ordinary matches;
-- v88 corrects the Top-3 score evidence hierarchy. The official 2017 CubeCraft Tower Defence update states that the game-end Top 3 is based on towers built, mobs sent and mobs killed using cumulative cost. `HistoricalOverallScoreCalculator` therefore now sums the three already-recorded authoritative buckets `towersBuiltCumulativeCost + troopsSentCumulativeCost + troopsKilledCumulativeCost`. The later community claim that Overall score was generic Coins spent no longer drives runtime behavior. Exact equal-score tie ordering remains unresolved and keeps the explicit deterministic fallback.
+- v88 corrects the Top-3 score evidence hierarchy. The official 2017 CubeCraft Tower Defence update states that the game-end Top 3 is based on towers built, mobs sent and mobs killed using cumulative cost. `HistoricalOverallScoreCalculator` therefore now sums the three already-recorded authoritative buckets `towersBuiltCumulativeCost + troopsSentCumulativeCost + troopsKilledCumulativeCost`. The later community claim that Overall score was generic Coins spent no longer drives runtime behavior. Exact equal-score tie ordering remains unresolved and keeps the explicit deterministic fallback;
+- v89 restores the officially described progression affordability feedback without pretending the exact menu layout is recovered. The live progression menu now reads the player's authoritative `MATCH_EXP` balance and compares it with the actual next-level `unlockOrUpgradeExp`. Affordable upgrades render an orange stained-glass pane, while unaffordable or max-level entries use a plain glass pane. Max-level entries are emitted as `noop:` actions and swallowed by the Bukkit menu bridge, preventing the previous invalid L6 upgrade click from reaching the progression router. Slot positions remain explicitly Engineering fallback.
 
 ## Build
 

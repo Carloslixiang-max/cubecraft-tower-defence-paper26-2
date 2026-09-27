@@ -82,10 +82,12 @@ object DynamicMatchMenus {
     fun progression(
         player:
             PlayerMatchSessionState,
+        availableExp: Long = 0L,
         definitions:
             MobDefinitionRepository =
             RecommendedMatureMobDefinitions
     ): MenuDefinition {
+        require(availableExp>=0L)
         val mobIds=
             definitions.all()
                 .keys
@@ -98,16 +100,49 @@ object DynamicMatchMenus {
                     val current=
                         player.progression
                             .level(mobId)
+                    val maxed=
+                        current>=5
+                    val nextLevel=
+                        if(maxed)
+                            null
+                        else
+                            current+1
+                    val nextCost=
+                        nextLevel?.let {
+                            definitions
+                                .get(mobId)
+                                .level(it)
+                                .unlockOrUpgradeExp
+                        }
+                    val affordable=
+                        nextCost!=null &&
+                            availableExp>=nextCost
+
                     add(
                         MenuSlot(
                             slot=index,
                             actionId=
-                                "progression:upgrade:$mobId",
+                                if(maxed)
+                                    "noop:progression:maxed:$mobId"
+                                else
+                                    "progression:upgrade:$mobId",
                             evidenceStatus=
                                 UiEvidenceStatus
                                     .ENGINEERING_FALLBACK,
                             displayName=
-                                "$mobId upgrade (current L$current)"
+                                when {
+                                    maxed ->
+                                        "$mobId — MAX LEVEL"
+                                    affordable ->
+                                        "$mobId L$nextLevel — $nextCost EXP (available)"
+                                    else ->
+                                        "$mobId L$nextLevel — $nextCost EXP"
+                                },
+                            iconHint=
+                                if(affordable)
+                                    "glass-pane-orange"
+                                else
+                                    "glass-pane"
                         )
                     )
                     add(

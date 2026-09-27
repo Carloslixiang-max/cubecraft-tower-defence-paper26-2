@@ -1140,9 +1140,38 @@ class BukkitNormalArenaController(
             "summoner" ->
                 DynamicMatchMenus
                     .summoner(player)
-            "progression" ->
+            "progression" -> {
+                val team=
+                    when {
+                        playerUuid in
+                            handle.context
+                                .redTeam.players ->
+                            TeamId.RED
+                        playerUuid in
+                            handle.context
+                                .blueTeam.players ->
+                            TeamId.BLUE
+                        else ->
+                            error(
+                                "Player is not assigned to an arena team"
+                            )
+                    }
+                val exp=
+                    handle.ledger
+                        .balance(
+                            EconomyAccount(
+                                team,
+                                playerUuid,
+                                EconomyCurrency
+                                    .MATCH_EXP
+                            )
+                        )
                 DynamicMatchMenus
-                    .progression(player)
+                    .progression(
+                        player,
+                        exp
+                    )
+            }
             "bazaar" ->
                 DynamicMatchMenus
                     .bazaar(player)

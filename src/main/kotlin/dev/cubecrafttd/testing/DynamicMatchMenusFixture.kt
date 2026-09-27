@@ -26,7 +26,30 @@ object DynamicMatchMenusFixture {
                 .summoner(player)
         val progression=
             DynamicMatchMenus
-                .progression(player)
+                .progression(
+                    player,
+                    availableExp=500L
+                )
+        val progressionPoor=
+            DynamicMatchMenus
+                .progression(
+                    player,
+                    availableExp=0L
+                )
+        player.progression
+            .unlockedLevelByMob[
+                "zombie"
+            ]=5
+        val progressionMaxed=
+            DynamicMatchMenus
+                .progression(
+                    player,
+                    availableExp=99_999L
+                )
+        player.progression
+            .unlockedLevelByMob[
+                "zombie"
+            ]=2
 
         val bazaarLocked=
             DynamicMatchMenus
@@ -87,6 +110,40 @@ object DynamicMatchMenusFixture {
                     progression.slots.any {
                         it.actionId==
                             "progression:rollback:zombie"
+                    }
+            ),
+            FixtureResult(
+                "dynamic-progression-affordable-upgrade-uses-orange-glass",
+                progression.slots
+                    .first {
+                        it.actionId==
+                            "progression:upgrade:zombie"
+                    }
+                    .iconHint==
+                    "glass-pane-orange"
+            ),
+            FixtureResult(
+                "dynamic-progression-unaffordable-upgrade-uses-plain-glass",
+                progressionPoor.slots
+                    .first {
+                        it.actionId==
+                            "progression:upgrade:zombie"
+                    }
+                    .iconHint==
+                    "glass-pane"
+            ),
+            FixtureResult(
+                "dynamic-progression-max-level-is-non-clicking-glass",
+                progressionMaxed.slots
+                    .first {
+                        it.actionId==
+                            "noop:progression:maxed:zombie"
+                    }
+                    .let {
+                        it.iconHint==
+                            "glass-pane" &&
+                            it.displayName==
+                                "zombie — MAX LEVEL"
                     }
             ),
             FixtureResult(

@@ -41,6 +41,9 @@ class BukkitEngineeringMenuRenderer :
             "anvil" -> Material.ANVIL
             "nether-star" -> Material.NETHER_STAR
             "spawner" -> Material.SPAWNER
+            "glass-pane" -> Material.GLASS_PANE
+            "glass-pane-orange" ->
+                Material.ORANGE_STAINED_GLASS_PANE
 
             // These three 2021 builder identities are visual inference rather
             // than direct item-name evidence. They stay weaker evidence in the
