@@ -83,6 +83,8 @@ object DynamicMatchMenus {
         player:
             PlayerMatchSessionState,
         availableExp: Long = 0L,
+        rollbackEligibleMobIds:
+            Set<String> = emptySet(),
         definitions:
             MobDefinitionRepository =
             RecommendedMatureMobDefinitions
@@ -145,16 +147,26 @@ object DynamicMatchMenus {
                                     "glass-pane"
                         )
                     )
+                    val rollbackEligible=
+                        mobId in
+                            rollbackEligibleMobIds
                     add(
                         MenuSlot(
                             slot=18+index,
                             actionId=
-                                "progression:rollback:$mobId",
+                                if(rollbackEligible)
+                                    "progression:rollback:$mobId"
+                                else
+                                    "noop:progression:rollback-unavailable:$mobId",
                             evidenceStatus=
                                 UiEvidenceStatus
                                     .ENGINEERING_FALLBACK,
                             displayName=
-                                "$mobId rollback"
+                                if(rollbackEligible)
+                                    "$mobId rollback"
+                                else
+                                    "$mobId rollback unavailable",
+                            iconHint="nether-star"
                         )
                     )
                 }

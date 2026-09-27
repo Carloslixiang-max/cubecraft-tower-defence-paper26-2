@@ -28,6 +28,16 @@ object DynamicMatchMenusFixture {
             DynamicMatchMenus
                 .progression(
                     player,
+                    availableExp=500L,
+                    rollbackEligibleMobIds=
+                        setOf(
+                            "zombie"
+                        )
+                )
+        val progressionNoRollback=
+            DynamicMatchMenus
+                .progression(
+                    player,
                     availableExp=500L
                 )
         val progressionPoor=
@@ -144,6 +154,20 @@ object DynamicMatchMenusFixture {
                             "glass-pane" &&
                             it.displayName==
                                 "zombie — MAX LEVEL"
+                    }
+            ),
+            FixtureResult(
+                "dynamic-progression-unavailable-rollback-is-noop",
+                progressionNoRollback.slots
+                    .first {
+                        it.actionId==
+                            "noop:progression:rollback-unavailable:zombie"
+                    }
+                    .let {
+                        it.displayName==
+                            "zombie rollback unavailable" &&
+                            it.iconHint==
+                                "nether-star"
                     }
             ),
             FixtureResult(

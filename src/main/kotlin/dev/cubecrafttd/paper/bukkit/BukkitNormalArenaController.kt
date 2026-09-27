@@ -1166,10 +1166,28 @@ class BukkitNormalArenaController(
                                     .MATCH_EXP
                             )
                         )
+                val rollbackEligible=
+                    RecommendedMatureMobDefinitions
+                        .all()
+                        .keys
+                        .filterTo(
+                            linkedSetOf()
+                        ) {
+                            mobId ->
+                            handle
+                                .progressionService
+                                .mayRollback(
+                                    playerUuid,
+                                    mobId,
+                                    handle.context
+                                        .gameTick
+                                )
+                        }
                 DynamicMatchMenus
                     .progression(
                         player,
-                        exp
+                        exp,
+                        rollbackEligible
                     )
             }
             "bazaar" ->
