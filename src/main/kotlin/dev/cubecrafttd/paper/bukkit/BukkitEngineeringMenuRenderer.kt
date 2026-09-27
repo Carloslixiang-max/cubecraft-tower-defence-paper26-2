@@ -23,6 +23,14 @@ class BukkitEngineeringMenuRenderer :
                     actionId
                 )
             )
+            if(
+                iconHint==
+                    "spawner-glow"
+            ) {
+                it.setEnchantmentGlintOverride(
+                    true
+                )
+            }
         }
         return item
     }
@@ -41,6 +49,8 @@ class BukkitEngineeringMenuRenderer :
             "anvil" -> Material.ANVIL
             "nether-star" -> Material.NETHER_STAR
             "spawner" -> Material.SPAWNER
+            "spawner-glow" ->
+                Material.SPAWNER
             "glass-pane" -> Material.GLASS_PANE
             "glass-pane-orange" ->
                 Material.ORANGE_STAINED_GLASS_PANE

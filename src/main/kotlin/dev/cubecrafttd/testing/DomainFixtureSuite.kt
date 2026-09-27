@@ -88,6 +88,7 @@ object DomainFixtureSuite {
         addAll(WitherArmageddonLiveRuntimeFixture.run())
         addAll(PlayerSentMobDeathFinalizerFixture.run())
         addAll(SummonerDraftBatchSendFixture.run())
+        addAll(SummonerSendAvailabilityFixture.run())
         addAll(MatchMenuActionRouterFixture.run())
         addAll(TowerWorldActionServiceFixture.run())
         addAll(TowerManagementMenuFixture.run())

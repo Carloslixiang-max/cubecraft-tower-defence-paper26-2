@@ -84,6 +84,8 @@ data class BukkitLiveArenaHandle(
         BukkitArenaArmageddonRuntime,
     val progressionService:
         TroopProgressionService,
+    val sendCooldowns:
+        DeterministicCooldownTracker,
     val aoeCooldowns:
         DeterministicCooldownTracker,
     val liveTickProfiler:
@@ -374,6 +376,8 @@ class BukkitNormalArenaController(
                     preflight.gameplay
                         .troopSpawnCadence
                 )
+        val sendCooldowns=
+            DeterministicCooldownTracker()
         val aoeCooldowns=
             DeterministicCooldownTracker()
         val stats=
@@ -599,6 +603,8 @@ class BukkitNormalArenaController(
                     armageddonRuntime,
                 progressionService=
                     progressionService,
+                sendCooldowns=
+                    sendCooldowns,
                 aoeCooldowns=aoeCooldowns,
                 liveTickProfiler=
                     ArenaTickProfiler(),
@@ -753,6 +759,8 @@ class BukkitNormalArenaController(
                     ledger=ledger,
                     progression=
                         progressionService,
+                    cooldowns=
+                        sendCooldowns,
                     initialSequence=
                         100_000L
                 )
@@ -1137,9 +1145,57 @@ class BukkitNormalArenaController(
                 )
 
         return when(kind.lowercase()) {
-            "summoner" ->
+            "summoner" -> {
+                val team=
+                    when {
+                        playerUuid in
+                            handle.context
+                                .redTeam.players ->
+                            TeamId.RED
+                        playerUuid in
+                            handle.context
+                                .blueTeam.players ->
+                            TeamId.BLUE
+                        else ->
+                            error(
+                                "Player is not assigned to an arena team"
+                            )
+                    }
+                val attackedTeam=
+                    if(team==TeamId.RED)
+                        TeamId.BLUE
+                    else
+                        TeamId.RED
+                val availability=
+                    SummonerSendAvailabilityEvaluator
+                        .evaluate(
+                            draft=
+                                player.interaction
+                                    .summonerDraft,
+                            queue=
+                                handle.runtimeState
+                                    .queues
+                                    .getValue(
+                                        attackedTeam
+                                    ),
+                            senderTeam=team,
+                            playerUuid=
+                                playerUuid,
+                            ledger=
+                                handle.ledger,
+                            cooldowns=
+                                handle.sendCooldowns,
+                            gameTick=
+                                handle.context
+                                    .gameTick
+                        )
                 DynamicMatchMenus
-                    .summoner(player)
+                    .summoner(
+                        player,
+                        availability
+                            .canSend
+                    )
+            }
             "progression" -> {
                 val team=
                     when {

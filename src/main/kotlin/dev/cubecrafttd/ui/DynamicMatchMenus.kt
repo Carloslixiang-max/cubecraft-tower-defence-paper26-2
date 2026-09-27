@@ -18,6 +18,7 @@ object DynamicMatchMenus {
     fun summoner(
         player:
             PlayerMatchSessionState,
+        sendReady: Boolean = false,
         definitions:
             MobDefinitionRepository =
             RecommendedMatureMobDefinitions
@@ -66,7 +67,11 @@ object DynamicMatchMenus {
                 UiEvidenceStatus
                     .HISTORICAL_DIRECT,
             displayName="Send selected troops",
-            iconHint="spawner"
+            iconHint=
+                if(sendReady)
+                    "spawner-glow"
+                else
+                    "spawner"
         )
 
         return MenuDefinition(

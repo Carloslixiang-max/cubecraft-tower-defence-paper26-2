@@ -93,6 +93,7 @@ data class PaperAdapterDiagnostics(
                 "historical Top-3 Overall score = official 2017 tower-built + mob-sent + mob-killed cumulative-cost sum",
                 "historical progression affordability glass-pane state uses live MATCH_EXP; affordable upgrades render orange",
                 "progression rollback buttons reflect live 10-second eligibility and suppress invalid clicks",
+                "historical Summoner send cage glow follows live draft/cooldown/queue/Coins preflight",
                 "historical end-of-match Top players list + hover stats presentation",
                 "historical Castle Health bossbar projection + lifecycle cleanup",
                 "historical Tower Defence Coins/EXP sidebar with conservative scoreboard ownership",

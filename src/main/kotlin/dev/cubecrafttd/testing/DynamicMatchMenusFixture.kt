@@ -24,6 +24,12 @@ object DynamicMatchMenusFixture {
         val summoner=
             DynamicMatchMenus
                 .summoner(player)
+        val summonerReady=
+            DynamicMatchMenus
+                .summoner(
+                    player,
+                    sendReady=true
+                )
         val progression=
             DynamicMatchMenus
                 .progression(
@@ -100,6 +106,16 @@ object DynamicMatchMenusFixture {
             )
 
         return listOf(
+            FixtureResult(
+                "dynamic-summoner-ready-send-cage-uses-glow-hint",
+                summonerReady.slots
+                    .first {
+                        it.actionId==
+                            "summoner:send"
+                    }
+                    .iconHint==
+                    "spawner-glow"
+            ),
             FixtureResult(
                 "dynamic-summoner-uses-current-unlocked-level",
                 summoner.slots.any {
