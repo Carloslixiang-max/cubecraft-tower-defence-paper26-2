@@ -166,6 +166,30 @@ object PregameVoteMenuProjection {
                             )
                     )
                 )
+                // Official 2021 evidence confirms both preference surfaces are
+                // available before the match. These hub positions are only an
+                // Engineering bridge; exact CubeCraft waiting-lobby entry slots
+                // remain unrecovered.
+                add(
+                    MenuSlot(
+                        22,
+                        "pregame-nav:settings",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Settings",
+                        "crafting-table"
+                    )
+                )
+                add(
+                    MenuSlot(
+                        24,
+                        "pregame-nav:hotbar",
+                        UiEvidenceStatus
+                            .ENGINEERING_FALLBACK,
+                        "Change inventory layout",
+                        "item-frame"
+                    )
+                )
             }
 
         return MenuDefinition(

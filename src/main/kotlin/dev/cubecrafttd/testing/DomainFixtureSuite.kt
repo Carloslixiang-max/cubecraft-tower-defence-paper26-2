@@ -16,6 +16,7 @@ object DomainFixtureSuite {
         addAll(HistoricalPregameArmageddonVoteFixture.run())
         addAll(HistoricalPregamePricingVoteFixture.run())
         addAll(PregameVoteMenuFixture.run())
+        addAll(PregamePreferenceMenuFixture.run())
         addAll(PregameQueueHudFixture.run())
         addAll(PlayerRecoveryFixture.run())
         addAll(PlayerRecoveryJournalFixture.run())
