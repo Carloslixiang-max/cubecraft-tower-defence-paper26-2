@@ -495,6 +495,16 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             )
                         }
                     }
+                },
+                BukkitMenuOpenObservationSink {
+                    _,menu ->
+                    PaperUiLiveEvidenceClassifier
+                        .classify(
+                            menu
+                        )
+                        ?.let(
+                            stage4Gate::recordUiEvidence
+                        )
                 }
             )
         aoePotionTargetListener =
