@@ -78,10 +78,16 @@ object TowerPlacementAndRangefinderFixture {
             TowerPath.BOTTOM
         )
 
+        world.sell(
+            player,
+            placed.result
+                .receipt.towerInstanceId
+        )
+
         val secondBegin=
             flow.beginRegular(
                 player,
-                BlockPos(4,0,2)
+                BlockPos(0,0,2)
             )
         val singlePathPlaced=
             flow.chooseTower(
