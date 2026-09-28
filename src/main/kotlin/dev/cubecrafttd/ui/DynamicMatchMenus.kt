@@ -434,7 +434,11 @@ object DynamicMatchMenus {
                                         action
                                     ) +
                                     if(
-                                        selected==action
+                                        selected==
+                                            HotbarEditorSelection
+                                                .Action(
+                                                    action
+                                                )
                                     )
                                         " (selected)"
                                     else
@@ -447,16 +451,62 @@ object DynamicMatchMenus {
                     )
                 }
 
+                RecommendedMatureBazaarDefinitions
+                    .aoePotions
+                    .filter {
+                        potion ->
+                        interaction
+                            .aoeInventory
+                            .quantity(
+                                potion.potionId
+                            )>0
+                    }
+                    .forEachIndexed {
+                        index,potion ->
+                        val quantity=
+                            interaction
+                                .aoeInventory
+                                .quantity(
+                                    potion.potionId
+                                )
+                        val selection=
+                            HotbarEditorSelection
+                                .AoE(
+                                    potion.potionId
+                                )
+                        add(
+                            MenuSlot(
+                                slot=18+index,
+                                actionId=
+                                    "hotbar:select-aoe:" +
+                                        potion.potionId,
+                                evidenceStatus=
+                                    UiEvidenceStatus
+                                        .ENGINEERING_FALLBACK,
+                                displayName=
+                                    "Select " +
+                                        potion.potionId +
+                                        " AoE · owned " +
+                                        quantity +
+                                        if(
+                                            selected==
+                                                selection
+                                        )
+                                            " (selected)"
+                                        else
+                                            "",
+                                iconHint=
+                                    "potion"
+                            )
+                        )
+                    }
+
                 repeat(9) {
                     hotbarSlot ->
                     val occupant=
-                        layout.slots
-                            .entries
-                            .firstOrNull {
-                                it.value==
-                                    hotbarSlot
-                            }
-                            ?.key
+                        layout.entryAt(
+                            hotbarSlot
+                        )
                     add(
                         MenuSlot(
                             slot=
@@ -474,7 +524,7 @@ object DynamicMatchMenus {
                                     .MATURE_CONTEXT,
                             displayName=
                                 occupant?.let {
-                                    hotbarActionLabel(
+                                    hotbarEntryLabel(
                                         it
                                     ) +
                                         " · slot " +
@@ -485,7 +535,7 @@ object DynamicMatchMenus {
                                 ),
                             iconHint=
                                 occupant?.let(
-                                    ::hotbarActionIcon
+                                    ::hotbarEntryIcon
                                 ) ?:
                                     "empty-slot"
                         )
@@ -503,6 +553,31 @@ object DynamicMatchMenus {
                     .MATURE_CONTEXT
         )
     }
+
+    private fun hotbarEntryLabel(
+        entry: HotbarEntry
+    ): String =
+        when(entry) {
+            is HotbarEntry.Action ->
+                hotbarActionLabel(
+                    entry.action
+                )
+            is HotbarEntry.AoE ->
+                entry.potionId +
+                    " AoE"
+        }
+
+    private fun hotbarEntryIcon(
+        entry: HotbarEntry
+    ): String =
+        when(entry) {
+            is HotbarEntry.Action ->
+                hotbarActionIcon(
+                    entry.action
+                )
+            is HotbarEntry.AoE ->
+                "potion"
+        }
 
     private fun hotbarActionLabel(
         action: HotbarAction

@@ -57,9 +57,27 @@ sealed interface MatchMenuActionResult {
     ) : MatchMenuActionResult
 
     data class HotbarEditorSelectionChanged(
+        val selection:
+            HotbarEditorSelection
+    ) : MatchMenuActionResult {
         val selectedAction:
-            HotbarAction
-    ) : MatchMenuActionResult
+            HotbarAction?
+            get() =
+                (
+                    selection as?
+                        HotbarEditorSelection
+                            .Action
+                )?.action
+
+        val selectedAoEPotionId:
+            String?
+            get() =
+                (
+                    selection as?
+                        HotbarEditorSelection
+                            .AoE
+                )?.potionId
+    }
 
     data class HotbarLayoutChanged(
         val layout:
@@ -605,12 +623,49 @@ class MatchMenuActionRouter(
                         parts[2]
                             .uppercase()
                     )
+                val selection=
+                    HotbarEditorSelection
+                        .Action(
+                            action
+                        )
                 interaction
                     .hotbarEditorSelection=
-                    action
+                    selection
                 MatchMenuActionResult
                     .HotbarEditorSelectionChanged(
-                        action
+                        selection
+                    )
+            }
+
+            "select-aoe" -> {
+                check(parts.size==3) {
+                    "hotbar:select-aoe:<potionId>"
+                }
+                val potionId=
+                    parts[2]
+                check(
+                    interaction.aoeInventory
+                        .quantity(
+                            potionId
+                        )>0
+                ) {
+                    "Cannot place an unowned AoE potion in the hotbar"
+                }
+                RecommendedMatureBazaarDefinitions
+                    .potion(
+                        potionId
+                    )
+                val selection=
+                    HotbarEditorSelection
+                        .AoE(
+                            potionId
+                        )
+                interaction
+                    .hotbarEditorSelection=
+                    selection
+                MatchMenuActionResult
+                    .HotbarEditorSelectionChanged(
+                        selection
                     )
             }
 
@@ -618,21 +673,33 @@ class MatchMenuActionRouter(
                 check(parts.size==3) {
                     "hotbar:place:<slot>"
                 }
-                val action=
+                val selection=
                     interaction
                         .hotbarEditorSelection
                         ?: error(
-                            "Select a hotbar action first"
+                            "Select a hotbar entry first"
                         )
                 val slot=
                     parts[2].toInt()
                 val next=
-                    interaction
-                        .hotbarLayout
-                        .move(
-                            action,
-                            slot
-                        )
+                    when(selection) {
+                        is HotbarEditorSelection
+                            .Action ->
+                            interaction
+                                .hotbarLayout
+                                .move(
+                                    selection.action,
+                                    slot
+                                )
+                        is HotbarEditorSelection
+                            .AoE ->
+                            interaction
+                                .hotbarLayout
+                                .placeAoE(
+                                    selection.potionId,
+                                    slot
+                                )
+                    }
                 interaction.hotbarLayout=
                     next
                 interaction

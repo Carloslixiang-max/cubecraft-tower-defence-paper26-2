@@ -143,6 +143,13 @@ object SettingsAndHotbarRuntimeFixture {
             DynamicMatchMenus
                 .settings(playerState)
 
+        playerState.interaction
+            .aoeInventory
+            .add(
+                "meteor",
+                2
+            )
+
         val editorInitial=
             DynamicMatchMenus
                 .hotbarEditor(
@@ -182,12 +189,35 @@ object SettingsAndHotbarRuntimeFixture {
                 .hotbarEditor(
                     playerState
                 )
+
+        val aoeSelected=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "hotbar:select-aoe:meteor",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .HotbarEditorSelectionChanged
+
+        val aoePlaced=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "hotbar:place:4",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .HotbarLayoutChanged
+
         val roundTrip=
             HotbarLayoutPersistenceCodec
                 .decode(
                     HotbarLayoutPersistenceCodec
                         .encode(
-                            hotbarChange.layout
+                            aoePlaced.layout
                         )
                 )
 
@@ -340,12 +370,33 @@ object SettingsAndHotbarRuntimeFixture {
                     }
             ),
             FixtureResult(
+                "hotbar-editor-owned-aoe-can-fill-empty-slot",
+                aoeSelected
+                    .selectedAoEPotionId==
+                    "meteor" &&
+                    aoePlaced.layout
+                        .aoeSlot(
+                            "meteor"
+                        )==4 &&
+                    aoePlaced.layout
+                        .entryAt(
+                            4
+                        )==
+                        HotbarEntry.AoE(
+                            "meteor"
+                        )
+            ),
+            FixtureResult(
                 "hotbar-persistence-codec-roundtrip",
                 roundTrip==
-                    hotbarChange.layout &&
+                    aoePlaced.layout &&
                     roundTrip?.evidence==
                         HotbarLayoutEvidence
-                            .PLAYER_CUSTOM
+                            .PLAYER_CUSTOM &&
+                    roundTrip
+                        .aoeSlot(
+                            "meteor"
+                        )==4
             )
         )
     }
