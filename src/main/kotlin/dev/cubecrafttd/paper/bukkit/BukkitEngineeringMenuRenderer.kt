@@ -48,6 +48,8 @@ class BukkitEngineeringMenuRenderer :
                 Material.STONE_BRICKS
             "crafting-table" ->
                 Material.CRAFTING_TABLE
+            "item-frame" ->
+                Material.ITEM_FRAME
             "empty-slot" ->
                 Material.GRAY_STAINED_GLASS_PANE
             "tnt" -> Material.TNT

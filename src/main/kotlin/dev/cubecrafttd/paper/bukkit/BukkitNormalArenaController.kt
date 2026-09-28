@@ -247,7 +247,10 @@ class BukkitNormalArenaController(
         selection:
             ResolvedArmageddonSelection,
         pricingMode:
-            PricingMode = PricingMode.NORMAL
+            PricingMode = PricingMode.NORMAL,
+        playerSettingsOverrides:
+            Map<UUID,PlayerMatchSettings> =
+            emptyMap()
     ): ArenaId =
         startTeamInternal(
             arenaIdText,
@@ -257,7 +260,9 @@ class BukkitNormalArenaController(
             resolvedSelection=selection,
             allowLiveArmageddonVoting=false,
             pricingMode=
-                pricingMode
+                pricingMode,
+            playerSettingsOverrides=
+                playerSettingsOverrides
         )
 
     fun startTeamCertificationTest(
@@ -287,7 +292,10 @@ class BukkitNormalArenaController(
         allowLiveArmageddonVoting:
             Boolean,
         pricingMode:
-            PricingMode
+            PricingMode,
+        playerSettingsOverrides:
+            Map<UUID,PlayerMatchSettings> =
+            emptyMap()
     ): ArenaId {
         check(redPlayers.isNotEmpty()) {
             "RED team must contain at least one player"
@@ -316,6 +324,16 @@ class BukkitNormalArenaController(
                 redPlayers.size +
                     bluePlayers.size
         )
+
+        check(
+            playerSettingsOverrides
+                .keys
+                .all {
+                    it in allPlayers
+                }
+        ) {
+            "Settings override contains a player outside this arena"
+        }
 
         val arenaId=ArenaId(arenaIdText)
         check(arenaId !in handles) {
@@ -756,6 +774,25 @@ class BukkitNormalArenaController(
                                 .hotbarLayout=
                                 saved
                         }
+
+                    playerSettingsOverrides[
+                        state.playerUuid
+                    ]?.let { saved ->
+                        state.interaction
+                            .settings
+                            .apply {
+                                autoCentreTowers=
+                                    saved.autoCentreTowers
+                                particleDensity=
+                                    saved.particleDensity
+                                digitalMobHealth=
+                                    saved.digitalMobHealth
+                                damageIndicators=
+                                    saved.damageIndicators
+                                allowInGamePointPurchases=
+                                    saved.allowInGamePointPurchases
+                            }
+                    }
                 }
 
             handle.session=

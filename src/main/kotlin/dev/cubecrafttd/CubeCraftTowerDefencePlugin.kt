@@ -150,7 +150,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 liveArenaController,
                 readinessService,
                 recoveryCoordinator,
-                stage4Gate
+                stage4Gate,
+                hotbarPreferences
             )
         trackedDamageListener = BukkitTrackedMobDamageListener(
             this,
@@ -362,53 +363,127 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 BukkitEngineeringMenuRenderer(),
                 BukkitMenuActionSink {
                     invocation ->
-                    runCatching {
-                        oneVsOneQueue
-                            .handlePregameMenuAction(
-                                invocation
-                            )
-                    }.onSuccess { result ->
-                        val player=
-                            server.getPlayer(
-                                invocation.playerUuid
-                            )
-                        when(result) {
-                            is BukkitPregameArmageddonVoteReport ->
-                                player?.sendMessage(
-                                    "Pregame Armageddon vote: " +
-                                        result.option
+                    val navigation=
+                        invocation.actionId
+                            .takeIf {
+                                it.startsWith(
+                                    "pregame-nav:"
                                 )
+                            }
+                            ?.substringAfter(
+                                "pregame-nav:"
+                            )
 
-                            is BukkitPregamePricingVoteReport ->
-                                player?.sendMessage(
-                                    "Pregame Pricing vote: " +
-                                        result.option
-                                )
-                        }
-
+                    if(navigation!=null) {
                         runCatching {
-                            oneVsOneQueue
-                                .pregameVoteMenu(
-                                    invocation.playerUuid
-                                )
+                            when(navigation) {
+                                "vote" ->
+                                    oneVsOneQueue
+                                        .pregameVoteMenu(
+                                            invocation.playerUuid
+                                        )
+                                "settings" ->
+                                    oneVsOneQueue
+                                        .pregameSettingsMenu(
+                                            invocation.playerUuid
+                                        )
+                                "hotbar" ->
+                                    oneVsOneQueue
+                                        .pregameHotbarMenu(
+                                            invocation.playerUuid
+                                        )
+                                else ->
+                                    error(
+                                        "Unknown pregame navigation " +
+                                            navigation
+                                    )
+                            }
                         }.onSuccess { menu ->
                             pregameVoteMenuBridge
                                 .open(
                                     invocation.playerUuid,
                                     menu.toLiveView()
                                 )
+                        }.onFailure { error ->
+                            server.getPlayer(
+                                invocation.playerUuid
+                            )?.sendMessage(
+                                "Pregame menu ERROR: " +
+                                    (
+                                        error.message
+                                            ?: error.javaClass
+                                                .simpleName
+                                    )
+                            )
                         }
-                    }.onFailure { error ->
-                        server.getPlayer(
-                            invocation.playerUuid
-                        )?.sendMessage(
-                            "Pregame vote ERROR: " +
-                                (
-                                    error.message
-                                        ?: error.javaClass
-                                            .simpleName
+                    } else {
+                        runCatching {
+                            oneVsOneQueue
+                                .handlePregameMenuAction(
+                                    invocation
                                 )
-                        )
+                        }.onSuccess { result ->
+                            val player=
+                                server.getPlayer(
+                                    invocation.playerUuid
+                                )
+                            when(result) {
+                                is BukkitPregameArmageddonVoteReport ->
+                                    player?.sendMessage(
+                                        "Pregame Armageddon vote: " +
+                                            result.option
+                                    )
+
+                                is BukkitPregamePricingVoteReport ->
+                                    player?.sendMessage(
+                                        "Pregame Pricing vote: " +
+                                            result.option
+                                    )
+                            }
+
+                            runCatching {
+                                when {
+                                    invocation.actionId
+                                        .startsWith(
+                                            "pregame-settings:"
+                                        ) ->
+                                        oneVsOneQueue
+                                            .pregameSettingsMenu(
+                                                invocation.playerUuid
+                                            )
+                                    invocation.actionId
+                                        .startsWith(
+                                            "pregame-hotbar:"
+                                        ) ->
+                                        oneVsOneQueue
+                                            .pregameHotbarMenu(
+                                                invocation.playerUuid
+                                            )
+                                    else ->
+                                        oneVsOneQueue
+                                            .pregameVoteMenu(
+                                                invocation.playerUuid
+                                            )
+                                }
+                            }.onSuccess { menu ->
+                                pregameVoteMenuBridge
+                                    .open(
+                                        invocation.playerUuid,
+                                        menu.toLiveView()
+                                    )
+                            }
+                        }.onFailure { error ->
+                            server.getPlayer(
+                                invocation.playerUuid
+                            )?.sendMessage(
+                                "Pregame menu ERROR: " +
+                                    (
+                                        error.message
+                                            ?: error.javaClass
+                                                .simpleName
+                                    )
+                            )
+                        }
                     }
                 }
             )

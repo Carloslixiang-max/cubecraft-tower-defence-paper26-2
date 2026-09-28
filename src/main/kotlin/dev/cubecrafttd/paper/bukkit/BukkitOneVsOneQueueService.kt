@@ -17,6 +17,12 @@ import dev.cubecrafttd.ui.PregameQueueHudProjection
 import dev.cubecrafttd.ui.PregameQueueHudState
 import dev.cubecrafttd.ui.PregameVoteMenuProjection
 import dev.cubecrafttd.ui.PregameVoteMenuState
+import dev.cubecrafttd.ui.HotbarLayout
+import dev.cubecrafttd.ui.PlayerMatchSettings
+import dev.cubecrafttd.ui.PregamePreferenceActionResult
+import dev.cubecrafttd.ui.PregamePreferenceActionService
+import dev.cubecrafttd.ui.PregamePreferenceMenus
+import dev.cubecrafttd.ui.PregamePreferenceState
 import net.kyori.adventure.text.Component
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
@@ -67,7 +73,9 @@ class BukkitOneVsOneQueueService(
     private val recovery:
         JournaledPlayerRecoveryOrchestrator,
     private val liveGate:
-        PaperStage4GateStore
+        PaperStage4GateStore,
+    private val hotbarPreferences:
+        BukkitHotbarPreferenceStore
 ) {
     private val queue=
         EngineeringOneVsOneQueueState()
@@ -100,6 +108,12 @@ class BukkitOneVsOneQueueService(
         linkedMapOf<
             UUID,
             HistoricalPregamePricingVoteOption
+        >()
+
+    private val pregamePreferences=
+        linkedMapOf<
+            UUID,
+            PregamePreferenceState
         >()
 
     private val task: BukkitTask =
@@ -302,10 +316,65 @@ class BukkitOneVsOneQueueService(
             )
     }
 
+    fun pregameSettingsMenu(
+        playerUuid: UUID
+    ): MenuDefinition =
+        PregamePreferenceMenus
+            .settings(
+                preferenceState(
+                    playerUuid
+                ).settings
+            )
+
+    fun pregameHotbarMenu(
+        playerUuid: UUID
+    ): MenuDefinition {
+        val state=
+            preferenceState(
+                playerUuid
+            )
+        return PregamePreferenceMenus
+            .hotbar(
+                state.hotbarLayout,
+                state.hotbarEditorSelection
+            )
+    }
+
     fun handlePregameMenuAction(
         invocation:
             MenuActionInvocation
     ): Any {
+        if(
+            invocation.actionId
+                .startsWith(
+                    "pregame-settings:"
+                ) ||
+            invocation.actionId
+                .startsWith(
+                    "pregame-hotbar:"
+                )
+        ) {
+            val result=
+                PregamePreferenceActionService
+                    .handle(
+                        preferenceState(
+                            invocation.playerUuid
+                        ),
+                        invocation.actionId
+                    )
+            if(
+                result is
+                    PregamePreferenceActionResult
+                        .HotbarLayoutChanged
+            ) {
+                hotbarPreferences.save(
+                    invocation.playerUuid,
+                    result.layout
+                )
+            }
+            return result
+        }
+
         val parts=
             invocation.actionId
                 .split(':')
@@ -390,6 +459,8 @@ class BukkitOneVsOneQueueService(
                 .remove(playerUuid)
             pregamePricingVotes
                 .remove(playerUuid)
+            pregamePreferences
+                .remove(playerUuid)
             clearQueueHud(
                 playerUuid
             )
@@ -413,6 +484,8 @@ class BukkitOneVsOneQueueService(
             pregameArmageddonVotes
                 .remove(playerUuid)
             pregamePricingVotes
+                .remove(playerUuid)
+            pregamePreferences
                 .remove(playerUuid)
             clearQueueHud(
                 playerUuid
@@ -492,6 +565,7 @@ class BukkitOneVsOneQueueService(
             .forEach(
                 ::clearQueueHud
             )
+        pregamePreferences.clear()
         task.cancel()
     }
 
@@ -742,6 +816,20 @@ class BukkitOneVsOneQueueService(
                 val resolvedPricing=
                     pricingVote.resolve()
 
+                val settingsOverrides=
+                    pair.players
+                        .mapNotNull {
+                            uuid ->
+                            pregamePreferences[
+                                uuid
+                            ]?.settings
+                                ?.copy()
+                                ?.let {
+                                    uuid to it
+                                }
+                        }
+                        .toMap()
+
                 controller
                     .startOneVsOneResolvedTest(
                         arenaId,
@@ -749,7 +837,8 @@ class BukkitOneVsOneQueueService(
                         pair.bluePlayer,
                         resolved.selection,
                         resolvedPricing
-                            .pricingMode
+                            .pricingMode,
+                        settingsOverrides
                     )
                 recordLiveEvidence(
                     PaperQueueLiveEvidence
@@ -799,6 +888,8 @@ class BukkitOneVsOneQueueService(
             pregameArmageddonVotes
                 .remove(it)
             pregamePricingVotes
+                .remove(it)
+            pregamePreferences
                 .remove(it)
         }
 
@@ -911,6 +1002,8 @@ class BukkitOneVsOneQueueService(
                 .remove(it)
             pregamePricingVotes
                 .remove(it)
+            pregamePreferences
+                .remove(it)
             clearQueueHud(it)
         }
         pruneWaitingPlayers()
@@ -952,8 +1045,44 @@ class BukkitOneVsOneQueueService(
                 .remove(it)
             pregamePricingVotes
                 .remove(it)
+            pregamePreferences
+                .remove(it)
             clearQueueHud(it)
         }
+    }
+
+    private fun preferenceState(
+        playerUuid: UUID
+    ): PregamePreferenceState {
+        val inWaiting=
+            queue.contains(
+                playerUuid
+            )
+        val inCountdown=
+            playerUuid in
+                (
+                    pendingPair
+                        ?.players
+                        ?: emptyList()
+                )
+        check(inWaiting || inCountdown) {
+            "Join the TD queue before editing preferences"
+        }
+
+        return pregamePreferences
+            .getOrPut(
+                playerUuid
+            ) {
+                PregamePreferenceState(
+                    hotbarLayout=
+                        hotbarPreferences
+                            .load(
+                                playerUuid
+                            )
+                            ?: HotbarLayout
+                                .ENGINEERING_RUNTIME_DEFAULT
+                )
+            }
     }
 
     private fun updateWaitingHud() {
