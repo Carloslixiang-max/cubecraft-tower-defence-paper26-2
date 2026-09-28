@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v104 engineering playtest shell**
-- Pure-domain baseline: **522/522 fixtures PASS**
+- Current shell lineage: **v105 engineering playtest shell**
+- Pure-domain baseline: **524/524 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -104,6 +104,7 @@ The codebase already contains substantial runtime work, including:
 - v102 makes the five critical GUI surfaces observable in the durable Stage-4 real-server gate without pretending that observation alone proves visual fidelity. Tower Builder, path selector, tower menu, Settings and inventory-layout opens are classified by the Paper adapter and recorded independently; `/ctdlivegate` can now distinguish “this surface was exercised on a real server” from the still-separate production icon/lore fidelity requirement.
 - v103 restores two stronger official-2021 GUI shells. Settings now projects the recovered 45-slot inventory instead of the old 27-slot Engineering shell and preserves the directly visible bottom-centre book at zero-based slot 40 while leaving its unrecovered click semantics fail-closed. `Change inventory layout` keeps the recovered 36-slot shell but no longer invents a separate fixed-action palette: the bottom row is the actual current hotbar and its existing entries can be selected for rearrangement, while owned AoEs are sourced from the upper three rows using an explicitly Engineering per-potion mapping until exact original source positions/gestures are recovered.
 - v104 makes the officially evidenced pre-match Settings and `Change inventory layout` surfaces usable from the existing `/ctdvote` waiting-lobby hub. Queue-local `PregamePreferenceState` reuses the same Settings and Hotbar rules as live matches without touching the player's real waiting inventory; hotbar changes persist through the existing `player-hotbars.yml`, while Settings are copied into the match session inside the arena bootstrap transaction. Failed starts/requeues keep those preferences, successful starts and genuine queue departures clear the temporary state, and exact waiting-lobby entry slots remain Engineering fallback because the original CubeCraft positions are not recovered. Auto-centre disabling also remains fail-closed pregame because a persistent lifetime-win source has not yet been recovered.
+- v105 resolves the lifetime-win gap behind the recovered Auto-centre rule. A minimal `player-progress.yml` stores only `<UUID>.wins`; authoritative `MatchOutcome.Winner(team)` results increment the winning active players exactly once, while ties, manual stops and start failures do not. Waiting-lobby Settings and match bootstrap both rehydrate `PlayerMatchSettings.lifetimeWins` from the same store, so the adopted 20-win Auto-centre-disable threshold now works across restarts. The threshold is centralized in `LifetimeWinProgress`; unrelated profile data such as losses, games played, points or ranks remain intentionally unimplemented rather than inferred.
 
 ## Build
 
