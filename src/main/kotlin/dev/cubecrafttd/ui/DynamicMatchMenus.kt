@@ -235,11 +235,17 @@ object DynamicMatchMenus {
                     potion.potionId in
                         player.bazaar
                             .unlockedAoE
+                val owned=
+                    player.interaction
+                        .aoeInventory
+                        .quantity(
+                            potion.potionId
+                        )
                 slots += MenuSlot(
                     slot=27+index,
                     actionId=
                         if(unlocked)
-                            "bazaar:potion:use:${potion.potionId}"
+                            "bazaar:potion:purchase:${potion.potionId}"
                         else
                             "bazaar:potion:unlock:${potion.potionId}",
                     evidenceStatus=
@@ -247,7 +253,7 @@ object DynamicMatchMenus {
                             .ENGINEERING_FALLBACK,
                     displayName=
                         if(unlocked)
-                            "${potion.potionId} — use ${potion.useCostCoins} Coins"
+                            "${potion.potionId} — buy ${potion.useCostCoins} Coins · owned ${owned}"
                         else
                             "${potion.potionId} — unlock ${potion.unlockExp} EXP"
                 )

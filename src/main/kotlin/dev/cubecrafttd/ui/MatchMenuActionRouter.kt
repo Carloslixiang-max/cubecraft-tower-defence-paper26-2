@@ -491,6 +491,7 @@ class MatchMenuActionRouter(
                             )
                     }
 
+                    "purchase",
                     "use" -> {
                         val token=
                             bazaar
@@ -502,7 +503,7 @@ class MatchMenuActionRouter(
                                     potionId,
                                     context.gameTick,
                                     seq,
-                                    "bazaar-potion-use:$playerUuid:$seq"
+                                    "bazaar-potion-purchase:$playerUuid:$seq"
                                 )
                         MatchMenuActionResult
                             .PotionUsePurchased(

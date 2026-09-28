@@ -16,6 +16,9 @@ data class PlayerMatchInteractionState(
         TowerPlacementFlowState(),
     val pinnedRangefinderTowers:
         MutableSet<Long> = linkedSetOf(),
+    val aoeInventory:
+        AoEPotionInventory =
+        AoEPotionInventory(),
     var armedAoEPotion:
         PotionUseToken? = null,
     var hotbarLayout:
