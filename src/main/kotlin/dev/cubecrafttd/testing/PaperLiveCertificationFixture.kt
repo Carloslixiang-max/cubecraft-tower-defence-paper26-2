@@ -86,6 +86,20 @@ object PaperLiveCertificationFixture {
                     departurePassed
                 )
 
+        val uiPassed=
+            corePassed.copy(
+                uiTowerBuilderObserved=true,
+                uiPathSelectorObserved=true,
+                uiTowerMenuObserved=true,
+                uiSettingsObserved=true,
+                uiInventoryLayoutObserved=true
+            )
+        val uiPassedRemaining=
+            diagnostics
+                .remainingLiveGates(
+                    uiPassed
+                )
+
         val manualStillRequired=
             "regular-player queue/join/leave + pregame GUI/HUD/vote/countdown real-server certification" in
                 remaining &&
@@ -133,6 +147,17 @@ object PaperLiveCertificationFixture {
                     departurePassed.departureFlowPassed &&
                     "player departure/reconnect and teammate tower takeover certification" !in
                         departurePassedRemaining
+            ),
+            FixtureResult(
+                "live-certification-critical-ui-observation-does-not-auto-certify-visual-fidelity",
+                !corePassed
+                    .criticalUiSurfaceFlowPassed &&
+                    uiPassed
+                        .criticalUiSurfaceFlowPassed &&
+                    "critical GUI surface real-server observation" !in
+                        uiPassedRemaining &&
+                    "production GUI icon/lore fidelity" in
+                        uiPassedRemaining
             )
         )
     }

@@ -26,6 +26,8 @@ data class PaperAdapterDiagnostics(
                         !stage4.queueFlowPassed
                     "player departure/reconnect and teammate tower takeover certification" ->
                         !stage4.departureFlowPassed
+                    "critical GUI surface real-server observation" ->
+                        !stage4.criticalUiSurfaceFlowPassed
                     else -> true
                 }
             }
@@ -85,6 +87,7 @@ data class PaperAdapterDiagnostics(
                 "admin-only 2v1/2v2 teammate-takeover live certification harness",
                 "2v2 team bootstrap/session/departure regression fixture",
                 "granular /ctdlivegate live-evidence status reporting",
+                "durable critical GUI surface open-observation evidence",
                 "evidence-backed GUI icon-hint projection into Bukkit menus",
                 "historical direct Anvil upgrade icon in tower management",
                 "historical direct Summoner bottom-middle Nether Star + bottom-right Mob Spawner controls",
@@ -130,6 +133,7 @@ data class PaperAdapterDiagnostics(
                 "player snapshot lossless roundtrip on real server",
                 "entity movement visual smoothness",
                 "raytrace fidelity vs original firing origins",
+                "critical GUI surface real-server observation",
                 "production GUI icon/lore fidelity",
                 "match-end title/menu cleanup real-server certification",
                 "consecutive-round world residue/reuse real-server certification",

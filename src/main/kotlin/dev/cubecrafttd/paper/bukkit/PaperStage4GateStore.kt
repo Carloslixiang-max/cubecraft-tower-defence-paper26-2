@@ -20,6 +20,14 @@ enum class PaperQueueLiveEvidence {
     ACTIVE_LEAVE
 }
 
+enum class PaperUiLiveEvidence {
+    TOWER_BUILDER,
+    PATH_SELECTOR,
+    TOWER_MENU,
+    SETTINGS,
+    INVENTORY_LAYOUT
+}
+
 data class PaperStage4GateStatus(
     val domainFixturesPassed: Boolean,
     val farmMapCheckPassed: Boolean,
@@ -49,6 +57,16 @@ data class PaperStage4GateStatus(
     val departureReconnectObserved:
         Boolean = false,
     val departedOwnerTeammateTakeoverObserved:
+        Boolean = false,
+    val uiTowerBuilderObserved:
+        Boolean = false,
+    val uiPathSelectorObserved:
+        Boolean = false,
+    val uiTowerMenuObserved:
+        Boolean = false,
+    val uiSettingsObserved:
+        Boolean = false,
+    val uiInventoryLayoutObserved:
         Boolean = false
 ) {
     val departureFlowPassed: Boolean
@@ -64,6 +82,15 @@ data class PaperStage4GateStatus(
                 queuePricingGuiVoteObserved &&
                 queueCountdownStartObserved &&
                 queueActiveLeaveObserved
+
+    val criticalUiSurfaceFlowPassed:
+        Boolean
+        get() =
+            uiTowerBuilderObserved &&
+                uiPathSelectorObserved &&
+                uiTowerMenuObserved &&
+                uiSettingsObserved &&
+                uiInventoryLayoutObserved
 
     val coreCertified: Boolean
         get() =
@@ -94,6 +121,7 @@ data class PaperStage4GateStatus(
             "verifiedFarmReset=$verifiedFarmResetPassed " +
             "queueFlow=$queueFlowPassed " +
             "departureFlow=$departureFlowPassed " +
+            "uiSurfaceFlow=$criticalUiSurfaceFlowPassed " +
             "cleanRestarts=$cleanRestartCycles " +
             "arenaRoundTrips=$cleanArenaRoundTrips " +
             "consecutiveCleanArenaRoundTrips=$consecutiveCleanArenaRoundTrips " +
@@ -310,6 +338,50 @@ class PaperStage4GateStore(
                     "queueCountdownStartObserved"
                 PaperQueueLiveEvidence.ACTIVE_LEAVE ->
                     "queueActiveLeaveObserved"
+            }
+        if(bool(key)) return
+
+        val previous=
+            props.getProperty(key)
+        props.setProperty(
+            key,
+            "true"
+        )
+        try {
+            save()
+        } catch(t:Throwable) {
+            if(previous==null) {
+                props.remove(key)
+            } else {
+                props.setProperty(
+                    key,
+                    previous
+                )
+            }
+            throw t
+        }
+    }
+
+    fun recordUiEvidence(
+        evidence: PaperUiLiveEvidence
+    ) {
+        val key=
+            when(evidence) {
+                PaperUiLiveEvidence
+                    .TOWER_BUILDER ->
+                    "uiTowerBuilderObserved"
+                PaperUiLiveEvidence
+                    .PATH_SELECTOR ->
+                    "uiPathSelectorObserved"
+                PaperUiLiveEvidence
+                    .TOWER_MENU ->
+                    "uiTowerMenuObserved"
+                PaperUiLiveEvidence
+                    .SETTINGS ->
+                    "uiSettingsObserved"
+                PaperUiLiveEvidence
+                    .INVENTORY_LAYOUT ->
+                    "uiInventoryLayoutObserved"
             }
         if(bool(key)) return
 
@@ -592,6 +664,26 @@ class PaperStage4GateStore(
             departedOwnerTeammateTakeoverObserved=
                 bool(
                     "departedOwnerTeammateTakeoverObserved"
+                ),
+            uiTowerBuilderObserved=
+                bool(
+                    "uiTowerBuilderObserved"
+                ),
+            uiPathSelectorObserved=
+                bool(
+                    "uiPathSelectorObserved"
+                ),
+            uiTowerMenuObserved=
+                bool(
+                    "uiTowerMenuObserved"
+                ),
+            uiSettingsObserved=
+                bool(
+                    "uiSettingsObserved"
+                ),
+            uiInventoryLayoutObserved=
+                bool(
+                    "uiInventoryLayoutObserved"
                 )
         )
 
