@@ -20,7 +20,7 @@ data class PlayerMatchInteractionState(
     val summonerDraft:
         SummonerDraftState =
         SummonerDraftState(),
-    val settings:
+    var settings:
         PlayerMatchSettings =
         PlayerMatchSettings(
             lifetimeWins=0
