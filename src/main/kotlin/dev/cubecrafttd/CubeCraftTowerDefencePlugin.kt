@@ -331,6 +331,16 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         )
                     }
                 }
+            },
+            BukkitMenuOpenObservationSink {
+                _,menu ->
+                PaperUiLiveEvidenceClassifier
+                    .classify(
+                        menu
+                    )
+                    ?.let(
+                        stage4Gate::recordUiEvidence
+                    )
             }
         )
         menuBridge.enableDynamicRefresh(
@@ -641,6 +651,18 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     stage4.departureReconnectObserved +
                     " teammateTakeover=" +
                     stage4.departedOwnerTeammateTakeoverObserved
+            )
+            sender.sendMessage(
+                " UI evidence: builder=" +
+                    stage4.uiTowerBuilderObserved +
+                    " pathSelector=" +
+                    stage4.uiPathSelectorObserved +
+                    " towerMenu=" +
+                    stage4.uiTowerMenuObserved +
+                    " settings=" +
+                    stage4.uiSettingsObserved +
+                    " inventoryLayout=" +
+                    stage4.uiInventoryLayoutObserved
             )
             sender.sendMessage(
                 " Recovery/world evidence: snapshotRoundTrip=" +

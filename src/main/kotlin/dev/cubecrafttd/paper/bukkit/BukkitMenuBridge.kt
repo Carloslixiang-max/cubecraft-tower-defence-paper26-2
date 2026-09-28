@@ -35,12 +35,24 @@ fun interface BukkitDynamicMenuRefreshProvider {
     ): LiveMenuView?
 }
 
+fun interface BukkitMenuOpenObservationSink {
+    fun observe(
+        playerUuid: UUID,
+        menu: LiveMenuView
+    )
+}
+
 class BukkitMenuBridge(
     private val plugin: Plugin,
     private val renderer:
         BukkitMenuItemRenderer,
     private val actionSink:
-        BukkitMenuActionSink
+        BukkitMenuActionSink,
+    private val openObservation:
+        BukkitMenuOpenObservationSink =
+        BukkitMenuOpenObservationSink {
+            _,_ -> Unit
+        }
 ) : LiveMenuOpenPort, Listener {
     private val openActions =
         linkedMapOf<
@@ -116,6 +128,19 @@ class BukkitMenuBridge(
             playerUuid,
             menu
         )
+        runCatching {
+            openObservation.observe(
+                playerUuid,
+                menu
+            )
+        }.onFailure {
+            plugin.logger.warning(
+                "Could not persist TD menu-open live evidence: " +
+                    it.javaClass.simpleName +
+                    ": " +
+                    it.message
+            )
+        }
     }
 
     /**

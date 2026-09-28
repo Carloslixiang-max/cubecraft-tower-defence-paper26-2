@@ -1,5 +1,6 @@
 package dev.cubecrafttd.testing
 
+import dev.cubecrafttd.paper.LiveMenuView
 import dev.cubecrafttd.paper.bukkit.*
 
 object PaperLiveCertificationFixture {
@@ -106,6 +107,53 @@ object PaperLiveCertificationFixture {
             "player departure/reconnect and teammate tower takeover certification" in
                 remaining
 
+        val classifiedUiEvidence=
+            listOf(
+                PaperUiLiveEvidenceClassifier
+                    .classify(
+                        LiveMenuView(
+                            "Tower builder",
+                            45,
+                            emptyMap()
+                        )
+                    ),
+                PaperUiLiveEvidenceClassifier
+                    .classify(
+                        LiveMenuView(
+                            "Select an upgrade path",
+                            27,
+                            emptyMap()
+                        )
+                    ),
+                PaperUiLiveEvidenceClassifier
+                    .classify(
+                        LiveMenuView(
+                            "Zeus Tower I",
+                            54,
+                            mapOf(
+                                45 to
+                                    "tower-manage:1:rangefinder"
+                            )
+                        )
+                    ),
+                PaperUiLiveEvidenceClassifier
+                    .classify(
+                        LiveMenuView(
+                            "Settings",
+                            27,
+                            emptyMap()
+                        )
+                    ),
+                PaperUiLiveEvidenceClassifier
+                    .classify(
+                        LiveMenuView(
+                            "Change inventory layout",
+                            36,
+                            emptyMap()
+                        )
+                    )
+            )
+
         return listOf(
             FixtureResult(
                 "live-certification-core-pass-does-not-imply-full-certification",
@@ -158,6 +206,22 @@ object PaperLiveCertificationFixture {
                         uiPassedRemaining &&
                     "production GUI icon/lore fidelity" in
                         uiPassedRemaining
+            ),
+            FixtureResult(
+                "live-certification-classifies-five-critical-ui-surfaces",
+                classifiedUiEvidence==
+                    listOf(
+                        PaperUiLiveEvidence
+                            .TOWER_BUILDER,
+                        PaperUiLiveEvidence
+                            .PATH_SELECTOR,
+                        PaperUiLiveEvidence
+                            .TOWER_MENU,
+                        PaperUiLiveEvidence
+                            .SETTINGS,
+                        PaperUiLiveEvidence
+                            .INVENTORY_LAYOUT
+                    )
             )
         )
     }
