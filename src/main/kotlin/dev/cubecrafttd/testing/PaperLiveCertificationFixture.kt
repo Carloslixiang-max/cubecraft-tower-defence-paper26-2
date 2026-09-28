@@ -140,7 +140,7 @@ object PaperLiveCertificationFixture {
                     .classify(
                         LiveMenuView(
                             "Settings",
-                            27,
+                            45,
                             emptyMap()
                         )
                     ),

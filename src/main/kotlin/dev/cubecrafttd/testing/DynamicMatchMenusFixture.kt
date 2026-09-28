@@ -224,7 +224,7 @@ object DynamicMatchMenusFixture {
                         UiEvidenceStatus.ENGINEERING_FALLBACK
             ),
             FixtureResult(
-                "dynamic-match-menu-layouts-remain-engineering-except-direct-summoner-controls",
+                "dynamic-match-menu-evidence-tiers-preserve-recovered-settings-shell",
                 summoner.evidenceStatus==
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK &&
@@ -251,7 +251,6 @@ object DynamicMatchMenusFixture {
                 listOf(
                     progression,
                     bazaarLocked,
-                    settings,
                     armageddon
                 ).all {
                     it.evidenceStatus==
@@ -262,7 +261,27 @@ object DynamicMatchMenusFixture {
                             UiEvidenceStatus
                                 .ENGINEERING_FALLBACK
                     }
-                }
+                } &&
+                settings.evidenceStatus==
+                    UiEvidenceStatus
+                        .MATURE_CONTEXT &&
+                settings.size==45 &&
+                settings.slots
+                    .first {
+                        it.slot==40
+                    }
+                    .evidenceStatus==
+                    UiEvidenceStatus
+                        .MATURE_DIRECT &&
+                settings.slots
+                    .filterNot {
+                        it.slot==40
+                    }
+                    .all {
+                        it.evidenceStatus==
+                            UiEvidenceStatus
+                                .ENGINEERING_FALLBACK
+                    }
             )
         )
     }
