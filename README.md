@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v97 engineering playtest shell**
-- Pure-domain baseline: **499/499 fixtures PASS**
+- Current shell lineage: **v98 engineering playtest shell**
+- Pure-domain baseline: **505/505 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -97,6 +97,7 @@ The codebase already contains substantial runtime work, including:
 - v95 removes the remaining fake Settings control. The official 2017 changelog confirms that an In-game purchase preference existed, but it does not recover the exact in-match catalogue, profile-point persistence or transaction semantics. Until that backend is implemented from stronger evidence, the Settings entry is still visible for historical surface fidelity but is explicitly unavailable and projects a `noop:` action; forged legacy `settings:point-purchases` actions fail closed instead of toggling inert state. Auto-centre remains a real tower-placement input, so it is not treated as a fake control.
 - v96 tightens Damage indicators to the recovered player-facing meaning instead of showing every HP loss to every player who enabled the option. Tower attacks (including Leach), player sword/bow hits, AoE potion damage and player-owned Poison/Burn ticks now emit authoritative `PlayerMobDamageEvent` records with the actual health lost after overkill clipping. The Paper layer keeps at most one active indicator per mob/player pair and shows that display only to the owning player. Castle Guard/system damage is excluded, and simultaneous teammate hits on the same mob no longer leak into each other's number. Exact original colour, offset and lifetime remain Engineering fallback.
 - v97 corrects the tower-path placement UI from stronger official 2021 screenshot evidence. Normal placement keeps the separate 27-slot `Select an upgrade path` inventory, with the two path controls directly recovered at zero-based slots 11 and 15; the selected path is then committed and remembered for shift quick-placement, while no explicit selection still defaults to the top path as documented by CubeCraft. The same screenshot pass also corrects the visible Tower Builder hints for Mage to coal and Sorcerer to an Ender Eye. Exact per-tower path item identities, names and lore remain contextual where the screenshots do not fully recover them.
+- v98 extends the 2021 tower UI fidelity pass. The live tower-management inventory now projects the real tower display name and Roman-numeral level, uses the recovered 54-slot shell, and places the rangefinder toggle at zero-based slot 45 with its stick icon and enabled/disabled wording while unrecovered stats/upgrade/sell positions remain explicitly weaker evidence. The upgrade-path selector is now contextual per tower, transports recovered item lore through the Paper menu bridge, and exposes the directly visible Zeus path-2 `Summons baby Zeus.` description. Towers with no TOP/BOTTOM branch no longer receive a fake two-path selector; they place through the documented default path behavior. Artillery level II is also corrected to a shared pre-branch stage, matching its cumulative-cost table and allowing both later branches to upgrade through it.
 
 ## Build
 
