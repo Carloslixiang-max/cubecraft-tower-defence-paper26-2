@@ -143,11 +143,34 @@ object SettingsAndHotbarRuntimeFixture {
             DynamicMatchMenus
                 .settings(playerState)
 
+        val editorInitial=
+            DynamicMatchMenus
+                .hotbarEditor(
+                    playerState
+                )
+
+        val selected=
+            router.handle(
+                MenuActionInvocation(
+                    player,
+                    "hotbar:select:SUMMONER",
+                    ClickKind.LEFT
+                )
+            ) as
+                MatchMenuActionResult
+                    .HotbarEditorSelectionChanged
+
+        val editorSelected=
+            DynamicMatchMenus
+                .hotbarEditor(
+                    playerState
+                )
+
         val hotbarChange=
             router.handle(
                 MenuActionInvocation(
                     player,
-                    "hotbar:move:SUMMONER:8",
+                    "hotbar:place:8",
                     ClickKind.LEFT
                 )
             ) as
@@ -269,18 +292,52 @@ object SettingsAndHotbarRuntimeFixture {
                             .PLAYER_CUSTOM
             ),
             FixtureResult(
-                "hotbar-editor-marks-current-slot",
+                "hotbar-editor-recovers-2021-36-slot-shell",
+                editorInitial.title==
+                    "Change inventory layout" &&
+                    editorInitial.size==36 &&
+                    editorInitial.evidenceStatus==
+                        UiEvidenceStatus
+                            .MATURE_CONTEXT &&
+                    (27..35).all {
+                        slot ->
+                        editorInitial.slots.any {
+                            it.slot==slot
+                        }
+                    }
+            ),
+            FixtureResult(
+                "hotbar-editor-select-then-place-flow",
+                selected.selectedAction==
+                    HotbarAction.SUMMONER &&
+                    editorSelected.slots
+                        .first {
+                            it.slot==35
+                        }
+                        .actionId==
+                        "hotbar:place:8" &&
+                    hotbarChange.layout
+                        .slot(
+                            HotbarAction.SUMMONER
+                        )==8 &&
+                    playerState.interaction
+                        .hotbarEditorSelection==
+                        null
+            ),
+            FixtureResult(
+                "hotbar-editor-bottom-row-mirrors-current-layout",
                 hotbarMenu.slots
-                    .firstOrNull {
-                        it.slot==26
-                    }?.let {
-                        it.actionId==
-                            "hotbar:move:SUMMONER:8" &&
-                            it.displayName
-                                ?.contains(
-                                    "(current)"
-                                )==true
-                    } == true
+                    .first {
+                        it.slot==35
+                    }
+                    .let {
+                        it.actionId.startsWith(
+                            "noop:hotbar:select-first:"
+                        ) &&
+                        it.displayName==
+                            "Mob Summoner · slot 9" &&
+                        it.iconHint=="chest"
+                    }
             ),
             FixtureResult(
                 "hotbar-persistence-codec-roundtrip",

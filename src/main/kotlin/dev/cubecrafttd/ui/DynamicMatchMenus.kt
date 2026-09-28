@@ -393,65 +393,141 @@ object DynamicMatchMenus {
         player:
             PlayerMatchSessionState
     ): MenuDefinition {
-        val layout=
+        val interaction=
             player.interaction
-                .hotbarLayout
+        val layout=
+            interaction.hotbarLayout
+        val selected=
+            interaction.hotbarEditorSelection
+
+        val paletteSlots=
+            mapOf(
+                HotbarAction.SWORD to 10,
+                HotbarAction.BOW to 11,
+                HotbarAction.SUMMONER to 12,
+                HotbarAction.CASTLE_BAZAAR to 13,
+                HotbarAction.SETTINGS to 14
+            )
+
         val slots=
             buildList {
-                HotbarAction.entries
-                    .forEachIndexed {
-                        row,action ->
-                        repeat(9) { slot ->
-                            val current=
-                                layout.slot(action)==
-                                    slot
-                            add(
-                                MenuSlot(
-                                    slot=
-                                        row*9 +
-                                            slot,
-                                    actionId=
-                                        "hotbar:move:" +
-                                            action.name +
-                                            ":" +
-                                            slot,
-                                    evidenceStatus=
-                                        UiEvidenceStatus
-                                            .ENGINEERING_FALLBACK,
-                                    displayName=
-                                        action.name
-                                            .lowercase()
-                                            .replace(
-                                                '_',' '
-                                            ) +
-                                            " -> slot " +
-                                            (slot+1) +
-                                            if(current)
-                                                " (current)"
-                                            else ""
+                paletteSlots.forEach {
+                    (action,slot) ->
+                    add(
+                        MenuSlot(
+                            slot=slot,
+                            actionId=
+                                "hotbar:select:" +
+                                    action.name,
+                            evidenceStatus=
+                                UiEvidenceStatus
+                                    .ENGINEERING_FALLBACK,
+                            displayName=
+                                "Select " +
+                                    hotbarActionLabel(
+                                        action
+                                    ) +
+                                    if(
+                                        selected==action
+                                    )
+                                        " (selected)"
+                                    else
+                                        "",
+                            iconHint=
+                                hotbarActionIcon(
+                                    action
                                 )
-                            )
-                        }
-                    }
-                add(
-                    MenuSlot(
-                        53,
-                        "nav:settings",
-                        UiEvidenceStatus
-                            .ENGINEERING_FALLBACK,
-                        "Back to Settings"
+                        )
                     )
-                )
+                }
+
+                repeat(9) {
+                    hotbarSlot ->
+                    val occupant=
+                        layout.slots
+                            .entries
+                            .firstOrNull {
+                                it.value==
+                                    hotbarSlot
+                            }
+                            ?.key
+                    add(
+                        MenuSlot(
+                            slot=
+                                27+
+                                    hotbarSlot,
+                            actionId=
+                                if(selected!=null)
+                                    "hotbar:place:" +
+                                        hotbarSlot
+                                else
+                                    "noop:hotbar:select-first:" +
+                                        hotbarSlot,
+                            evidenceStatus=
+                                UiEvidenceStatus
+                                    .MATURE_CONTEXT,
+                            displayName=
+                                occupant?.let {
+                                    hotbarActionLabel(
+                                        it
+                                    ) +
+                                        " · slot " +
+                                        (hotbarSlot+1)
+                                } ?: (
+                                    "Empty hotbar slot " +
+                                        (hotbarSlot+1)
+                                ),
+                            iconHint=
+                                occupant?.let(
+                                    ::hotbarActionIcon
+                                ) ?:
+                                    "empty-slot"
+                        )
+                    )
+                }
             }
 
         return MenuDefinition(
-            title="Hotbar editor",
-            size=54,
+            title=
+                "Change inventory layout",
+            size=36,
             slots=slots,
             evidenceStatus=
                 UiEvidenceStatus
-                    .ENGINEERING_FALLBACK
+                    .MATURE_CONTEXT
         )
     }
+
+    private fun hotbarActionLabel(
+        action: HotbarAction
+    ): String =
+        when(action) {
+            HotbarAction.SWORD ->
+                "Sword"
+            HotbarAction.BOW ->
+                "Bow"
+            HotbarAction.SUMMONER ->
+                "Mob Summoner"
+            HotbarAction.CASTLE_BAZAAR ->
+                "Castle Bazaar"
+            HotbarAction.SETTINGS ->
+                "Settings"
+        }
+
+    private fun hotbarActionIcon(
+        action: HotbarAction
+    ): String =
+        when(action) {
+            HotbarAction.SWORD ->
+                "wooden-sword"
+            HotbarAction.BOW ->
+                "bow"
+            HotbarAction.SUMMONER ->
+                "chest"
+            HotbarAction.CASTLE_BAZAAR ->
+                "stone-bricks"
+            HotbarAction.SETTINGS ->
+                "crafting-table"
+        }
 
 }

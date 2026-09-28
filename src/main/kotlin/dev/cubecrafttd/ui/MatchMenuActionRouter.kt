@@ -56,6 +56,11 @@ sealed interface MatchMenuActionResult {
             SettingsMenuModel
     ) : MatchMenuActionResult
 
+    data class HotbarEditorSelectionChanged(
+        val selectedAction:
+            HotbarAction
+    ) : MatchMenuActionResult
+
     data class HotbarLayoutChanged(
         val layout:
             HotbarLayout
@@ -582,32 +587,98 @@ class MatchMenuActionRouter(
             PlayerMatchSessionState,
         parts: List<String>
     ): MatchMenuActionResult {
-        check(
-            parts.size==4 &&
-                parts[1]=="move"
-        ) {
-            "hotbar:move:<action>:<slot>"
+        check(parts.size>=2) {
+            "hotbar:<select|place|move>:..."
         }
-        val action=
-            HotbarAction.valueOf(
-                parts[2]
-                    .uppercase()
-            )
-        val slot=
-            parts[3].toInt()
-        val next=
+
+        val interaction=
             playerState.interaction
-                .hotbarLayout
-                .move(
-                    action,
-                    slot
+
+        return when(parts[1]) {
+            "select" -> {
+                check(parts.size==3) {
+                    "hotbar:select:<action>"
+                }
+                val action=
+                    HotbarAction.valueOf(
+                        parts[2]
+                            .uppercase()
+                    )
+                interaction
+                    .hotbarEditorSelection=
+                    action
+                MatchMenuActionResult
+                    .HotbarEditorSelectionChanged(
+                        action
+                    )
+            }
+
+            "place" -> {
+                check(parts.size==3) {
+                    "hotbar:place:<slot>"
+                }
+                val action=
+                    interaction
+                        .hotbarEditorSelection
+                        ?: error(
+                            "Select a hotbar action first"
+                        )
+                val slot=
+                    parts[2].toInt()
+                val next=
+                    interaction
+                        .hotbarLayout
+                        .move(
+                            action,
+                            slot
+                        )
+                interaction.hotbarLayout=
+                    next
+                interaction
+                    .hotbarEditorSelection=
+                    null
+                MatchMenuActionResult
+                    .HotbarLayoutChanged(
+                        next
+                    )
+            }
+
+            // Compatibility with the old 54-slot Engineering editor action.
+            "move" -> {
+                check(parts.size==4) {
+                    "hotbar:move:<action>:<slot>"
+                }
+                val action=
+                    HotbarAction.valueOf(
+                        parts[2]
+                            .uppercase()
+                    )
+                val slot=
+                    parts[3].toInt()
+                val next=
+                    interaction
+                        .hotbarLayout
+                        .move(
+                            action,
+                            slot
+                        )
+                interaction.hotbarLayout=
+                    next
+                interaction
+                    .hotbarEditorSelection=
+                    null
+                MatchMenuActionResult
+                    .HotbarLayoutChanged(
+                        next
+                    )
+            }
+
+            else ->
+                error(
+                    "Unknown hotbar editor action " +
+                        parts[1]
                 )
-        playerState.interaction
-            .hotbarLayout=next
-        return MatchMenuActionResult
-            .HotbarLayoutChanged(
-                next
-            )
+        }
     }
 
     private fun teamOf(

@@ -20,5 +20,7 @@ data class PlayerMatchInteractionState(
         PotionUseToken? = null,
     var hotbarLayout:
         HotbarLayout =
-        HotbarLayout.ENGINEERING_RUNTIME_DEFAULT
+        HotbarLayout.ENGINEERING_RUNTIME_DEFAULT,
+    var hotbarEditorSelection:
+        HotbarAction? = null
 )

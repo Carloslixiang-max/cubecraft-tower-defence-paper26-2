@@ -41,6 +41,15 @@ class BukkitEngineeringMenuRenderer :
     ): Material =
         when(iconHint) {
             "bow" -> Material.BOW
+            "wooden-sword" ->
+                Material.WOODEN_SWORD
+            "chest" -> Material.CHEST
+            "stone-bricks" ->
+                Material.STONE_BRICKS
+            "crafting-table" ->
+                Material.CRAFTING_TABLE
+            "empty-slot" ->
+                Material.GRAY_STAINED_GLASS_PANE
             "tnt" -> Material.TNT
             "beacon" -> Material.BEACON
             "dirt" -> Material.DIRT
