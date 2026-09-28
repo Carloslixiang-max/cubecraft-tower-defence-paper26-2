@@ -25,5 +25,13 @@ fun MenuDefinition.toLiveView():
                 slot.iconHint?.let {
                     slot.slot to it
                 }
-            }.toMap()
+            }.toMap(),
+        slotLore=
+            slots
+                .filter {
+                    it.lore.isNotEmpty()
+                }
+                .associate {
+                    it.slot to it.lore
+                }
     )

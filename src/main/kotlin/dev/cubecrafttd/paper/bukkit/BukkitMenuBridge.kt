@@ -252,15 +252,25 @@ class BukkitMenuBridge(
                         slot
                     ]
                 )
-            menu.slotDisplayNames[
-                slot
-            ]?.let {
-                displayName ->
-                item.editMeta {
-                    meta ->
+            item.editMeta {
+                meta ->
+                menu.slotDisplayNames[
+                    slot
+                ]?.let {
+                    displayName ->
                     meta.displayName(
                         Component.text(
                             displayName
+                        )
+                    )
+                }
+                menu.slotLore[
+                    slot
+                ]?.let {
+                    lore ->
+                    meta.lore(
+                        lore.map(
+                            Component::text
                         )
                     )
                 }

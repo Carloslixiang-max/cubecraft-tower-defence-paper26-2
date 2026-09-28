@@ -50,6 +50,9 @@ data class LiveMenuView(
         emptyMap(),
     val slotIconHints:
         Map<Int,String> =
+        emptyMap(),
+    val slotLore:
+        Map<Int,List<String>> =
         emptyMap()
 )
 

@@ -1,5 +1,6 @@
 package dev.cubecrafttd.ui
 
+import dev.cubecrafttd.tower.*
 import dev.cubecrafttd.tower.visual.TowerPath
 
 enum class TowerBuilderFootprint { THREE_BY_THREE, FIVE_BY_FIVE }
@@ -61,26 +62,98 @@ object TowerBuilderMenus {
 
     /**
      * The official January 2021 update screenshot directly recovers the
-     * 27-slot "Select an upgrade path" inventory and the two path positions:
-     * zero-based slots 11 and 15. Per-tower item names, icons and lore vary by
-     * tower and are not fully recovered, so those presentation details stay
-     * contextual rather than being promoted to exact truth.
+     * 27-slot "Select an upgrade path" inventory and zero-based slots 11/15.
+     * The hovered Zeus path-2 item also directly exposes its name and lore.
+     *
+     * Other per-tower item identities/lore remain contextual until additional
+     * screenshots are recovered.
      */
-    val pathSelector2021 = MenuDefinition(
-        title = "Select an upgrade path",
-        size = 27,
-        evidenceStatus = UiEvidenceStatus.MATURE_DIRECT,
-        slots = listOf(
-            MenuSlot(11,"path:top",UiEvidenceStatus.MATURE_CONTEXT,"Path 1"),
-            MenuSlot(15,"path:bottom",UiEvidenceStatus.MATURE_CONTEXT,"Path 2")
-        )
-    )
+    fun pathSelector2021(
+        towerId: String,
+        definitions:
+            TowerDefinitionRepository =
+            RecommendedMatureTowerDefinitions
+    ): MenuDefinition {
+        val definition=
+            definitions.get(towerId)
+        require(
+            hasTwoSelectablePaths(
+                definition
+            )
+        ) {
+            "Tower $towerId has no two-path selector"
+        }
 
-    /**
-     * Compatibility alias for older fixtures/callers. The slots are no longer
-     * an engineering guess; see [pathSelector2021].
-     */
-    val pathSelectorEngineeringSlots = pathSelector2021
+        val zeus=
+            towerId=="zeus"
+
+        return MenuDefinition(
+            title=
+                "Select an upgrade path",
+            size=27,
+            evidenceStatus=
+                UiEvidenceStatus
+                    .MATURE_DIRECT,
+            slots=listOf(
+                MenuSlot(
+                    11,
+                    "path:top",
+                    UiEvidenceStatus
+                        .MATURE_CONTEXT,
+                    definition.displayName +
+                        " path 1",
+                    if(zeus)
+                        "flint"
+                    else null
+                ),
+                MenuSlot(
+                    15,
+                    "path:bottom",
+                    if(zeus)
+                        UiEvidenceStatus
+                            .MATURE_DIRECT
+                    else
+                        UiEvidenceStatus
+                            .MATURE_CONTEXT,
+                    definition.displayName +
+                        " path 2",
+                    if(zeus)
+                        "sugar"
+                    else null,
+                    if(zeus)
+                        listOf(
+                            "Summons baby Zeus.",
+                            "Click to select path!"
+                        )
+                    else
+                        emptyList()
+                )
+            )
+        )
+    }
+
+    fun requiresPathSelection(
+        towerId: String,
+        definitions:
+            TowerDefinitionRepository =
+            RecommendedMatureTowerDefinitions
+    ): Boolean =
+        hasTwoSelectablePaths(
+            definitions.get(towerId)
+        )
+
+    private fun hasTwoSelectablePaths(
+        definition: TowerDefinition
+    ): Boolean {
+        val options=
+            definition.levels
+                .map { it.option }
+                .toSet()
+        return TowerPathOption.TOP in
+            options &&
+            TowerPathOption.BOTTOM in
+                options
+    }
 }
 
 data class TowerBuilderSelection(

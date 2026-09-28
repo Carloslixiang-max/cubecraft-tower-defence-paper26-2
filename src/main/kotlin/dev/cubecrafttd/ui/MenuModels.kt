@@ -13,7 +13,8 @@ data class MenuSlot(
     val actionId: String,
     val evidenceStatus: UiEvidenceStatus,
     val displayName: String? = null,
-    val iconHint: String? = null
+    val iconHint: String? = null,
+    val lore: List<String> = emptyList()
 ) {
     init { require(slot >= 0) }
 }
