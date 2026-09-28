@@ -282,11 +282,14 @@ object DynamicMatchMenus {
 
         return MenuDefinition(
             title="Settings",
-            size=27,
+            size=45,
             evidenceStatus=
                 UiEvidenceStatus
-                    .ENGINEERING_FALLBACK,
+                    .MATURE_CONTEXT,
             slots=listOf(
+                // Official 2021 screenshot recovers the 5x9 Settings shell,
+                // but the exact slot/icon mapping for these controls is not
+                // fully recovered. Keep those positions explicitly fallback.
                 MenuSlot(
                     10,
                     "settings:particle-density",
@@ -333,18 +336,28 @@ object DynamicMatchMenus {
                         "In-game Point purchases: unavailable"
                 ),
                 MenuSlot(
-                    18,
+                    31,
                     "nav:armageddon",
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
                     "Armageddon vote (Engineering)"
                 ),
                 MenuSlot(
-                    22,
+                    32,
                     "nav:hotbar",
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
                     "Edit hotbar layout"
+                ),
+                // Direct screenshot evidence: a book occupies zero-based slot
+                // 40. Its exact click semantics are still unresolved.
+                MenuSlot(
+                    40,
+                    "noop:settings:2021-navigation-book-unresolved",
+                    UiEvidenceStatus
+                        .MATURE_DIRECT,
+                    "2021 navigation control (action unresolved)",
+                    "book"
                 )
             )
         )
@@ -406,51 +419,19 @@ object DynamicMatchMenus {
         val selected=
             interaction.hotbarEditorSelection
 
-        val paletteSlots=
-            mapOf(
-                HotbarAction.SWORD to 10,
-                HotbarAction.BOW to 11,
-                HotbarAction.SUMMONER to 12,
-                HotbarAction.CASTLE_BAZAAR to 13,
-                HotbarAction.SETTINGS to 14
+        // The official 2021 screenshot shows AoE items in the upper three
+        // rows and the live nine-slot hotbar on the bottom row. Exact
+        // per-potion source positions are not recovered, so known owned AoEs
+        // use this screenshot-shaped source region as an Engineering mapping.
+        val aoeSourceSlots=
+            listOf(
+                0,1,2,
+                9,10,11,
+                18,19,20
             )
 
         val slots=
             buildList {
-                paletteSlots.forEach {
-                    (action,slot) ->
-                    add(
-                        MenuSlot(
-                            slot=slot,
-                            actionId=
-                                "hotbar:select:" +
-                                    action.name,
-                            evidenceStatus=
-                                UiEvidenceStatus
-                                    .ENGINEERING_FALLBACK,
-                            displayName=
-                                "Select " +
-                                    hotbarActionLabel(
-                                        action
-                                    ) +
-                                    if(
-                                        selected==
-                                            HotbarEditorSelection
-                                                .Action(
-                                                    action
-                                                )
-                                    )
-                                        " (selected)"
-                                    else
-                                        "",
-                            iconHint=
-                                hotbarActionIcon(
-                                    action
-                                )
-                        )
-                    )
-                }
-
                 RecommendedMatureBazaarDefinitions
                     .aoePotions
                     .filter {
@@ -461,6 +442,9 @@ object DynamicMatchMenus {
                                 potion.potionId
                             )>0
                     }
+                    .take(
+                        aoeSourceSlots.size
+                    )
                     .forEachIndexed {
                         index,potion ->
                         val quantity=
@@ -476,7 +460,10 @@ object DynamicMatchMenus {
                                 )
                         add(
                             MenuSlot(
-                                slot=18+index,
+                                slot=
+                                    aoeSourceSlots[
+                                        index
+                                    ],
                                 actionId=
                                     "hotbar:select-aoe:" +
                                         potion.potionId,
@@ -484,8 +471,7 @@ object DynamicMatchMenus {
                                     UiEvidenceStatus
                                         .ENGINEERING_FALLBACK,
                                 displayName=
-                                    "Select " +
-                                        potion.potionId +
+                                    potion.potionId +
                                         " AoE · owned " +
                                         quantity +
                                         if(
@@ -513,12 +499,11 @@ object DynamicMatchMenus {
                                 27+
                                     hotbarSlot,
                             actionId=
-                                if(selected!=null)
-                                    "hotbar:place:" +
-                                        hotbarSlot
-                                else
-                                    "noop:hotbar:select-first:" +
-                                        hotbarSlot,
+                                hotbarEditorBottomAction(
+                                    hotbarSlot,
+                                    occupant,
+                                    selected
+                                ),
                             evidenceStatus=
                                 UiEvidenceStatus
                                     .MATURE_CONTEXT,
@@ -528,7 +513,16 @@ object DynamicMatchMenus {
                                         it
                                     ) +
                                         " · slot " +
-                                        (hotbarSlot+1)
+                                        (hotbarSlot+1) +
+                                        if(
+                                            hotbarSelectionMatches(
+                                                selected,
+                                                it
+                                            )
+                                        )
+                                            " (selected)"
+                                        else
+                                            ""
                                 } ?: (
                                     "Empty hotbar slot " +
                                         (hotbarSlot+1)
@@ -553,6 +547,66 @@ object DynamicMatchMenus {
                     .MATURE_CONTEXT
         )
     }
+
+    private fun hotbarEditorBottomAction(
+        hotbarSlot: Int,
+        occupant: HotbarEntry?,
+        selected: HotbarEditorSelection?
+    ): String {
+        if(selected==null) {
+            return when(occupant) {
+                is HotbarEntry.Action ->
+                    "hotbar:select:" +
+                        occupant.action.name
+                is HotbarEntry.AoE ->
+                    "hotbar:select-aoe:" +
+                        occupant.potionId
+                null ->
+                    "noop:hotbar:empty:" +
+                        hotbarSlot
+            }
+        }
+
+        val canPlace=
+            when(selected) {
+                is HotbarEditorSelection.Action ->
+                    occupant !is
+                        HotbarEntry.AoE
+                is HotbarEditorSelection.AoE ->
+                    occupant==null ||
+                        occupant==
+                            HotbarEntry.AoE(
+                                selected.potionId
+                            )
+            }
+
+        return if(canPlace)
+            "hotbar:place:" +
+                hotbarSlot
+        else
+            "noop:hotbar:swap-semantics-unresolved:" +
+                hotbarSlot
+    }
+
+    private fun hotbarSelectionMatches(
+        selection: HotbarEditorSelection?,
+        entry: HotbarEntry
+    ): Boolean =
+        when {
+            selection is
+                HotbarEditorSelection.Action &&
+                entry is
+                    HotbarEntry.Action ->
+                selection.action==
+                    entry.action
+            selection is
+                HotbarEditorSelection.AoE &&
+                entry is
+                    HotbarEntry.AoE ->
+                selection.potionId==
+                    entry.potionId
+            else -> false
+        }
 
     private fun hotbarEntryLabel(
         entry: HotbarEntry

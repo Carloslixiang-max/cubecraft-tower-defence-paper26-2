@@ -232,10 +232,23 @@ object SettingsAndHotbarRuntimeFixture {
                     .autoCentreEnabled
             ),
             FixtureResult(
-                "settings-menu-remains-layout-fallback",
-                menu.evidenceStatus==
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK
+                "settings-menu-recovers-2021-45-slot-shell",
+                menu.size==45 &&
+                    menu.evidenceStatus==
+                        UiEvidenceStatus
+                            .MATURE_CONTEXT &&
+                    menu.slots
+                        .first {
+                            it.slot==40
+                        }
+                        .let {
+                            it.actionId==
+                                "noop:settings:2021-navigation-book-unresolved" &&
+                            it.evidenceStatus==
+                                UiEvidenceStatus
+                                    .MATURE_DIRECT &&
+                            it.iconHint=="book"
+                        }
             ),
             FixtureResult(
                 "settings-router-particle-density-cycles-official-three-state-model",
@@ -355,18 +368,33 @@ object SettingsAndHotbarRuntimeFixture {
                         null
             ),
             FixtureResult(
-                "hotbar-editor-bottom-row-mirrors-current-layout",
+                "hotbar-editor-bottom-row-is-clickable-current-layout",
                 hotbarMenu.slots
                     .first {
                         it.slot==35
                     }
                     .let {
-                        it.actionId.startsWith(
-                            "noop:hotbar:select-first:"
-                        ) &&
+                        it.actionId==
+                            "hotbar:select:SUMMONER" &&
                         it.displayName==
                             "Mob Summoner · slot 9" &&
                         it.iconHint=="chest"
+                    } &&
+                    hotbarMenu.slots
+                        .count {
+                            it.slot in 27..35
+                        }==9
+            ),
+            FixtureResult(
+                "hotbar-editor-no-longer-projects-invented-fixed-action-palette",
+                hotbarMenu.slots
+                    .filter {
+                        it.slot<27
+                    }
+                    .all {
+                        it.actionId.startsWith(
+                            "hotbar:select-aoe:"
+                        )
                     }
             ),
             FixtureResult(
