@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v103 engineering playtest shell**
-- Pure-domain baseline: **514/514 fixtures PASS**
+- Current shell lineage: **v104 engineering playtest shell**
+- Pure-domain baseline: **522/522 fixtures PASS**
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -103,6 +103,7 @@ The codebase already contains substantial runtime work, including:
 - v101 connects owned AoEs to the persistent 2021 hotbar model. `HotbarLayout` now carries optional `aoeSlots` beside the five legacy controls and persists them with backward-compatible `AOE__<potionId>` keys, so existing `player-hotbars.yml` files remain readable. The 36-slot editor exposes currently owned AoEs and only allows them into empty slots until exact original replacement/swap gestures are recovered. Live hotbar projection shows the owned stack count, omits a configured AoE when its stock is zero without forgetting the saved slot, and refreshes immediately after purchase/throw. Right-click AoE targeting is now gated by the actually held AoE slot rather than a global armed flag, preventing ordinary menu interactions from accidentally committing an AoE. Exact original potion appearance and editor AoE palette positions remain explicitly unresolved.
 - v102 makes the five critical GUI surfaces observable in the durable Stage-4 real-server gate without pretending that observation alone proves visual fidelity. Tower Builder, path selector, tower menu, Settings and inventory-layout opens are classified by the Paper adapter and recorded independently; `/ctdlivegate` can now distinguish “this surface was exercised on a real server” from the still-separate production icon/lore fidelity requirement.
 - v103 restores two stronger official-2021 GUI shells. Settings now projects the recovered 45-slot inventory instead of the old 27-slot Engineering shell and preserves the directly visible bottom-centre book at zero-based slot 40 while leaving its unrecovered click semantics fail-closed. `Change inventory layout` keeps the recovered 36-slot shell but no longer invents a separate fixed-action palette: the bottom row is the actual current hotbar and its existing entries can be selected for rearrangement, while owned AoEs are sourced from the upper three rows using an explicitly Engineering per-potion mapping until exact original source positions/gestures are recovered.
+- v104 makes the officially evidenced pre-match Settings and `Change inventory layout` surfaces usable from the existing `/ctdvote` waiting-lobby hub. Queue-local `PregamePreferenceState` reuses the same Settings and Hotbar rules as live matches without touching the player's real waiting inventory; hotbar changes persist through the existing `player-hotbars.yml`, while Settings are copied into the match session inside the arena bootstrap transaction. Failed starts/requeues keep those preferences, successful starts and genuine queue departures clear the temporary state, and exact waiting-lobby entry slots remain Engineering fallback because the original CubeCraft positions are not recovered. Auto-centre disabling also remains fail-closed pregame because a persistent lifetime-win source has not yet been recovered.
 
 ## Build
 
