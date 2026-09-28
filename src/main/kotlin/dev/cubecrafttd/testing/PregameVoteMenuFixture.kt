@@ -54,8 +54,8 @@ object PregameVoteMenuFixture {
 
         return listOf(
             FixtureResult(
-                "pregame-vote-menu-projects-all-runnable-vote-actions",
-                actions==
+                "pregame-vote-menu-projects-all-runnable-vote-actions-and-preference-entrypoints",
+                actions.containsAll(
                     setOf(
                         "pregame:armageddon:random",
                         "pregame:armageddon:wither",
@@ -63,8 +63,11 @@ object PregameVoteMenuFixture {
                         "pregame:armageddon:horde",
                         "pregame:pricing:normal",
                         "pregame:pricing:double_income",
-                        "pregame:pricing:quick_start"
+                        "pregame:pricing:quick_start",
+                        "pregame-nav:settings",
+                        "pregame-nav:hotbar"
                     )
+                )
             ),
             FixtureResult(
                 "pregame-vote-menu-hides-unrunnable-armageddon-modes",
