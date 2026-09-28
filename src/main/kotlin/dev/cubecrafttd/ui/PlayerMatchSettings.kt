@@ -39,12 +39,19 @@ data class PlayerMatchSettings(
     init { require(lifetimeWins >= 0) }
 
     val canDisableAutoCentre: Boolean
-        get() = lifetimeWins >= 20
+        get() =
+            LifetimeWinProgress
+                .canDisableAutoCentre(
+                    lifetimeWins
+                )
 
     fun setAutoCentre(enabled: Boolean) {
         if (!enabled && !canDisableAutoCentre) {
             error(
-                "Auto-centering disable unlocks after 20 wins"
+                "Auto-centering disable unlocks after " +
+                    LifetimeWinProgress
+                        .AUTO_CENTRE_DISABLE_WINS +
+                    " wins"
             )
         }
         autoCentreTowers = enabled

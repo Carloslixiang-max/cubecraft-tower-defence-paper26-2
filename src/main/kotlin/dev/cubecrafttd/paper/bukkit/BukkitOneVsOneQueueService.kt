@@ -75,7 +75,9 @@ class BukkitOneVsOneQueueService(
     private val liveGate:
         PaperStage4GateStore,
     private val hotbarPreferences:
-        BukkitHotbarPreferenceStore
+        BukkitHotbarPreferenceStore,
+    private val lifetimeWinStore:
+        BukkitLifetimeWinStore
 ) {
     private val queue=
         EngineeringOneVsOneQueueState()
@@ -1074,6 +1076,14 @@ class BukkitOneVsOneQueueService(
                 playerUuid
             ) {
                 PregamePreferenceState(
+                    settings=
+                        PlayerMatchSettings(
+                            lifetimeWins=
+                                lifetimeWinStore
+                                    .load(
+                                        playerUuid
+                                    )
+                        ),
                     hotbarLayout=
                         hotbarPreferences
                             .load(

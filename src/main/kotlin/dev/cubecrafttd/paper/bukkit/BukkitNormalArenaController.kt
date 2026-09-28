@@ -120,7 +120,9 @@ class BukkitNormalArenaController(
     private val stage4Gate:
         PaperStage4GateStore,
     private val hotbarPreferences:
-        BukkitHotbarPreferenceStore
+        BukkitHotbarPreferenceStore,
+    private val lifetimeWinStore:
+        BukkitLifetimeWinStore
 ) {
     private val matchHud=
         BukkitMatchHudService(
@@ -774,6 +776,16 @@ class BukkitNormalArenaController(
                                 .hotbarLayout=
                                 saved
                         }
+
+                    state.interaction
+                        .settings=
+                        PlayerMatchSettings(
+                            lifetimeWins=
+                                lifetimeWinStore
+                                    .load(
+                                        state.playerUuid
+                                    )
+                        )
 
                     playerSettingsOverrides[
                         state.playerUuid
@@ -2447,6 +2459,41 @@ class BukkitNormalArenaController(
                         handle.context,
                         outcome
                     )
+
+            val winnerTeam=
+                (
+                    report.outcome as?
+                        MatchOutcome.Winner
+                )?.team
+            if(winnerTeam!=null) {
+                activeTeamByPlayer
+                    .filterValues {
+                        it==winnerTeam
+                    }
+                    .keys
+                    .forEach {
+                        playerUuid ->
+                        runCatching {
+                            lifetimeWinStore
+                                .recordWin(
+                                    playerUuid
+                                )
+                        }.onFailure {
+                            error ->
+                            plugin.logger
+                                .warning(
+                                    "Could not persist TD lifetime win for " +
+                                        playerUuid +
+                                        ": " +
+                                        (
+                                            error.message
+                                                ?: error.javaClass
+                                                    .simpleName
+                                        )
+                                )
+                        }
+                    }
+            }
 
             farmReuseGate
                 .record(
