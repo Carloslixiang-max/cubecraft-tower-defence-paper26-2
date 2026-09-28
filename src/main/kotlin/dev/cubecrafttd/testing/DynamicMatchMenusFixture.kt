@@ -72,6 +72,12 @@ object DynamicMatchMenusFixture {
                 .bazaar(player)
         player.bazaar.unlockedAoE +=
             "meteor"
+        player.interaction
+            .aoeInventory
+            .add(
+                "meteor",
+                2
+            )
         val bazaarUnlocked=
             DynamicMatchMenus
                 .bazaar(player)
@@ -194,7 +200,9 @@ object DynamicMatchMenusFixture {
                 } &&
                     bazaarUnlocked.slots.any {
                         it.actionId==
-                            "bazaar:potion:use:meteor"
+                            "bazaar:potion:purchase:meteor" &&
+                        it.displayName==
+                            "meteor — buy 1350 Coins · owned 2"
                     }
             ),
             FixtureResult(

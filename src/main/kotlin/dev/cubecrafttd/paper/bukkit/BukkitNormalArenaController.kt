@@ -1501,6 +1501,41 @@ class BukkitNormalArenaController(
             ?.interaction
             ?.armedAoEPotion != null
 
+    fun armOwnedAoEPotion(
+        playerUuid: UUID,
+        potionId: String
+    ): Boolean {
+        val interaction=
+            handleForPlayer(
+                playerUuid
+            )
+                ?.session
+                ?.players
+                ?.get(playerUuid)
+                ?.interaction
+                ?: return false
+
+        if(
+            interaction.aoeInventory
+                .quantity(
+                    potionId
+                )<=0
+        ) {
+            return false
+        }
+
+        interaction.armedAoEPotion=
+            PotionUseToken(
+                potionId,
+                playerUuid,
+                RecommendedMatureBazaarDefinitions
+                    .potion(
+                        potionId
+                    )
+            )
+        return true
+    }
+
     fun commitArmedAoEPotion(
         playerUuid: UUID,
         targetX: Double,
@@ -1654,8 +1689,29 @@ class BukkitNormalArenaController(
                         fallback
                     ).value
             )
-        playerState.interaction
-            .armedAoEPotion=null
+        val interaction=
+            playerState.interaction
+        val ownedBefore=
+            interaction.aoeInventory
+                .quantity(
+                    token.potionId
+                )
+        if(ownedBefore>0) {
+            interaction.aoeInventory
+                .consume(
+                    token.potionId
+                )
+        }
+        interaction.armedAoEPotion=
+            if(
+                interaction.aoeInventory
+                    .quantity(
+                        token.potionId
+                    )>0
+            )
+                token
+            else
+                null
 
         return BukkitAoEPotionCommitReport(
             potionId=
@@ -1965,42 +2021,6 @@ class BukkitNormalArenaController(
             return receipt
         }
 
-        if(
-            invocation.actionId
-                .startsWith(
-                    "bazaar:potion:use:"
-                )
-        ) {
-            val state=
-                playerState
-                    ?: error(
-                        "Player match session is missing"
-                    )
-            check(
-                state.interaction
-                    .armedAoEPotion==null
-            ) {
-                "Throw the currently armed AoE potion first"
-            }
-            val cooldown=
-                AoEPotionCooldownGate(
-                    handle.aoeCooldowns
-                )
-            check(
-                cooldown.isReady(
-                    invocation.playerUuid,
-                    handle.context.gameTick
-                )
-            ) {
-                "AoE potion cooldown active for " +
-                    cooldown.remainingTicks(
-                        invocation.playerUuid,
-                        handle.context.gameTick
-                    ) +
-                    " more ticks"
-            }
-        }
-
         if(placementPending && invocation.actionId.startsWith("tower:")) {
             val towerId=
                 invocation.actionId
@@ -2160,8 +2180,20 @@ class BukkitNormalArenaController(
                     ) ?: error(
                     "Player match session is missing"
                 )
-            state.interaction
-                .armedAoEPotion=result.token
+            val interaction=
+                state.interaction
+            interaction.aoeInventory
+                .add(
+                    result.token.potionId
+                )
+            if(
+                interaction
+                    .armedAoEPotion==null
+            ) {
+                interaction
+                    .armedAoEPotion=
+                    result.token
+            }
         }
 
         if(

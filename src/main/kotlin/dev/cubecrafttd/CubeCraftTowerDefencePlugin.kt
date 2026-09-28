@@ -239,7 +239,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 player?.sendMessage(
                                     "AoE " +
                                         result.token.potionId +
-                                        " armed. Right-click the world to choose its target area."
+                                        " purchased."
                                 )
                             }
                             else -> {

@@ -106,6 +106,7 @@ object DomainFixtureSuite {
         addAll(LiveMenuProjectionFixture.run())
         addAll(MobStatusMovementFixture.run())
         addAll(MobStatusDamageFixture.run())
+        addAll(AoEPotionInventoryFixture.run())
         addAll(AoEPotionWorldExecutionFixture.run())
     }
 }
