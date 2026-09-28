@@ -35,16 +35,24 @@ class BukkitMatchHotbarListener(
         ) return
 
         val player=event.player
+        val heldSlot=
+            player.inventory
+                .heldItemSlot
+
         if(
-            controller.hasArmedAoEPotion(
-                player.uniqueId
-            )
-        ) return
+            controller.hotbarAoEPotionAt(
+                player.uniqueId,
+                heldSlot
+            )!=null
+        ) {
+            // The NORMAL-priority AoE target listener handles this same click.
+            return
+        }
 
         val action=
             controller.hotbarActionAt(
                 player.uniqueId,
-                player.inventory.heldItemSlot
+                heldSlot
             ) ?: return
 
         val menuKind=

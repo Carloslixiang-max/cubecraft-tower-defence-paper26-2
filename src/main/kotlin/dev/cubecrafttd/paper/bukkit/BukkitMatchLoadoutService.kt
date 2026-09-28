@@ -94,9 +94,20 @@ class BukkitMatchLoadoutService(
                 MatchHotbarVisualKind
                     .SETTINGS_CRAFTING_TABLE ->
                     Material.CRAFTING_TABLE
+                MatchHotbarVisualKind
+                    .AOE_POTION ->
+                    Material.SPLASH_POTION
             }
 
-        val item=ItemStack(material,1)
+        val item=
+            ItemStack(
+                material,
+                projection.amount
+                    .coerceIn(
+                        1,
+                        64
+                    )
+            )
         item.editMeta {
             it.displayName(
                 Component.text(

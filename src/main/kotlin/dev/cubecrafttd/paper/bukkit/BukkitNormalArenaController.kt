@@ -1332,6 +1332,30 @@ class BukkitNormalArenaController(
             }?.key
     }
 
+    fun hotbarAoEPotionAt(
+        playerUuid: UUID,
+        zeroBasedSlot: Int
+    ): String? {
+        if(zeroBasedSlot !in 0..8)
+            return null
+        val interaction=
+            handleForPlayer(
+                playerUuid
+            )
+                ?.session
+                ?.players
+                ?.get(playerUuid)
+                ?.interaction
+                ?: return null
+        return (
+            interaction.hotbarLayout
+                .entryAt(
+                    zeroBasedSlot
+                ) as?
+                HotbarEntry.AoE
+            )?.potionId
+    }
+
     fun visibleRangefinderTowers(
         playerUuid: UUID,
         hoveredTower: TowerInstanceId?,
@@ -1712,6 +1736,13 @@ class BukkitNormalArenaController(
                 token
             else
                 null
+
+        BukkitMatchLoadoutService(
+            plugin.server
+        ).apply(
+            playerUuid,
+            playerState
+        )
 
         return BukkitAoEPotionCommitReport(
             potionId=
@@ -2186,14 +2217,12 @@ class BukkitNormalArenaController(
                 .add(
                     result.token.potionId
                 )
-            if(
-                interaction
-                    .armedAoEPotion==null
-            ) {
-                interaction
-                    .armedAoEPotion=
-                    result.token
-            }
+            BukkitMatchLoadoutService(
+                plugin.server
+            ).apply(
+                invocation.playerUuid,
+                state
+            )
         }
 
         if(

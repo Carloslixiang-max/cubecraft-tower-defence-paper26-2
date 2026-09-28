@@ -28,6 +28,34 @@ object MatchHotbarProjectionFixture {
             MatchHotbarProjector
                 .project(player)
 
+        player.interaction
+            .aoeInventory
+            .add(
+                "meteor",
+                3
+            )
+        player.interaction
+            .hotbarLayout=
+            player.interaction
+                .hotbarLayout
+                .placeAoE(
+                    "meteor",
+                    4
+                )
+        val withAoE=
+            MatchHotbarProjector
+                .project(player)
+
+        player.interaction
+            .aoeInventory
+            .consume(
+                "meteor",
+                3
+            )
+        val withoutStock=
+            MatchHotbarProjector
+                .project(player)
+
         return listOf(
             FixtureResult(
                 "hotbar-projection-all-five-actions",
@@ -59,6 +87,34 @@ object MatchHotbarProjectionFixture {
                             HotbarAction.BOW
                     }.displayName==
                         "Bow 3"
+            ),
+            FixtureResult(
+                "hotbar-projection-includes-owned-aoe-stack",
+                withAoE
+                    .firstOrNull {
+                        it.potionId==
+                            "meteor"
+                    }
+                    ?.let {
+                        it.action==null &&
+                        it.slot==4 &&
+                        it.visual==
+                            MatchHotbarVisualKind
+                                .AOE_POTION &&
+                        it.amount==3
+                    } == true
+            ),
+            FixtureResult(
+                "hotbar-projection-hides-empty-aoe-stack-without-forgetting-layout",
+                withoutStock.none {
+                    it.potionId==
+                        "meteor"
+                } &&
+                    player.interaction
+                        .hotbarLayout
+                        .aoeSlot(
+                            "meteor"
+                        )==4
             )
         )
     }

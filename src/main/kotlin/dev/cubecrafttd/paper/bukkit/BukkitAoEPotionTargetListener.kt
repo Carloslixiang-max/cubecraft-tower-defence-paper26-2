@@ -29,9 +29,17 @@ class BukkitAoEPotionTargetListener(
         event: PlayerInteractEvent
     ) {
         val player=event.player
+        val potionId=
+            controller.hotbarAoEPotionAt(
+                player.uniqueId,
+                player.inventory
+                    .heldItemSlot
+            ) ?: return
+
         if(
-            !controller.hasArmedAoEPotion(
-                player.uniqueId
+            !controller.armOwnedAoEPotion(
+                player.uniqueId,
+                potionId
             )
         ) return
 
