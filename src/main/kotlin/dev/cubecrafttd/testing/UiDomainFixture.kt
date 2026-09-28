@@ -72,7 +72,10 @@ object UiDomainFixture {
             ),
             FixtureResult(
                 "ui-2021-path-selector-direct-layout-with-contextual-items",
-                TowerBuilderMenus.pathSelector2021
+                TowerBuilderMenus
+                    .pathSelector2021(
+                        "zeus"
+                    )
                     .let { menu ->
                         menu.title==
                             "Select an upgrade path" &&
@@ -81,11 +84,21 @@ object UiDomainFixture {
                             UiEvidenceStatus.MATURE_DIRECT &&
                         menu.actionAt(11)=="path:top" &&
                         menu.actionAt(15)=="path:bottom" &&
-                        menu.slots.all {
-                            it.evidenceStatus==
-                                UiEvidenceStatus.MATURE_CONTEXT
-                        }
-                    }
+                        menu.slots
+                            .first {
+                                it.slot==15
+                            }
+                            .evidenceStatus==
+                            UiEvidenceStatus.MATURE_DIRECT
+                    } &&
+                    TowerBuilderMenus
+                        .requiresPathSelection(
+                            "zeus"
+                        ) &&
+                    !TowerBuilderMenus
+                        .requiresPathSelection(
+                            "mage"
+                        )
             )
         )
     }
