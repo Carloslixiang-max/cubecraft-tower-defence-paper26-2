@@ -39,13 +39,32 @@ class TowerPlacementInteractionService(
     fun chooseTower(
         playerUuid: UUID,
         towerId: String
-    ): TowerPlacementInteractionResult.OpenPathSelector {
+    ): TowerPlacementInteractionResult {
         val player=player(playerUuid)
-        player.interaction.towerPlacement.chooseTower(towerId)
-        return TowerPlacementInteractionResult.OpenPathSelector(
-            TowerBuilderMenus.pathSelector2021,
-            towerId
-        )
+        player.interaction
+            .towerPlacement
+            .chooseTower(towerId)
+
+        if(
+            !TowerBuilderMenus
+                .requiresPathSelection(
+                    towerId
+                )
+        ) {
+            return choosePathAndPlace(
+                playerUuid,
+                TowerPath.TOP
+            )
+        }
+
+        return TowerPlacementInteractionResult
+            .OpenPathSelector(
+                TowerBuilderMenus
+                    .pathSelector2021(
+                        towerId
+                    ),
+                towerId
+            )
     }
 
     fun choosePathAndPlace(

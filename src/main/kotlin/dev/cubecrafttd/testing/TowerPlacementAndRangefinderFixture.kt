@@ -66,11 +66,30 @@ object TowerPlacementAndRangefinderFixture {
         val flow=TowerPlacementInteractionService(session,world)
 
         val begin=flow.beginRegular(player,BlockPos(0,0,2))
-        val choose=flow.chooseTower(player,"archer")
+        val choose=
+            flow.chooseTower(
+                player,
+                "archer"
+            ) as
+                TowerPlacementInteractionResult
+                    .OpenPathSelector
         val placed=flow.choosePathAndPlace(
             player,
             TowerPath.BOTTOM
         )
+
+        val secondBegin=
+            flow.beginRegular(
+                player,
+                BlockPos(4,0,2)
+            )
+        val singlePathPlaced=
+            flow.chooseTower(
+                player,
+                "mage"
+            ) as
+                TowerPlacementInteractionResult
+                    .Placed
 
         val ids=(1L..12L).associate {
             TowerInstanceId(it) to it.toDouble()
@@ -103,11 +122,31 @@ object TowerPlacementAndRangefinderFixture {
             FixtureResult(
                 "placement-path-commit-builds-and-remembers-selected-path",
                 placed.result.selection.towerId=="archer" &&
-                    placed.result.selection.path==TowerPath.BOTTOM &&
+                    placed.result.selection.path==TowerPath.BOTTOM
+            ),
+            FixtureResult(
+                "placement-single-path-tower-skips-path-selector",
+                secondBegin.menu.title==
+                    "Tower builder" &&
+                    singlePathPlaced
+                        .result.selection
+                        .towerId=="mage" &&
+                    singlePathPlaced
+                        .result.selection
+                        .path==TowerPath.TOP &&
                     playerState.interaction
-                        .builder
-                        .quickPlaceSelection()
-                        ?.path==TowerPath.BOTTOM
+                        .towerPlacement
+                        .pending==null
+            ),
+            FixtureResult(
+                "placement-last-successful-selection-updates-quick-place",
+                playerState.interaction
+                    .builder
+                    .quickPlaceSelection()
+                    ?.let {
+                        it.towerId=="mage" &&
+                            it.path==TowerPath.TOP
+                    }==true
             ),
             FixtureResult(
                 "rangefinder-shift-nearest-ten-plus-pinned",

@@ -2002,10 +2002,31 @@ class BukkitNormalArenaController(
         }
 
         if(placementPending && invocation.actionId.startsWith("tower:")) {
-            val towerId=invocation.actionId.substringAfter("tower:")
-            return handle.towerPlacement
-                ?.chooseTower(invocation.playerUuid,towerId)
-                ?: error("Tower placement service is not initialized")
+            val towerId=
+                invocation.actionId
+                    .substringAfter("tower:")
+            val result=
+                handle.towerPlacement
+                    ?.chooseTower(
+                        invocation.playerUuid,
+                        towerId
+                    )
+                    ?: error(
+                        "Tower placement service is not initialized"
+                    )
+            if(
+                result is
+                    TowerPlacementInteractionResult
+                        .Placed
+            ) {
+                handle.stats
+                    .recordTowerBuilt(
+                        invocation.playerUuid,
+                        result.result
+                            .receipt.cost
+                    )
+            }
+            return result
         }
         if(placementPending && invocation.actionId.startsWith("path:")) {
             val path=when(invocation.actionId.substringAfter("path:")) {

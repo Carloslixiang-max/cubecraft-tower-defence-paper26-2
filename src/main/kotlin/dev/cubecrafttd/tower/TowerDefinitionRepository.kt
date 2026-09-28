@@ -128,7 +128,7 @@ object RecommendedMatureTowerDefinitions : TowerDefinitionRepository {
             setOf(TargetLayer.GROUND),setOf(DamageKind.PHYSICAL),setOf(EffectKind.STUN),
             levels=listOf(
                 d(TowerPathOption.NONE,1,s(240,240,16.5,7.0,10.0),"aoe"),
-                d(TowerPathOption.TOP,2,s(110,350,20.0,7.0,12.0,
+                d(TowerPathOption.NONE,2,s(110,350,20.0,7.0,12.0,
                     mapOf("fragDamage" to 12.5,"aoeRange" to 2.0)),"aoe"),
                 d(TowerPathOption.TOP,3,s(270,620,20.0,7.0,13.0,
                     mapOf("fragDamage" to 12.5,"aoeRange" to 2.0,"stunSeconds" to 0.5)),"stun"),

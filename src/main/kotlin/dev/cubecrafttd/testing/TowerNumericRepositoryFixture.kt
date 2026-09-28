@@ -1,5 +1,7 @@
 package dev.cubecrafttd.testing
 
+import dev.cubecrafttd.tower.visual.TowerPath
+
 import dev.cubecrafttd.tower.*
 
 object TowerNumericRepositoryFixture {
@@ -12,7 +14,26 @@ object TowerNumericRepositoryFixture {
         val zeus = towers.get("zeus")
         val turret = towers.get("turret")
 
+        val artilleryBottomLevel2=
+            TowerStageResolver.resolve(
+                RecommendedMatureTowerDefinitions
+                    .get("artillery"),
+                TowerPath.BOTTOM,
+                2
+            )
+
         return listOf(
+            FixtureResult(
+                "tower-artillery-level2-is-shared-before-branch",
+                artilleryBottomLevel2
+                    .option==
+                    TowerPathOption.NONE &&
+                    artilleryBottomLevel2
+                        .stats.cost==110L &&
+                    artilleryBottomLevel2
+                        .stats.cumulativeCost==
+                        350L
+            ),
             FixtureResult(
                 "tower-numeric-eleven-families",
                 towers.all().size == 11

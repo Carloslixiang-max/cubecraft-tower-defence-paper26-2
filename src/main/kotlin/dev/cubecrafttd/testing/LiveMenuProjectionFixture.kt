@@ -34,6 +34,12 @@ object LiveMenuProjectionFixture {
             TowerBuilderMenus
                 .threeByThree2021
                 .toLiveView()
+        val zeusPath=
+            TowerBuilderMenus
+                .pathSelector2021(
+                    "zeus"
+                )
+                .toLiveView()
 
         return listOf(
             FixtureResult(
@@ -66,6 +72,20 @@ object LiveMenuProjectionFixture {
                     summoner.slotIconHints[22]=="nether-star" &&
                     summoner.slotActionIds[26]=="summoner:send" &&
                     summoner.slotIconHints[26]=="spawner"
+            ),
+            FixtureResult(
+                "live-menu-projection-preserves-2021-zeus-path2-context",
+                zeusPath.slotActionIds[15]==
+                    "path:bottom" &&
+                    zeusPath.slotDisplayNames[15]==
+                        "Zeus Tower path 2" &&
+                    zeusPath.slotIconHints[15]==
+                        "sugar" &&
+                    zeusPath.slotLore[15]==
+                        listOf(
+                            "Summons baby Zeus.",
+                            "Click to select path!"
+                        )
             )
         )
     }
