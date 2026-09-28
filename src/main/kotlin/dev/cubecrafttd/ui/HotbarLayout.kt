@@ -8,6 +8,20 @@ enum class HotbarAction {
     SETTINGS
 }
 
+sealed interface HotbarEntry {
+    data class Action(
+        val action: HotbarAction
+    ) : HotbarEntry
+
+    data class AoE(
+        val potionId: String
+    ) : HotbarEntry {
+        init {
+            require(potionId.isNotBlank())
+        }
+    }
+}
+
 enum class HotbarLayoutEvidence {
     OFFICIAL_2021_SCREENSHOT_EXAMPLE,
     ENGINEERING_RUNTIME_DEFAULT,
@@ -17,75 +31,164 @@ enum class HotbarLayoutEvidence {
 data class HotbarLayout(
     val slots: Map<HotbarAction, Int>,
     val evidence: HotbarLayoutEvidence =
-        HotbarLayoutEvidence.PLAYER_CUSTOM
+        HotbarLayoutEvidence.PLAYER_CUSTOM,
+    val aoeSlots: Map<String,Int> =
+        emptyMap()
 ) {
     init {
         require(slots.values.all { it in 0..8 })
-        require(slots.values.distinct().size == slots.size)
+        require(aoeSlots.keys.all { it.isNotBlank() })
+        require(aoeSlots.values.all { it in 0..8 })
+        val occupied=
+            slots.values +
+                aoeSlots.values
+        require(
+            occupied.distinct().size==
+                occupied.size
+        ) {
+            "Hotbar entries cannot share a slot"
+        }
     }
 
     fun slot(action: HotbarAction): Int =
-        slots[action] ?: error("Action $action has no hotbar slot")
+        slots[action]
+            ?: error("Action $action has no hotbar slot")
+
+    fun aoeSlot(potionId: String): Int? =
+        aoeSlots[potionId]
+
+    fun entryAt(slot: Int): HotbarEntry? {
+        require(slot in 0..8)
+
+        slots.entries
+            .firstOrNull { it.value==slot }
+            ?.let {
+                return HotbarEntry.Action(
+                    it.key
+                )
+            }
+
+        aoeSlots.entries
+            .firstOrNull { it.value==slot }
+            ?.let {
+                return HotbarEntry.AoE(
+                    it.key
+                )
+            }
+
+        return null
+    }
 
     fun move(
         action: HotbarAction,
         newSlot: Int
     ): HotbarLayout {
         require(newSlot in 0..8)
-        val existingAtTarget = slots.entries
-            .firstOrNull { it.value == newSlot }
-        val oldSlot = slot(action)
-        val next = slots.toMutableMap()
-        next[action] = newSlot
-        if (existingAtTarget != null &&
-            existingAtTarget.key != action
+        check(
+            newSlot !in aoeSlots.values
         ) {
-            next[existingAtTarget.key] = oldSlot
+            "Fixed-action/AoE swap semantics are not recovered; move the AoE first"
+        }
+
+        val existingAtTarget=
+            slots.entries
+                .firstOrNull {
+                    it.value==newSlot
+                }
+        val oldSlot=slot(action)
+        val next=slots.toMutableMap()
+        next[action]=newSlot
+        if(
+            existingAtTarget!=null &&
+            existingAtTarget.key!=action
+        ) {
+            next[
+                existingAtTarget.key
+            ]=oldSlot
         }
         return HotbarLayout(
             next,
-            HotbarLayoutEvidence.PLAYER_CUSTOM
+            HotbarLayoutEvidence.PLAYER_CUSTOM,
+            aoeSlots
+        )
+    }
+
+    /**
+     * Exact original replacement/swap gestures are unresolved. AoE placement
+     * therefore only targets an empty slot or its own current slot.
+     */
+    fun placeAoE(
+        potionId: String,
+        newSlot: Int
+    ): HotbarLayout {
+        require(potionId.isNotBlank())
+        require(newSlot in 0..8)
+
+        val occupied=entryAt(newSlot)
+        check(
+            occupied==null ||
+                occupied==
+                    HotbarEntry.AoE(
+                        potionId
+                    )
+        ) {
+            "Target hotbar slot is occupied; AoE replacement semantics are not recovered"
+        }
+
+        val next=aoeSlots.toMutableMap()
+        next[potionId]=newSlot
+        return HotbarLayout(
+            slots,
+            HotbarLayoutEvidence.PLAYER_CUSTOM,
+            next
+        )
+    }
+
+    fun removeAoE(
+        potionId: String
+    ): HotbarLayout {
+        if(potionId !in aoeSlots)
+            return this
+        val next=aoeSlots.toMutableMap()
+        next.remove(potionId)
+        return HotbarLayout(
+            slots,
+            HotbarLayoutEvidence.PLAYER_CUSTOM,
+            next
         )
     }
 
     companion object {
-        /**
-         * Runtime compatibility preset only. Official 2021 evidence proves the
-         * layout is player-customizable and saved between games; it does not
-         * prove this was the universal default.
-         */
-        val ENGINEERING_RUNTIME_DEFAULT = HotbarLayout(
-            mapOf(
-                HotbarAction.SWORD to 0,
-                HotbarAction.BOW to 1,
-                HotbarAction.SUMMONER to 2,
-                HotbarAction.CASTLE_BAZAAR to 3,
-                HotbarAction.SETTINGS to 8
-            ),
-            HotbarLayoutEvidence.ENGINEERING_RUNTIME_DEFAULT
-        )
+        val ENGINEERING_RUNTIME_DEFAULT =
+            HotbarLayout(
+                mapOf(
+                    HotbarAction.SWORD to 0,
+                    HotbarAction.BOW to 1,
+                    HotbarAction.SUMMONER to 2,
+                    HotbarAction.CASTLE_BAZAAR to 3,
+                    HotbarAction.SETTINGS to 8
+                ),
+                HotbarLayoutEvidence
+                    .ENGINEERING_RUNTIME_DEFAULT
+            )
 
         @Deprecated(
             "Not evidence-backed as a universal 2021 default; use ENGINEERING_RUNTIME_DEFAULT"
         )
-        val DEFAULT_2021 = ENGINEERING_RUNTIME_DEFAULT
+        val DEFAULT_2021 =
+            ENGINEERING_RUNTIME_DEFAULT
 
-        /**
-         * Official Jan-2021 inventory-layout screenshot example. It visibly
-         * places the Summoner chest at slot 5, Bazaar block at slot 7 and
-         * Settings crafting table at slot 9 (human numbering). The screenshot
-         * also contains a utility AoE slot, which is modeled separately later
-         * because the 2021 editor allows multiple AoEs.
-         */
-        val OFFICIAL_2021_SCREENSHOT_EXAMPLE = HotbarLayout(
-            mapOf(
-                HotbarAction.SWORD to 0,
-                HotbarAction.BOW to 1,
-                HotbarAction.SUMMONER to 4,
-                HotbarAction.CASTLE_BAZAAR to 6,
-                HotbarAction.SETTINGS to 8
-            ),
-            HotbarLayoutEvidence.OFFICIAL_2021_SCREENSHOT_EXAMPLE
-        )
+        val OFFICIAL_2021_SCREENSHOT_EXAMPLE =
+            HotbarLayout(
+                mapOf(
+                    HotbarAction.SWORD to 0,
+                    HotbarAction.BOW to 1,
+                    HotbarAction.SUMMONER to 4,
+                    HotbarAction.CASTLE_BAZAAR to 6,
+                    HotbarAction.SETTINGS to 8
+                ),
+                HotbarLayoutEvidence
+                    .OFFICIAL_2021_SCREENSHOT_EXAMPLE
+            )
     }
 }
