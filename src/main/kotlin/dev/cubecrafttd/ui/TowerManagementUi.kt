@@ -32,9 +32,10 @@ object TowerManagementMenus {
     /**
      * Mixed-evidence 2021 tower menu shell.
      *
-     * Direct official screenshot evidence recovers a 54-slot inventory, a
-     * concrete title example ("Zeus Tower I"), and the rangefinder control in
-     * zero-based slot 45. Statistics / upgrade / sell exist historically, but
+     * Direct 2021 screenshots recover a 45-slot inventory, concrete tower
+     * title examples such as "Archer Tower I", the rangefinder stick in
+     * zero-based slot 36, a book in slot 40 and a barrier in slot 44.
+     * Statistics / upgrade / sell exist historically, but
      * their exact 2021 slots remain unrecovered, so those controls intentionally
      * retain the previous Engineering fallback positions.
      */
@@ -49,7 +50,7 @@ object TowerManagementMenus {
                 towerDisplayName +
                     " " +
                     romanLevel(level),
-            size=54,
+            size=45,
             evidenceStatus=
                 UiEvidenceStatus
                     .ENGINEERING_FALLBACK,
@@ -77,7 +78,7 @@ object TowerManagementMenus {
                     "Sell tower"
                 ),
                 MenuSlot(
-                    45,
+                    36,
                     "tower-manage:$towerInstanceId:rangefinder",
                     UiEvidenceStatus
                         .MATURE_DIRECT,
@@ -86,6 +87,22 @@ object TowerManagementMenus {
                     else
                         "Click to Enable this tower's rangefinder",
                     "stick"
+                ),
+                MenuSlot(
+                    40,
+                    "noop:tower-manage:$towerInstanceId:2021-book-unresolved",
+                    UiEvidenceStatus
+                        .MATURE_DIRECT,
+                    "2021 tower-menu book (action unresolved)",
+                    "book"
+                ),
+                MenuSlot(
+                    44,
+                    "noop:tower-manage:$towerInstanceId:2021-barrier-unresolved",
+                    UiEvidenceStatus
+                        .MATURE_DIRECT,
+                    "2021 tower-menu barrier (action unresolved)",
+                    "barrier"
                 )
             )
         )

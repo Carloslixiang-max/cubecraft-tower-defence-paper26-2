@@ -33,13 +33,13 @@ object TowerManagementMenuFixture {
             ),
             FixtureResult(
                 "tower-management-2021-shell-recovers-size-title-and-rangefinder-slot",
-                menu.size==54 &&
+                menu.size==45 &&
                     menu.title=="Zeus Tower I" &&
-                    menu.actionAt(45)==
+                    menu.actionAt(36)==
                         "tower-manage:42:rangefinder" &&
                     menu.slots
                         .first {
-                            it.slot==45
+                            it.slot==36
                         }
                         .let {
                             it.evidenceStatus==
@@ -51,12 +51,33 @@ object TowerManagementMenuFixture {
                         }
             ),
             FixtureResult(
+                "tower-management-2021-bottom-row-direct-visuals-are-preserved-with-unresolved-actions",
+                menu.actionAt(40)==
+                    "noop:tower-manage:42:2021-book-unresolved" &&
+                    menu.actionAt(44)==
+                        "noop:tower-manage:42:2021-barrier-unresolved" &&
+                    menu.slots
+                        .first { it.slot==40 }
+                        .let {
+                            it.evidenceStatus==
+                                UiEvidenceStatus.MATURE_DIRECT &&
+                            it.iconHint=="book"
+                        } &&
+                    menu.slots
+                        .first { it.slot==44 }
+                        .let {
+                            it.evidenceStatus==
+                                UiEvidenceStatus.MATURE_DIRECT &&
+                            it.iconHint=="barrier"
+                        }
+            ),
+            FixtureResult(
                 "tower-management-rangefinder-state-and-roman-level-project",
                 pinned.title==
                     "Zeus Tower IV" &&
                     pinned.slots
                         .first {
-                            it.slot==45
+                            it.slot==36
                         }
                         .displayName==
                     "Click to Disable this tower's rangefinder"
