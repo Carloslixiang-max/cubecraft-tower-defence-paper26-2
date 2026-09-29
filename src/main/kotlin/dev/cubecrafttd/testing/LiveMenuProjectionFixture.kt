@@ -5,6 +5,7 @@ import dev.cubecrafttd.paper.bukkit.toLiveView
 import dev.cubecrafttd.progression.TroopProgressionState
 import dev.cubecrafttd.ui.DynamicMatchMenus
 import dev.cubecrafttd.ui.TowerBuilderMenus
+import dev.cubecrafttd.ui.TowerManagementMenus
 import java.util.UUID
 
 object LiveMenuProjectionFixture {
@@ -38,6 +39,15 @@ object LiveMenuProjectionFixture {
             TowerBuilderMenus
                 .pathSelector2021(
                     "zeus"
+                )
+                .toLiveView()
+        val archerTowerMenu=
+            TowerManagementMenus
+                .mature2021(
+                    7,
+                    "Archer Tower",
+                    1,
+                    false
                 )
                 .toLiveView()
 
@@ -86,6 +96,13 @@ object LiveMenuProjectionFixture {
                             "Summons baby Zeus.",
                             "Click to select path!"
                         )
+            ),
+            FixtureResult(
+                "live-menu-projection-preserves-2021-tower-menu-bottom-row-icons",
+                archerTowerMenu.size==45 &&
+                    archerTowerMenu.slotIconHints[36]=="stick" &&
+                    archerTowerMenu.slotIconHints[40]=="book" &&
+                    archerTowerMenu.slotIconHints[44]=="barrier"
             )
         )
     }
