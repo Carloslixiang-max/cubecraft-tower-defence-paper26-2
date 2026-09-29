@@ -105,10 +105,10 @@ object LiveMenuProjectionFixture {
             ),
             FixtureResult(
                 "live-menu-projection-preserves-2021-tower-menu-bottom-row-icons",
-                archerTowerMenu.size==45 &&
-                    archerTowerMenu.slotIconHints[36]=="stick" &&
-                    archerTowerMenu.slotIconHints[40]=="book" &&
-                    archerTowerMenu.slotIconHints[44]=="barrier"
+                archerTowerMenu.size==54 &&
+                    archerTowerMenu.slotIconHints[45]=="stick" &&
+                    archerTowerMenu.slotIconHints[49]=="book" &&
+                    archerTowerMenu.slotIconHints[53]=="barrier"
             ),
             FixtureResult(
                 "live-menu-projection-preserves-2021-archer-path-arrow-appearance",

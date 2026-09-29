@@ -129,13 +129,13 @@ object PaperLiveCertificationFixture {
                     .classify(
                         LiveMenuView(
                             "Zeus Tower I",
-                            45,
+                            54,
                             mapOf(
-                                36 to
+                                45 to
                                     "tower-manage:1:rangefinder",
-                                40 to
+                                49 to
                                     "noop:tower-manage:1:2021-book-unresolved",
-                                44 to
+                                53 to
                                     "noop:tower-manage:1:2021-barrier-unresolved"
                             )
                         )
