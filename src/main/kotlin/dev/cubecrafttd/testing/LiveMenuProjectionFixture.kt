@@ -41,6 +41,12 @@ object LiveMenuProjectionFixture {
                     "zeus"
                 )
                 .toLiveView()
+        val archerPath=
+            TowerBuilderMenus
+                .pathSelector2021(
+                    "archer"
+                )
+                .toLiveView()
         val archerTowerMenu=
             TowerManagementMenus
                 .mature2021(
@@ -103,6 +109,13 @@ object LiveMenuProjectionFixture {
                     archerTowerMenu.slotIconHints[36]=="stick" &&
                     archerTowerMenu.slotIconHints[40]=="book" &&
                     archerTowerMenu.slotIconHints[44]=="barrier"
+            ),
+            FixtureResult(
+                "live-menu-projection-preserves-2021-archer-path-arrow-appearance",
+                archerPath.slotActionIds[11]=="path:top" &&
+                    archerPath.slotIconHints[11]=="arrow" &&
+                    archerPath.slotActionIds[15]=="path:bottom" &&
+                    archerPath.slotIconHints[15]=="arrow-glow"
             )
         )
     }

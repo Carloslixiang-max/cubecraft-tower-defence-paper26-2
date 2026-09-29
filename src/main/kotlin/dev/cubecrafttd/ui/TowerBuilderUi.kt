@@ -86,6 +86,8 @@ object TowerBuilderMenus {
 
         val zeus=
             towerId=="zeus"
+        val archer=
+            towerId=="archer"
 
         return MenuDefinition(
             title=
@@ -102,9 +104,11 @@ object TowerBuilderMenus {
                         .MATURE_CONTEXT,
                     definition.displayName +
                         " path 1",
-                    if(zeus)
-                        "flint"
-                    else null
+                    when {
+                        zeus -> "flint"
+                        archer -> "arrow"
+                        else -> null
+                    }
                 ),
                 MenuSlot(
                     15,
@@ -117,9 +121,11 @@ object TowerBuilderMenus {
                             .MATURE_CONTEXT,
                     definition.displayName +
                         " path 2",
-                    if(zeus)
-                        "sugar"
-                    else null,
+                    when {
+                        zeus -> "sugar"
+                        archer -> "arrow-glow"
+                        else -> null
+                    },
                     if(zeus)
                         listOf(
                             "Summons baby Zeus.",

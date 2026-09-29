@@ -25,7 +25,9 @@ class BukkitEngineeringMenuRenderer :
             )
             if(
                 iconHint==
-                    "spawner-glow"
+                    "spawner-glow" ||
+                iconHint==
+                    "arrow-glow"
             ) {
                 it.setEnchantmentGlintOverride(
                     true
@@ -60,6 +62,8 @@ class BukkitEngineeringMenuRenderer :
             "anvil" -> Material.ANVIL
             "stick" -> Material.STICK
             "barrier" -> Material.BARRIER
+            "arrow" -> Material.ARROW
+            "arrow-glow" -> Material.ARROW
             "flint" -> Material.FLINT
             "sugar" -> Material.SUGAR
             "nether-star" -> Material.NETHER_STAR
