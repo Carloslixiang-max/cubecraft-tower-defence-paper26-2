@@ -275,13 +275,18 @@ object DynamicMatchMenusFixture {
                         .MATURE_DIRECT &&
                 settings.slots
                     .filterNot {
-                        it.slot==40
+                        it.slot==40 || it.slot==11
                     }
                     .all {
                         it.evidenceStatus==
                             UiEvidenceStatus
                                 .ENGINEERING_FALLBACK
-                    }
+                    } &&
+                settings.slots.first { it.slot==11 }.let {
+                    it.evidenceStatus==UiEvidenceStatus.MATURE_CONTEXT &&
+                        it.iconHint=="torch" &&
+                        it.actionId=="settings:auto-centre"
+                }
             )
         )
     }
