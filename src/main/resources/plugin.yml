@@ -87,7 +87,7 @@ commands:
     permission: cubecrafttd.admin
   ctdplaytestsetup:
     description: Write explicit engineering-only playable defaults and Farm map binding
-    usage: /ctdplaytestsetup apply
+    usage: /ctdplaytestsetup apply [<world> <originX> <originY> <originZ>]
     permission: cubecrafttd.admin
 permissions:
   cubecrafttd.play:

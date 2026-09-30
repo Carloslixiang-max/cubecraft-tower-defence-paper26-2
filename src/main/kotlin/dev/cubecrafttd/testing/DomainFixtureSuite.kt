@@ -103,6 +103,7 @@ object DomainFixtureSuite {
         addAll(MatchHotbarProjectionFixture.run())
         addAll(TowerPlacementAndRangefinderFixture.run())
         addAll(EngineeringPlaytestProfileFixture.run())
+        addAll(EngineeringPlaytestSetupRequestFixture.run())
         addAll(EngineeringMatchHudFixture.run())
         addAll(EngineeringMatchEndPresentationFixture.run())
         addAll(MatchEndFeedbackPolicyFixture.run())

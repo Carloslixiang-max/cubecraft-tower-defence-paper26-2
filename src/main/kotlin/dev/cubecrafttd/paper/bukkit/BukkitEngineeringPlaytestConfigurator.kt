@@ -1,8 +1,11 @@
 package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.arena.TeamId
+import dev.cubecrafttd.admin.EngineeringMapPlacementBounds
 import dev.cubecrafttd.map.*
+import dev.cubecrafttd.map.schematic.SpongeSchematicV2Decoder
 import dev.cubecrafttd.truth.*
+import org.bukkit.World
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
@@ -24,7 +27,13 @@ class BukkitEngineeringPlaytestConfigurator(
 ) {
     fun apply(
         player: Player
-    ): EngineeringPlaytestSetupReport {
+    ): EngineeringPlaytestSetupReport = apply(
+        player.world,
+        BlockPos(player.location.blockX, player.location.blockY + 8, player.location.blockZ)
+    )
+
+    /** Explicit coordinates are the schematic origin, without the player-mode +8 offset. */
+    fun apply(world: World, origin: BlockPos): EngineeringPlaytestSetupReport {
         val farm=
             File(
                 plugin.dataFolder,
@@ -44,18 +53,14 @@ class BukkitEngineeringPlaytestConfigurator(
             "ImprovedFarm.schem SHA-256 mismatch: " + sha
         }
 
-        val origin=
-            BlockPos(
-                player.location.blockX,
-                player.location.blockY + 8,
-                player.location.blockZ
-            )
+        val dimensions=SpongeSchematicV2Decoder().decode(bytes).dimensions
+        EngineeringMapPlacementBounds.validate(origin, dimensions, world.minHeight, world.maxHeight)
 
         val runtime=
             FarmPaperMapBinder()
                 .prepare(
                     bytes,
-                    player.world.uid,
+                    world.uid,
                     origin
                 )
                 .runtime
@@ -149,7 +154,7 @@ class BukkitEngineeringPlaytestConfigurator(
         )
         c.set(
             "map-binding.world",
-            player.world.name
+            world.name
         )
         c.set("map-binding.origin.x",origin.x)
         c.set("map-binding.origin.y",origin.y)
@@ -193,7 +198,7 @@ class BukkitEngineeringPlaytestConfigurator(
             profileId=
                 EngineeringPlaytestProfile.ID,
             worldName=
-                player.world.name,
+                world.name,
             origin=origin,
             redRoute=redRoute,
             blueRoute=blueRoute,

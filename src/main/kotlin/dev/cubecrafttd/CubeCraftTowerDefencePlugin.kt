@@ -491,451 +491,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                         error.message
                                             ?: error.javaClass
                                                 .simpleName
-                                    )
-                            )
-                        }
-                    }
-                },
-                BukkitMenuOpenObservationSink {
-                    _,menu ->
-                    PaperUiLiveEvidenceClassifier
-                        .classify(
-                            menu
-                        )
-                        ?.let(
-                            stage4Gate::recordUiEvidence
-                        )
-                }
-            )
-        aoePotionTargetListener =
-            BukkitAoEPotionTargetListener(
-                this,
-                liveArenaController
-            )
-        towerInteractionListener =
-            BukkitTowerInteractionListener(
-                this,
-                liveArenaController,
-                menuBridge
-            )
-        matchHotbarListener =
-            BukkitMatchHotbarListener(
-                this,
-                liveArenaController,
-                menuBridge
-            )
-        towerPlacementListener =
-            BukkitTowerPlacementListener(
-                this,
-                liveArenaController,
-                menuBridge
-            )
-        matchSafetyListener =
-            BukkitMatchSafetyListener(
-                this,
-                liveArenaController
-            )
-        matchDepartureListener =
-            BukkitMatchDepartureListener(
-                this,
-                liveArenaController,
-                stage4Gate
-            )
-        rangefinderService =
-            BukkitEngineeringRangefinderService(
-                this,
-                liveArenaController
-            )
-
-        val domain = DomainFixtureSuite.runAll()
-        val failed = domain.filterNot { it.passed }
-        check(failed.isEmpty()) {
-            "Pure-domain fixture gate failed: ${failed.joinToString { it.id }}"
-        }
-        stage4Gate.recordDomainFixtures(true)
-
-        val adapterSmokeFailures =
-            stage4Gate.runAndRecordAdapterSmoke()
-        check(adapterSmokeFailures.isEmpty()) {
-            "Paper adapter smoke gate failed: " +
-                adapterSmokeFailures.joinToString()
-        }
-
-        val pendingRecovery =
-            recoveryListener.pendingCount()
-        val readiness = readinessService.inspect()
-        logger.info(
-            "CubeCraftTowerDefence shell v106 enabled; " +
-                "domainFixtures=${domain.size}; " +
-                "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
-                "activeArenas=${arenaService.contexts().size}; " +
-                "fallbackMissing=${fallbackMissing.size}; " +
-                "readiness=${readiness.summary()}; " +
-                "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED"
-        )
-
-        if (fallbackMissing.isNotEmpty()) {
-            val blocking = fallbackMissing.count {
-                it.level == FallbackRequirementLevel.BLOCKS_MECHANIC
-            }
-            logger.warning(
-                "Runtime fallback report: ${fallbackMissing.size} unresolved field group(s); " +
-                    "$blocking currently block affected gameplay mechanics. " +
-                    "No hidden defaults were injected."
-            )
-        }
-
-        if (pendingRecovery > 0) {
-            logger.warning(
-                "$pendingRecovery player recovery snapshot(s) are pending. " +
-                    "Shell stage preserves them; Paper player-state serializer/restore binding " +
-                    "must be validated before production gameplay activation."
-            )
-        }
-
-        if(recoveryJournalLoadFailures.isNotEmpty()) {
-            logger.severe(
-                "Recovery journal corruption gate is BLOCKING new TD matches. " +
-                    "Unreadable files were preserved: " +
-                    recoveryJournalLoadFailures
-                        .joinToString {
-                            it.fileName +
-                                " (" +
-                                it.reason +
-                                ")"
-                        }
-            )
-        }
-    }
-
-    override fun onDisable() {
-        if (::oneVsOneQueue.isInitialized) {
-            oneVsOneQueue.close()
-        }
-        if (::liveArenaController.isInitialized) {
-            liveArenaController.stopAll()
-        }
-        if (::recoveryListener.isInitialized) {
-            recoveryListener.close()
-        }
-        if (::mapOperations.isInitialized) {
-            mapOperations.cancelActivePaste()
-        }
-        arenaService.closeAll { context ->
-            check(context.towerBodyLedger.isEmpty()) {
-                "Shell disable found unexpected tower-body ledger state in ${context.arenaId.value}"
-            }
-        }
-        val clean=
-            arenaService.contexts().isEmpty() &&
-                !mapOperations.hasActivePaste()
-        if(::stage4Gate.isInitialized) {
-            stage4Gate.markCleanShutdown(clean)
-        }
-        logger.info(
-            "CubeCraftTowerDefence shell v106 disabled; " +
-                "clean=$clean all arena contexts closed"
-        )
-    }
-
-    override fun onCommand(
-        sender: CommandSender,
-        command: Command,
-        label: String,
-        args: Array<out String>
-    ): Boolean = when (command.name.lowercase()) {
-        "ctdjoin" -> {
-            runPlayerQueueJoin(
-                sender,args.toList()
-            )
-            true
-        }
-
-        "ctdleave" -> {
-            runPlayerQueueLeave(
-                sender,args.toList()
-            )
-            true
-        }
-
-        "ctdvote" -> {
-            runPlayerPregameVote(
-                sender,args.toList()
-            )
-            true
-        }
-
-        "ctdstatus" -> {
-            sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v106, " +
-                    "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
-                    "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
-                    "reuse=" +
-                    (if(::liveArenaController.isInitialized)
-                        liveArenaController.farmReuseStatus().summary()
-                    else
-                        "uninitialized") +
-                    ", fallbackMissing=${fallbackMissing.size}, " +
-                    "readiness=${readinessService.inspect().summary()}, " +
-                    "stage4=${stage4Gate.status().summary()}"
-            )
-            true
-        }
-
-        "ctdfixtures" -> {
-            val results = DomainFixtureSuite.runAll()
-            stage4Gate.recordDomainFixtures(
-                results.all { it.passed }
-            )
-            report(sender, "domain", results)
-            true
-        }
-
-        "ctdmapcheck" -> {
-            runFarmMapCheck(sender)
-            true
-        }
-
-        "ctdready" -> {
-            reportReadiness(sender)
-            true
-        }
-
-        "ctdlivegate" -> {
-            val stage4=
-                stage4Gate.status()
-            val diagnostics=
-                PaperAdapterDiagnostics.current()
-            val remaining=
-                diagnostics
-                    .remainingLiveGates(
-                        stage4
-                    )
-            val fullCertified=
-                diagnostics
-                    .fullRealServerCertified(
-                        stage4
-                    )
-
-            sender.sendMessage(
-                "CubeCraft TD Stage-4 core: " +
-                    stage4.summary()
-            )
-            sender.sendMessage(
-                "CubeCraft TD full real-server certification: certified=" +
-                    fullCertified +
-                    " remaining=" +
-                    remaining.size
-            )
-            sender.sendMessage(
-                " Queue evidence: join=" +
-                    stage4.queueJoinObserved +
-                    " hud=" +
-                    stage4.queueHudObserved +
-                    " armageddonGuiVote=" +
-                    stage4.queueArmageddonGuiVoteObserved +
-                    " pricingGuiVote=" +
-                    stage4.queuePricingGuiVoteObserved +
-                    " countdownStart=" +
-                    stage4.queueCountdownStartObserved +
-                    " activeLeave=" +
-                    stage4.queueActiveLeaveObserved
-            )
-            sender.sendMessage(
-                " Departure evidence: reconnectRestore=" +
-                    stage4.departureReconnectObserved +
-                    " teammateTakeover=" +
-                    stage4.departedOwnerTeammateTakeoverObserved
-            )
-            sender.sendMessage(
-                " UI evidence: builder=" +
-                    stage4.uiTowerBuilderObserved +
-                    " pathSelector=" +
-                    stage4.uiPathSelectorObserved +
-                    " towerMenu=" +
-                    stage4.uiTowerMenuObserved +
-                    " settings=" +
-                    stage4.uiSettingsObserved +
-                    " inventoryLayout=" +
-                    stage4.uiInventoryLayoutObserved
-            )
-            sender.sendMessage(
-                " Recovery/world evidence: snapshotRoundTrip=" +
-                    stage4.playerSnapshotRoundTripPassed +
-                    " restartRecovery=" +
-                    stage4.restartRecoveryPassed +
-                    " stress60=" +
-                    stage4.towerStress60Passed +
-                    " verifiedFarmReset=" +
-                    stage4.verifiedFarmResetPassed +
-                    " consecutiveCleanRounds=" +
-                    stage4.consecutiveCleanArenaRoundTrips +
-                    "/2 cleanRestarts=" +
-                    stage4.cleanRestartCycles +
-                    "/2"
-            )
-            remaining.forEach {
-                sender.sendMessage(
-                    " LIVE-GATE PENDING: " +
-                        it
-                )
-            }
-            true
-        }
-
-        "ctdreuse" -> {
-            if(
-                args.size!=1 ||
-                !args[0].equals(
-                    "status",
-                    ignoreCase=true
-                )
-            ) {
-                sender.sendMessage(
-                    "Usage: /ctdreuse status"
-                )
-            } else {
-                val reuse=
-                    liveArenaController
-                        .farmReuseStatus()
-                sender.sendMessage(
-                    "Farm reuse gate: " +
-                        reuse.summary()
-                )
-                if(
-                    reuse.hardTowerConflictKeys
-                        .isNotEmpty()
-                ) {
-                    sender.sendMessage(
-                        "Hard tower-body residue requires a verified map repair/reset before this gate may be cleared."
-                    )
-                }
-                if(
-                    reuse.uncleanRestartSuspectedResidue
-                ) {
-                    sender.sendMessage(
-                        "Farm world integrity is unknown (for example after an unclean restart or failed start cleanup). Run the verified Farm reset; it will remove persistently-tagged TD entities in the Farm volume and then verify the schematic before reuse is unlocked."
-                    )
-                }
-                if(
-                    reuse.liveTrackedEntityResidue
-                        .isNotEmpty()
-                ) {
-                    sender.sendMessage(
-                        "Live tracked-entity residue UUIDs: " +
-                            reuse.liveTrackedEntityResidue
-                                .joinToString()
-                    )
-                }
-            }
-            true
-        }
-
-        "ctdsnapshotcheck" -> {
-            runPlayerSnapshotRoundTripCheck(
-                sender,
-                args.toList()
-            )
-            true
-        }
-
-        "ctdperf" -> {
-            runPerformanceReport(
-                sender,
-                args.toList()
-            )
-            true
-        }
-
-        "ctdmapplan" -> {
-            runFarmMapPlan(sender)
-            true
-        }
-
-        "ctdpreflight" -> {
-            runLiveCompositionPreflight(sender)
-            true
-        }
-
-        "ctdfallbacks" -> {
-            reportFallbackCompleteness(sender)
-            true
-        }
-
-        "ctdarmageddonfallbacks" -> {
-            reportArmageddonFallbacks(
-                sender,args.toList()
-            )
-            true
-        }
-
-        "ctdpastefarm" -> {
-            runFarmPaste(sender,args.toList())
-            true
-        }
-
-        "ctdresetfarm" -> {
-            runFarmReset(
-                sender,
-                args.toList()
-            )
-            true
-        }
-
-        "ctdtest" -> {
-            runAdminTest(sender,args.toList())
-            true
-        }
-
-        "ctdlivetest" -> {
-            runLiveArenaTest(sender,args.toList())
-            true
-        }
-
-        "ctdmenu" -> {
-            runLiveMenuTest(
-                sender,args.toList()
-            )
-            true
-        }
-
-        "ctdplaytestsetup" -> {
-            runEngineeringPlaytestSetup(
-                sender,args.toList()
-            )
-            true
-        }
-
-        else -> false
-    }
-
-    private fun runPlayerPregameVote(
-        sender: CommandSender,
-        args: List<String>
-    ) {
-        val player=
-            sender as?
-                org.bukkit.entity.Player
-                ?: run {
-                    sender.sendMessage(
-                        "ctdvote requires a player"
-                    )
-                    return
-                }
-
-        if(args.isEmpty()) {
-            runCatching {
-                oneVsOneQueue
-                    .pregameVoteMenu(
-                        player.uniqueId
-                    )
-            }.onSuccess { menu ->
-                pregameVoteMenuBridge
-                    .open(
-                        player.uniqueId,
-                        menu.toLiveView()
-                    )
-            }.onFailure { error ->
+     …3680 tokens truncated….onFailure { error ->
                 sender.sendMessage(
                     "ctdvote ERROR: " +
                         (
@@ -2012,28 +1568,15 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         sender: CommandSender,
         args: List<String>
     ) {
-        if(
-            args.size!=1 ||
-            args[0].lowercase()!="apply"
-        ) {
-            sender.sendMessage(
-                "Usage: /ctdplaytestsetup apply"
-            )
-            sender.sendMessage(
-                "This writes explicit ENGINEERING values to config.yml; they are not original CubeCraft truth."
-            )
+        val request=try {
+            EngineeringPlaytestSetupRequest.parse(args)
+        } catch(t: IllegalArgumentException) {
+            sender.sendMessage(t.message ?: EngineeringPlaytestSetupRequest.USAGE)
+            return
+        } catch(t: IllegalStateException) {
+            sender.sendMessage(t.message ?: EngineeringPlaytestSetupRequest.USAGE)
             return
         }
-
-        val player=
-            sender as?
-                org.bukkit.entity.Player
-                ?: run {
-                    sender.sendMessage(
-                        "ctdplaytestsetup must be run by a player standing at the intended map minimum corner."
-                    )
-                    return
-                }
 
         if(arenaService.contexts().isNotEmpty()) {
             sender.sendMessage(
@@ -2041,12 +1584,29 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             )
             return
         }
+        if(mapOperations.hasActivePaste()) {
+            sender.sendMessage("Wait for the active Farm paste/reset before changing the playtest profile.")
+            return
+        }
 
         try {
-            val r=
-                BukkitEngineeringPlaytestConfigurator(
-                    this
-                ).apply(player)
+            val configurator=BukkitEngineeringPlaytestConfigurator(this)
+            val r=when(request) {
+                EngineeringPlaytestSetupRequest.StandingPlayer -> {
+                    val player=sender as? org.bukkit.entity.Player
+                    if(player==null) {
+                        sender.sendMessage("Console setup requires an explicit world and schematic origin.")
+                        sender.sendMessage(EngineeringPlaytestSetupRequest.USAGE)
+                        return
+                    }
+                    configurator.apply(player)
+                }
+                is EngineeringPlaytestSetupRequest.ExplicitOrigin -> {
+                    val world=server.getWorld(request.worldName)
+                        ?: error("Requested map world is missing/not loaded: ${request.worldName}")
+                    configurator.apply(world, request.origin)
+                }
+            }
             sender.sendMessage(
                 "Engineering playtest profile saved: " +
                     r.profileId

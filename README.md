@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v106 engineering playtest shell**
-- Pure-domain suite: **533 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Current shell lineage: **v107 engineering playtest shell**
+- Pure-domain suite: **539 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -168,6 +168,8 @@ Unknown original values remain unknown in the strict configuration. For actual t
 13. End an admin-started test with `/ctdlivetest stop test`.
 
 The setup command creates `config.before-engineering-playtest.yml` before its first overwrite. Generated numbers, route choice, player spawns, and Guard anchors are explicitly tagged **ENGINEERING** and are never promoted to original CubeCraft truth.
+
+For explicit console deployment, use `/ctdplaytestsetup apply <world> <originX> <originY> <originZ>` with a loaded world name and whole block coordinates. These coordinates are the **schematic origin itself**, with no +8 Y offset. For example, `ctdplaytestsetup apply ctd-playtest 0 80 0` binds the Farm volume to `(0,80,0)` through `(124,97,190)`. The original player form retains its +8 offset. Both forms use the same checksum, runtime compiler, backup and fallback configuration; neither pastes blocks or bypasses live certification. An out-of-world-height volume or horizontal-coordinate overflow is rejected before any config/backup write. Configuration changes also refuse active arenas and active Farm paste/reset operations. Restart before pasting or starting a match.
 
 For cross-restart recovery certification, run `/ctdsnapshotcheck restart-arm` as an online OP who is not in a TD arena, then perform a real server restart and reconnect. The command intentionally puts that player into temporary match-prepared state after the durable snapshot is written. On the next process, the plugin restores and re-captures the player before deleting the journal; verify the result with `/ctdsnapshotcheck restart-status`.
 
