@@ -129,10 +129,15 @@ object TowerBuilderMenus {
                     if(zeus)
                         listOf(
                             "Summons baby Zeus.",
+                            "",
                             "Click to select path!"
                         )
                     else
-                        emptyList()
+                        emptyList(),
+                    if (zeus) MenuTextStyle(
+                        MenuTextColor.GREEN,
+                        mapOf(0 to MenuTextColor.GRAY, 2 to MenuTextColor.RED)
+                    ) else null
                 )
             )
         )
@@ -245,4 +250,3 @@ class TowerBuilderSession {
         )
     }
 }
-

@@ -61,6 +61,9 @@ class BukkitEngineeringMenuRenderer :
             "book" -> Material.BOOK
             "anvil" -> Material.ANVIL
             "stick" -> Material.STICK
+            "torch" -> Material.TORCH
+            "bricks" -> Material.BRICKS
+            "splash-potion" -> Material.SPLASH_POTION
             "barrier" -> Material.BARRIER
             "arrow" -> Material.ARROW
             "arrow-glow" -> Material.ARROW

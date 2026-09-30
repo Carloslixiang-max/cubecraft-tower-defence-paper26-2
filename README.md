@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v105 engineering playtest shell**
-- Pure-domain baseline: **524/524 fixtures PASS**
+- Current shell lineage: **v106 engineering playtest shell**
+- Pure-domain baseline: see the latest successful Actions run and its Paper `ctdfixtures` output (the previous documented baseline was 524/524).
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -218,3 +218,14 @@ See the source under `dev.cubecrafttd.truth` for the runtime fallback model.
 Source code in this repository is licensed under **GPL-3.0-only**. See [`LICENSE`](LICENSE).
 
 Third-party names, trademarks, and assets are not granted by this code license. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+### v106 GUI fidelity pass
+
+- Tower management remains **54 slots**; the recovered stick/book/barrier occupy zero-based slots 45/49/53. Book and barrier retain fail-closed `noop:` actions.
+- Archer paths retain ordinary Arrow / Arrow with enchant glint. Zeus path 2 retains Sugar and now projects the directly visible green title, gray description, blank line and red click instruction. Other towers do not inherit Zeus lore.
+- Both pregame and match Settings use the same recovered Auto-centre control: Torch at slot 11 and the official description. Its enabled/unlocked wording is direct evidence; disabled and fewer-than-20-win messaging are runtime adaptations. The 20-win rule still comes from persistent lifetime wins.
+- Inventory-layout AoEs now use Splash Potion icons. Castle Bazaar uses Bricks in both editors and the real match hotbar. Per-potion colors, exact source order and original editor gestures remain unresolved.
+- The GUI text style survives domain-to-live projection; Paper applies explicit color and non-italic text only to recovered styled controls. Precise bold spans and client visual matching still need verification.
+- Real Paper adapter smoke checks these item identities and Archer enchant glint on both CI boots. This does not pass the production GUI fidelity or any other human-server gate.
+
+Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).

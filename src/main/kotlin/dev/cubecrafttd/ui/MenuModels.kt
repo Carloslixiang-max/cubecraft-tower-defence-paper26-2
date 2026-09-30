@@ -8,13 +8,22 @@ enum class UiEvidenceStatus {
     UNKNOWN
 }
 
+enum class MenuTextColor { GREEN, RED, GRAY, GOLD }
+
+/** Explicit styling for recovered text; unstyled Engineering labels stay plain. */
+data class MenuTextStyle(
+    val nameColor: MenuTextColor,
+    val loreColors: Map<Int, MenuTextColor> = emptyMap()
+)
+
 data class MenuSlot(
     val slot: Int,
     val actionId: String,
     val evidenceStatus: UiEvidenceStatus,
     val displayName: String? = null,
     val iconHint: String? = null,
-    val lore: List<String> = emptyList()
+    val lore: List<String> = emptyList(),
+    val textStyle: MenuTextStyle? = null
 ) {
     init { require(slot >= 0) }
 }

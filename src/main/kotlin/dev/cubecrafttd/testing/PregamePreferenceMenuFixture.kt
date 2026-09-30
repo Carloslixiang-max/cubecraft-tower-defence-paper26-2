@@ -54,10 +54,8 @@ object PregamePreferenceMenuFixture {
                         it.actionId==
                             "pregame-settings:auto-centre"
                     }
-                    .displayName
-                    ?.contains(
-                        "disable locked"
-                    )==true
+                    .lore
+                    .any { it.contains("Disable locked") }
             ),
             FixtureResult(
                 "pregame-hotbar-projects-known-aoes-without-fake-ownership-counts",

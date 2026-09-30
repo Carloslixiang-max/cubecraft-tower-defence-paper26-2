@@ -33,5 +33,8 @@ fun MenuDefinition.toLiveView():
                 }
                 .associate {
                     it.slot to it.lore
-                }
+                },
+        slotTextStyles = slots.mapNotNull { slot ->
+            slot.textStyle?.let { slot.slot to it }
+        }.toMap()
     )

@@ -92,6 +92,9 @@ class BukkitMatchLoadoutService(
                     .CASTLE_BAZAAR_STONE_BRICKS ->
                     Material.STONE_BRICKS
                 MatchHotbarVisualKind
+                    .CASTLE_BAZAAR_BRICKS ->
+                    Material.BRICKS
+                MatchHotbarVisualKind
                     .SETTINGS_CRAFTING_TABLE ->
                     Material.CRAFTING_TABLE
                 MatchHotbarVisualKind

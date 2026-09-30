@@ -264,6 +264,21 @@ class PaperStage4GateStore(
             ItemStack.deserializeBytes(bytes)
         }
 
+        // Real Paper item construction, independent of client visual certification.
+        checkStep("historical-gui-item-identities") {
+            val renderer = BukkitEngineeringMenuRenderer()
+            mapOf(
+                "torch" to Material.TORCH,
+                "bricks" to Material.BRICKS,
+                "splash-potion" to Material.SPLASH_POTION,
+                "barrier" to Material.BARRIER
+            ).forEach { (hint, material) ->
+                check(renderer.render("noop:gui-smoke", hint).type == material)
+            }
+            check(renderer.render("path:bottom", "arrow-glow")
+                .itemMeta.enchantmentGlintOverride == true)
+        }
+
         checkStep("scheduler-primary-thread") {
             check(
                 Bukkit.isPrimaryThread()

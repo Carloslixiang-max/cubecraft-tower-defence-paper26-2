@@ -87,7 +87,7 @@ jobs:
           echo "stop" >&3
           exec 3>&-
           wait "$SERVER_PID"
-          grep -Pq "CubeCraft TD domain fixtures: ([0-9]+)/\\1 PASS" /tmp/ctd-server-1.log
+          grep -P "CubeCraft TD domain fixtures: ([0-9]+)/\\1 PASS" /tmp/ctd-server-1.log
           grep -Eq "CubeCraftTowerDefence shell v[0-9]+ disabled; clean=true" /tmp/ctd-server-1.log
           cp /tmp/ctd-server-1.log build/paper-smoke-1.log
 

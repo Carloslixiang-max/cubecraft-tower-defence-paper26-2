@@ -100,6 +100,7 @@ object LiveMenuProjectionFixture {
                     zeusPath.slotLore[15]==
                         listOf(
                             "Summons baby Zeus.",
+                            "",
                             "Click to select path!"
                         )
             ),

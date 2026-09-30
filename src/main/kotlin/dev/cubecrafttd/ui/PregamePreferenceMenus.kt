@@ -31,16 +31,9 @@ object PregamePreferenceMenus {
                         .ENGINEERING_FALLBACK,
                     "Particles: ${model.particleDensity.label}"
                 ),
-                MenuSlot(
-                    11,
-                    "pregame-settings:auto-centre",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Auto-centre towers: ${model.autoCentreEnabled}" +
-                        if(
-                            model.autoCentreDisableUnlocked
-                        ) ""
-                        else " (disable locked)"
+                HistoricalSettingsControls.autoCentre(
+                    model,
+                    "pregame-settings:auto-centre"
                 ),
                 MenuSlot(
                     12,
@@ -133,7 +126,7 @@ object PregamePreferenceMenus {
                                         " (selected)"
                                     else
                                         "",
-                                "potion"
+                                "splash-potion"
                             )
                         )
                     }
@@ -297,11 +290,11 @@ object PregamePreferenceMenus {
                     HotbarAction.SUMMONER ->
                         "chest"
                     HotbarAction.CASTLE_BAZAAR ->
-                        "stone-bricks"
+                        "bricks"
                     HotbarAction.SETTINGS ->
                         "crafting-table"
                 }
             is HotbarEntry.AoE ->
-                "potion"
+                "splash-potion"
         }
 }

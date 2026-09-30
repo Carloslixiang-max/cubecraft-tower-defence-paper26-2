@@ -9,6 +9,7 @@ enum class MatchHotbarVisualKind {
     BOW,
     SUMMONER_CHEST,
     CASTLE_BAZAAR_STONE_BRICKS,
+    CASTLE_BAZAAR_BRICKS,
     SETTINGS_CRAFTING_TABLE,
     AOE_POTION
 }
@@ -104,9 +105,9 @@ object MatchHotbarProjector {
                             .CASTLE_BAZAAR
                     ),
                     MatchHotbarVisualKind
-                        .CASTLE_BAZAAR_STONE_BRICKS,
+                        .CASTLE_BAZAAR_BRICKS,
                     "Castle Bazaar",
-                    "MATURE_GUIDE_STONE_BRICKS"
+                    "OFFICIAL_2021_SCREENSHOT_EXAMPLE"
                 ),
                 MatchHotbarItemProjection(
                     HotbarAction.SETTINGS,

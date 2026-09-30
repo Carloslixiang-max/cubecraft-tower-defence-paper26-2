@@ -297,12 +297,9 @@ object DynamicMatchMenus {
                         .ENGINEERING_FALLBACK,
                     "Particles: ${model.particleDensity.label}"
                 ),
-                MenuSlot(
-                    11,
-                    "settings:auto-centre",
-                    UiEvidenceStatus
-                        .ENGINEERING_FALLBACK,
-                    "Auto-centre towers: ${model.autoCentreEnabled}"
+                HistoricalSettingsControls.autoCentre(
+                    model,
+                    "settings:auto-centre"
                 ),
                 MenuSlot(
                     12,
@@ -482,7 +479,7 @@ object DynamicMatchMenus {
                                         else
                                             "",
                                 iconHint=
-                                    "potion"
+                                    "splash-potion"
                             )
                         )
                     }
@@ -630,7 +627,7 @@ object DynamicMatchMenus {
                     entry.action
                 )
             is HotbarEntry.AoE ->
-                "potion"
+                "splash-potion"
         }
 
     private fun hotbarActionLabel(
@@ -660,7 +657,7 @@ object DynamicMatchMenus {
             HotbarAction.SUMMONER ->
                 "chest"
             HotbarAction.CASTLE_BAZAAR ->
-                "stone-bricks"
+                "bricks"
             HotbarAction.SETTINGS ->
                 "crafting-table"
         }

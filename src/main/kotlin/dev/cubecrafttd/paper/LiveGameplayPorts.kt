@@ -53,6 +53,9 @@ data class LiveMenuView(
         emptyMap(),
     val slotLore:
         Map<Int,List<String>> =
+        emptyMap(),
+    val slotTextStyles:
+        Map<Int,dev.cubecrafttd.ui.MenuTextStyle> =
         emptyMap()
 )
 
