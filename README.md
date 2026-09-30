@@ -149,6 +149,8 @@ build/libs/
 
 ## Engineering playtest quick start
 
+**Map scope:** this is a playable Engineering track fixture, not a complete original Farm world. The verified community asset contains a 125 × 18 × 191 volume with 24,420 non-air blocks; its 2022 author deliberately changed tower spots. Complete original scenery, castles, terrain and lobby are not reconstructed/certified. Map parsing/reset implementation progress must not be reported as world-reconstruction progress. See [the map audit](evidence/FARM_MAP_SCOPE.md).
+
 Unknown original values remain unknown in the strict configuration. For actual testing, operators can explicitly opt into a separate engineering-only profile:
 
 1. Put the verified `ImprovedFarm.schem` in `plugins/CubeCraftTowerDefence/maps/ImprovedFarm.schem`. Expected SHA-256: `28d24136afe80358b89556d0fbe3b08d00e518af38c7c518819fa7fc225e613e`.
@@ -170,6 +172,20 @@ The setup command creates `config.before-engineering-playtest.yml` before its fi
 For cross-restart recovery certification, run `/ctdsnapshotcheck restart-arm` as an online OP who is not in a TD arena, then perform a real server restart and reconnect. The command intentionally puts that player into temporary match-prepared state after the durable snapshot is written. On the next process, the plugin restores and re-captures the player before deleting the journal; verify the result with `/ctdsnapshotcheck restart-status`.
 
 The Farm schematic is not bundled in this public repository because its redistribution rights have not been verified. The community author publicly shared the adjusted Farm schematic in the CubeCraft forum thread [Farm Improvements](https://www.cubecraft.net/threads/%F0%9F%8C%BE-farm-improvements-%E2%9A%92%EF%B8%8F.309871/); obtain it from the original post rather than redistributing it through this repository.
+
+### Assemble a private playtest kit
+
+Use a locally obtained map and a downloaded **successful** Actions artifact. The script validates the fixed map checksum, plugin metadata, domain-fixture count, both adapter smoke logs and both clean shutdowns. Pass the commit/run that produced the artifact; it does not independently attest those caller-supplied identifiers.
+
+```bash
+python3 scripts/package-playtest.py \
+  --artifact /path/to/green-CI-artifact.zip \
+  --farm /path/to/ImprovedFarm.schem \
+  --head <full-artifact-source-commit> --run <successful-actions-run-id> \
+  --output /path/to/new-playtest-kit.zip
+```
+
+The kit contains the existing plugin and track, fresh-server properties, start scripts, Chinese setup/match instructions, a computed map audit/voxel top view and CI logs. It refuses to replace an existing ZIP. Paper and Java are obtained separately. Extract into an empty server directory; these properties are not an upgrade configuration for an existing server. The kit still needs online operator setup, preflight and two real players. Packaging never advances Stage-4 human-server gates.
 
 ## Paper test commands
 

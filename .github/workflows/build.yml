@@ -39,6 +39,12 @@ jobs:
           java --version
           gradle --version
 
+      - name: Validate playtest packaging scripts
+        run: |
+          python3 -m py_compile scripts/package-playtest.py
+          python3 scripts/package-playtest.py --help
+          bash -n playtest/start.sh
+
       - name: Compile Paper plugin
         run: gradle clean compileKotlin --stacktrace --warning-mode all
 
