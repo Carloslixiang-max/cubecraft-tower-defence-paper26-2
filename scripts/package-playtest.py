@@ -137,6 +137,7 @@ def main():
     parser.add_argument("--head", required=True, help="Artifact's source commit, not necessarily latest HEAD")
     parser.add_argument("--run", type=int, required=True, help="Green Actions run producing that artifact")
     parser.add_argument("--output", type=Path, required=True, help="New ZIP path; existing file is never replaced")
+    parser.add_argument("--deployment-evidence", type=Path, help="Optional successful console deployment directory for the identical plugin bytes")
     args = parser.parse_args()
     if not re.fullmatch("[0-9a-f]{40}", args.head) or args.run <= 0:
         parser.error("A full commit SHA and positive Actions run ID are required")
@@ -182,6 +183,27 @@ def main():
         **{f"evidence/{name}": raw for name, raw in logs.items()},
         **{name: (template / name).read_bytes() for name in ("README.zh-CN.md", "start.sh", "start.bat", "server.properties")},
     }
+    if args.deployment_evidence:
+        directory = args.deployment_evidence
+        evidence_bytes = (directory / "deployment-report.json").read_bytes()
+        evidence = json.loads(evidence_bytes)
+        comparison = evidence.get("saved_block_state_comparison", {})
+        if (evidence.get("status") != "PASS" or evidence.get("plugin_sha256") != digest(plugin) or
+                evidence.get("farm_sha256") != FARM_SHA or comparison.get("status") != "PASS" or
+                comparison.get("checked_cells") != report["volume_blocks"] or comparison.get("mismatches") != 0 or
+                evidence.get("human_match_certified") is not False or evidence.get("full_original_map") is not False):
+            raise ValueError("Deployment evidence does not match this plugin/map or its limited certification scope")
+        manifest["console_deployment_source_commit"] = evidence["source_head"]
+        manifest["saved_block_state_comparison_cells"] = comparison["checked_cells"]
+        entries["evidence/build-manifest.json"] = json.dumps(manifest, indent=2).encode()
+        entries["evidence/deployment/deployment-report.json"] = evidence_bytes
+        if set(evidence["logs"]) != {f"deployment-boot-{i}.log" for i in (1, 2, 3)}:
+            raise ValueError("Expected exactly three deployment boot logs")
+        for name, expected_sha in evidence["logs"].items():
+            raw = (directory / name).read_bytes()
+            if digest(raw) != expected_sha:
+                raise ValueError(f"Deployment log checksum mismatch: {name}")
+            entries[f"evidence/deployment/{name}"] = raw
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.output, "x", compression=zipfile.ZIP_DEFLATED) as output:
         for name, data in entries.items():

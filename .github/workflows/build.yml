@@ -41,8 +41,10 @@ jobs:
 
       - name: Validate playtest packaging scripts
         run: |
-          python3 -m py_compile scripts/package-playtest.py
+          python3 -m py_compile scripts/package-playtest.py scripts/verify-farm-deployment.py scripts/verify-saved-farm.py
           python3 scripts/package-playtest.py --help
+          python3 scripts/verify-farm-deployment.py --help
+          python3 scripts/verify-saved-farm.py --help
           bash -n playtest/start.sh
 
       - name: Compile Paper plugin

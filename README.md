@@ -189,6 +189,8 @@ python3 scripts/package-playtest.py \
 
 The kit contains the existing plugin and track, fresh-server properties, start scripts, Chinese setup/match instructions, a computed map audit/voxel top view and CI logs. It refuses to replace an existing ZIP. Paper and Java are obtained separately. Extract into an empty server directory; these properties are not an upgrade configuration for an existing server. The kit still needs online operator setup, preflight and two real players. Packaging never advances Stage-4 human-server gates.
 
+v107 adds an opt-in isolated console deployment harness (`scripts/verify-farm-deployment.py`) and an independent stopped-world Anvil block-state checker (`scripts/verify-saved-farm.py`). The actual verified track passed three clean deployment boots, safe paste/occupied-volume refusal, post-restart preflight and a **429,750-cell saved block-state comparison with zero differences**. [Deployment evidence and limits](evidence/FARM_DEPLOYMENT_SMOKE_2026-09-30.md) remain separate from player/match/reset certification. Add `--deployment-evidence <successful-deployment-directory>` when packaging the identical tested plugin bytes to include the report/logs. Original scene components are tracked in [the official-reference ledger](evidence/FARM_SCENE_REFERENCES_2021.md); complete scene reconstruction is still pending.
+
 ## Paper test commands
 
 The plugin currently exposes player-facing Engineering commands:

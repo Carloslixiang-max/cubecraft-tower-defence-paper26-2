@@ -53,6 +53,7 @@
 - `evidence/farm-audit.json` 是从实际 NBT 方块数据计算的范围和材料数量。
 - `evidence/farm-top-view.svg` 是赛道方块俯视图，X 向右、Z 向下。颜色只是材料分类，空白区域不是已复刻地形。
 - `evidence/build-manifest.json` 记录插件来源 commit、Actions run 和文件校验值；双次 CI 起服不能替代两名真人实际打一整局。
+- 若包中有 `evidence/deployment/`，其中是相同插件字节对应的独立部署验证：三次启动、实际赛道粘贴、重启 preflight，以及保存后的 429,750 格方块状态比对。该验证没有在线玩家，不代表完整游玩、玩家恢复或完整原版场景已认证。
 
 其余 Stage-4 真人门禁（重启恢复、60+ 塔、移动视觉、连续复用、raytrace、GUI、重连接管、multi-arena）继续以实际服证据为准。
 Fast Fly 的准确语义/速度仍为 UNKNOWN。
