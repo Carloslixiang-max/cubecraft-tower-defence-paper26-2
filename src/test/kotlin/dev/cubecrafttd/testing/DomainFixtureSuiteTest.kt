@@ -8,6 +8,8 @@ class DomainFixtureSuiteTest {
     fun allDomainFixturesPass() {
         val results = DomainFixtureSuite.runAll()
         val failed = results.filterNot { it.passed }
+        println("CubeCraft TD domain fixtures: ${results.size - failed.size}/${results.size} " +
+            if (failed.isEmpty()) "PASS" else "FAIL: ${failed.joinToString { it.id }}")
         assertTrue(
             failed.isEmpty(),
             buildString {
