@@ -10,11 +10,30 @@ enum class UiEvidenceStatus {
 
 enum class MenuTextColor { GREEN, RED, GRAY, GOLD }
 
+/** UTF-16 offsets, end exclusive; only directly observed spans are styled. */
+data class MenuBoldSpan(val start: Int, val endExclusive: Int) {
+    init { require(start >= 0 && endExclusive > start) }
+}
+
 /** Explicit styling for recovered text; unstyled Engineering labels stay plain. */
 data class MenuTextStyle(
     val nameColor: MenuTextColor,
-    val loreColors: Map<Int, MenuTextColor> = emptyMap()
-)
+    val loreColors: Map<Int, MenuTextColor> = emptyMap(),
+    val nameBoldSpans: List<MenuBoldSpan> = emptyList(),
+    val loreBoldSpans: Map<Int, List<MenuBoldSpan>> = emptyMap()
+) {
+    fun validate(name: String?, lore: List<String>) {
+        fun checkSpans(text: String, spans: List<MenuBoldSpan>) {
+            require(spans.all { it.endExclusive <= text.length })
+            require(spans.zipWithNext().all { (a, b) -> a.endExclusive <= b.start })
+        }
+        if (nameBoldSpans.isNotEmpty()) checkSpans(requireNotNull(name), nameBoldSpans)
+        loreBoldSpans.forEach { (index, spans) ->
+            require(index in lore.indices)
+            checkSpans(lore[index], spans)
+        }
+    }
+}
 
 data class MenuSlot(
     val slot: Int,
@@ -25,7 +44,10 @@ data class MenuSlot(
     val lore: List<String> = emptyList(),
     val textStyle: MenuTextStyle? = null
 ) {
-    init { require(slot >= 0) }
+    init {
+        require(slot >= 0)
+        textStyle?.validate(displayName, lore)
+    }
 }
 
 data class MenuDefinition(

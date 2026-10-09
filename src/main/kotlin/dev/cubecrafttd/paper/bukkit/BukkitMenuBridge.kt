@@ -3,8 +3,6 @@ package dev.cubecrafttd.paper.bukkit
 import dev.cubecrafttd.paper.*
 import dev.cubecrafttd.ui.*
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
-import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -287,7 +285,8 @@ class BukkitMenuBridge(
                 ]?.let {
                     displayName ->
                     meta.displayName(
-                        styledText(displayName, style?.nameColor, style != null)
+                        BukkitMenuText.render(displayName, style?.nameColor, style != null,
+                            style?.nameBoldSpans.orEmpty())
                     )
                 }
                 menu.slotLore[
@@ -296,7 +295,8 @@ class BukkitMenuBridge(
                     lore ->
                     meta.lore(
                         lore.mapIndexed { index, line ->
-                            styledText(line, style?.loreColors?.get(index), style != null)
+                            BukkitMenuText.render(line, style?.loreColors?.get(index), style != null,
+                                style?.loreBoldSpans?.get(index).orEmpty())
                         }
                     )
                 }
@@ -306,26 +306,6 @@ class BukkitMenuBridge(
                 item
             )
         }
-    }
-
-    private fun styledText(
-        text: String,
-        color: MenuTextColor?,
-        explicitStyle: Boolean
-    ): Component {
-        var component = Component.text(text)
-        if (color != null) {
-            component = component.color(when (color) {
-                MenuTextColor.GREEN -> NamedTextColor.GREEN
-                MenuTextColor.RED -> NamedTextColor.RED
-                MenuTextColor.GRAY -> NamedTextColor.GRAY
-                MenuTextColor.GOLD -> NamedTextColor.GOLD
-            })
-        }
-        if (explicitStyle) {
-            component = component.decoration(TextDecoration.ITALIC, false)
-        }
-        return component
     }
 
     private fun rememberOpenMenu(

@@ -2,6 +2,13 @@ package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.arena.ArenaTeardownReport
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import dev.cubecrafttd.ui.TowerBuilderMenus
+import dev.cubecrafttd.ui.HistoricalSettingsControls
+import dev.cubecrafttd.ui.SettingsMenuProjector
+import dev.cubecrafttd.ui.PlayerMatchSettings
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
@@ -277,6 +284,32 @@ class PaperStage4GateStore(
             }
             check(renderer.render("path:bottom", "arrow-glow")
                 .itemMeta.enchantmentGlintOverride == true)
+        }
+
+        checkStep("historical-gui-partial-bold-item-roundtrip") {
+            val zeus = TowerBuilderMenus.pathSelector2021("zeus").slots.first { it.slot == 15 }
+            val style = requireNotNull(zeus.textStyle)
+            val item = BukkitEngineeringMenuRenderer().render(zeus.actionId, zeus.iconHint)
+            val lore = zeus.lore.mapIndexed { index, text ->
+                BukkitMenuText.render(text, style.loreColors[index], true,
+                    style.loreBoldSpans[index].orEmpty())
+            }
+            val autoCentre = HistoricalSettingsControls.autoCentre(
+                SettingsMenuProjector.project(PlayerMatchSettings(lifetimeWins = 20)), "noop:smoke")
+            val nameStyle = requireNotNull(autoCentre.textStyle)
+            val name = BukkitMenuText.render(requireNotNull(autoCentre.displayName),
+                nameStyle.nameColor, true, nameStyle.nameBoldSpans)
+            item.editMeta { it.displayName(name); it.lore(lore) }
+            val restored = ItemStack.deserializeBytes(item.serializeAsBytes()).itemMeta
+            check(restored.displayName() == name && restored.lore() == lore)
+            val description = restored.lore()!![1]
+            check(description.color() == NamedTextColor.GRAY)
+            check(description.decoration(TextDecoration.BOLD) == TextDecoration.State.FALSE)
+            check(description.decoration(TextDecoration.ITALIC) == TextDecoration.State.FALSE)
+            check((description.children()[0] as TextComponent).content() == "Summons ")
+            check((description.children()[1] as TextComponent).content() == "baby Zeus")
+            check(description.children()[1].decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE)
+            check(name.children()[1].decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE)
         }
 
         checkStep("scheduler-primary-thread") {

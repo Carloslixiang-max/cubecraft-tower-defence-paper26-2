@@ -128,7 +128,8 @@ object TowerBuilderMenus {
                     },
                     if(zeus)
                         listOf(
-                            "Summons baby Zeus.",
+                            "",
+                            "Summons baby Zeus",
                             "",
                             "Click to select path!"
                         )
@@ -136,7 +137,8 @@ object TowerBuilderMenus {
                         emptyList(),
                     if (zeus) MenuTextStyle(
                         MenuTextColor.GREEN,
-                        mapOf(0 to MenuTextColor.GRAY, 2 to MenuTextColor.RED)
+                        mapOf(1 to MenuTextColor.GRAY, 3 to MenuTextColor.RED),
+                        loreBoldSpans = mapOf(1 to listOf(MenuBoldSpan(8, 17)))
                     ) else null
                 )
             )

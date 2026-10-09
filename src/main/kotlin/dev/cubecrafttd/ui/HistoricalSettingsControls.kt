@@ -29,7 +29,10 @@ object HistoricalSettingsControls {
         ),
         textStyle = MenuTextStyle(
             if (model.autoCentreEnabled) MenuTextColor.GREEN else MenuTextColor.RED,
-            mapOf(0 to MenuTextColor.GRAY, 1 to MenuTextColor.GRAY, 2 to MenuTextColor.GOLD)
+            mapOf(0 to MenuTextColor.GRAY, 1 to MenuTextColor.GRAY, 2 to MenuTextColor.GOLD),
+            // Screenshot_173 bolds only ENABLED. Disabled is still an adaptation.
+            nameBoldSpans = if (model.autoCentreEnabled)
+                listOf(MenuBoldSpan(21, 28)) else emptyList()
         )
     )
 }

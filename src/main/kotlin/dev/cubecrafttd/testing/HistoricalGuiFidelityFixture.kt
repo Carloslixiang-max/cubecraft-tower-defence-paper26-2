@@ -27,7 +27,28 @@ object HistoricalGuiFidelityFixture {
             PregamePreferenceMenus.hotbar(layout, null).toLiveView(),
             DynamicMatchMenus.hotbarEditor(player).toLiveView()
         )
+        fun invalidSpansRejected(spans: List<MenuBoldSpan>, line: Int = 0): Boolean = runCatching {
+            MenuSlot(0, "noop:invalid-style", UiEvidenceStatus.ENGINEERING_FALLBACK,
+                "name", lore = listOf("short"), textStyle = MenuTextStyle(
+                    MenuTextColor.GRAY, loreBoldSpans = mapOf(line to spans)))
+        }.isFailure
         return listOf(
+            FixtureResult("2021-partial-bold-spans-preserve-target-substrings-and-blank-lines",
+                unlocked.all { view ->
+                    view.slotTextStyles[11]?.nameBoldSpans?.map {
+                        view.slotDisplayNames.getValue(11).substring(it.start, it.endExclusive)
+                    } == listOf("ENABLED")
+                } && disabled.all { it.slotTextStyles[11]?.nameBoldSpans?.isEmpty() == true } &&
+                    TowerBuilderMenus.pathSelector2021("zeus").toLiveView().let { view ->
+                        view.slotLore[15] == listOf("", "Summons baby Zeus", "", "Click to select path!") &&
+                            view.slotTextStyles[15]?.loreBoldSpans?.get(1)?.map {
+                                view.slotLore.getValue(15)[1].substring(it.start, it.endExclusive)
+                            } == listOf("baby Zeus")
+                    }),
+            FixtureResult("menu-text-style-rejects-overlapping-out-of-bounds-and-missing-line-spans",
+                invalidSpansRejected(listOf(MenuBoldSpan(0, 6))) &&
+                    invalidSpansRejected(listOf(MenuBoldSpan(0, 3), MenuBoldSpan(2, 4))) &&
+                    invalidSpansRejected(listOf(MenuBoldSpan(0, 1)), 1)),
             FixtureResult("2021-settings-auto-centre-text-style-survives-both-live-projections",
                 unlocked.all {
                     it.slotIconHints[11] == "torch" &&
@@ -54,7 +75,7 @@ object HistoricalGuiFidelityFixture {
                 }.visual == MatchHotbarVisualKind.CASTLE_BAZAAR_BRICKS),
             FixtureResult("2021-zeus-path2-style-preserves-unresolved-paths-as-plain-fallback",
                 TowerBuilderMenus.pathSelector2021("zeus").toLiveView()
-                    .slotTextStyles[15]?.loreColors?.get(2) == MenuTextColor.RED &&
+                    .slotTextStyles[15]?.loreColors?.get(3) == MenuTextColor.RED &&
                     TowerBuilderMenus.pathSelector2021("archer").toLiveView()
                         .slotTextStyles.isEmpty())
         )

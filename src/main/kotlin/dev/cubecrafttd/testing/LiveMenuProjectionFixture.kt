@@ -99,7 +99,8 @@ object LiveMenuProjectionFixture {
                         "sugar" &&
                     zeusPath.slotLore[15]==
                         listOf(
-                            "Summons baby Zeus.",
+                            "",
+                            "Summons baby Zeus",
                             "",
                             "Click to select path!"
                         )
