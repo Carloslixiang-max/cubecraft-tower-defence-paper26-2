@@ -333,6 +333,10 @@ class PaperStage4GateStore(
             }
         }
 
+        checkStep("tower-model-catalog-and-owned-tile-rollback") {
+            BukkitTowerModelSmoke.run(plugin)
+        }
+
         if(failures.isEmpty()) {
             props.setProperty(
                 "adapterSmokePassed",

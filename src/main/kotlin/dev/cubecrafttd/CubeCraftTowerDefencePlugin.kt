@@ -565,7 +565,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v107 enabled; " +
+            "CubeCraftTowerDefence shell v108 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -633,7 +633,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v107 disabled; " +
+            "CubeCraftTowerDefence shell v108 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -667,7 +667,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v107, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v108, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
                     "reuse=" +
@@ -2150,7 +2150,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ) {
         if(args.isEmpty()) {
             sender.sendMessage(
-                "Usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|teamstart <arenaId> <red1[,red2]> <blue1[,blue2]> <wither|lightning|horde>|stop <arenaId>|status>"
+                "Usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|teamstart <arenaId> <red1,...,red6> <blue1,...,blue6> <wither|lightning|horde>|stop <arenaId>|status>"
             )
             return
         }
@@ -2214,32 +2214,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
                 "teamstart" -> {
                     check(args.size==5) {
-                        "teamstart <arenaId> <red1[,red2]> <blue1[,blue2]> <wither|lightning|horde>"
+                        "teamstart <arenaId> <red1,...,red6> <blue1,...,blue6> <wither|lightning|horde>"
                     }
 
                     fun resolveTeam(
                         raw: String,
                         label: String
                     ): Set<java.util.UUID> {
-                        val names=
-                            raw.split(',')
-                                .map {
-                                    it.trim()
-                                }
-                                .filter {
-                                    it.isNotEmpty()
-                                }
-                        check(
-                            names.size in 1..2
-                        ) {
-                            "$label team must contain 1 or 2 comma-separated online player names"
-                        }
-                        check(
-                            names.distinct().size==
-                                names.size
-                        ) {
-                            "$label team contains a duplicate player name"
-                        }
+                        val names = dev.cubecrafttd.match.TeamRosterPolicy.names(raw)
                         return names
                             .mapTo(
                                 linkedSetOf()

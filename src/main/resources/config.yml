@@ -278,3 +278,9 @@ runtime-fallback:
       #     quantity-per-team: 2
       waves: []
 
+
+# Model catalog declares provenance and binds every model file to its SHA-256.
+# Missing stages stay explicit placeholders unless strict coverage is required.
+# Loaded once per match before snapshots. Restart/reload is not needed for next match.
+tower-models:
+  require-complete: false

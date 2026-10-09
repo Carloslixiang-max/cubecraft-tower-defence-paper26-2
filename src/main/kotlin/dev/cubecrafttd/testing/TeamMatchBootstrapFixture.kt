@@ -28,7 +28,9 @@ object TeamMatchBootstrapFixture {
         byteArrayOf(6)
     )
 
-    fun run(): List<FixtureResult> {
+    fun run(): List<FixtureResult> = runForTeamSize(2) + runForTeamSize(6)
+
+    private fun runForTeamSize(teamSize: Int): List<FixtureResult> {
         val red1=UUID.fromString(
             "00000000-0000-0000-0000-000000075001"
         )
@@ -45,8 +47,12 @@ object TeamMatchBootstrapFixture {
             linkedSetOf(red1,red2)
         val blues=
             linkedSetOf(blue1,blue2)
-        val all=
-            reds + blues
+        (3..teamSize).forEach { n ->
+            reds.add(UUID.fromString("00000000-0000-0000-0000-${(76000 + n).toString().padStart(12, '0')}"))
+            blues.add(UUID.fromString("00000000-0000-0000-0000-${(77000 + n).toString().padStart(12, '0')}"))
+        }
+        TeamRosterPolicy.validate(reds, blues)
+        val all = reds + blues
 
         val captured=
             linkedSetOf<UUID>()
@@ -183,15 +189,15 @@ object TeamMatchBootstrapFixture {
 
         return listOf(
             FixtureResult(
-                "team-bootstrap-captures-and-prepares-all-2v2-players",
+                "team-bootstrap-captures-and-prepares-all-${teamSize}v${teamSize}-players",
                 allCapturedPrepared
             ),
             FixtureResult(
-                "team-bootstrap-populates-both-teams-and-four-player-session",
+                "team-bootstrap-populates-both-teams-and-${teamSize * 2}-player-session",
                 teamsAndSession
             ),
             FixtureResult(
-                "team-bootstrap-departure-keeps-teammates-active-and-restores-all",
+                "team-bootstrap-${teamSize}v${teamSize}-departure-keeps-teammates-active-and-restores-all",
                 teammateRemainsActive &&
                     allRestored
             )

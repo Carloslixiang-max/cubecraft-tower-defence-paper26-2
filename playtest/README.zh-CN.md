@@ -57,3 +57,13 @@
 
 其余 Stage-4 真人门禁（重启恢复、60+ 塔、移动视觉、连续复用、raytrace、GUI、重连接管、multi-arena）继续以实际服证据为准。
 Fast Fly 的准确语义/速度仍为 UNKNOWN。
+
+## v108 团队与塔模型入口
+
+管理员可用 `/ctdlivetest teamstart test 红1,红2,红3,红4,红5,红6 蓝1,蓝2,蓝3,蓝4,蓝5,蓝6 wither`
+启动最多每队六人的团队测试。列出的玩家必须全部在线，两队不能有重复玩家；结束测试用
+`/ctdlivetest stop test`。普通 `/ctdjoin` 仍为两人排队，不表示已经还原原版团队匹配。
+
+现在支持外部塔体模型目录 `plugins/CubeCraftTowerDefence/tower-models/catalog.yml`，模型文件有来源标签和 SHA-256 校验。
+**本包没有附带已认证原版塔体，缺失模型仍显示石头/玻璃占位。** 模型格式与安全恢复范围见源码仓库
+`evidence/TOWER_MODEL_INTEGRATION.md`；校验值能确认文件字节，不能自动证明模型与原版完全一致。

@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v107 engineering playtest shell**
-- Pure-domain suite: **542 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Current shell lineage: **v108 engineering playtest shell**
+- Pure-domain suite: **555 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -245,7 +245,14 @@ Third-party names, trademarks, and assets are not granted by this code license. 
 - Archer paths retain ordinary Arrow / Arrow with enchant glint. Zeus path 2 retains Sugar and now projects the directly visible green title, gray description, blank line and red click instruction. Other towers do not inherit Zeus lore.
 - Both pregame and match Settings use the same recovered Auto-centre control: Torch at slot 11 and the official description. Its enabled/unlocked wording is direct evidence; disabled and fewer-than-20-win messaging are runtime adaptations. The 20-win rule still comes from persistent lifetime wins.
 - Inventory-layout AoEs now use Splash Potion icons. Castle Bazaar uses Bricks in both editors and the real match hotbar. Per-potion colors, exact source order and original editor gestures remain unresolved.
-- The GUI text style survives domain-to-live projection; Paper applies explicit color and non-italic text only to recovered styled controls. Precise bold spans and client visual matching still need verification.
+- The GUI text style survives domain-to-live projection; Paper applies explicit color and non-italic text only to recovered styled controls. Recovered bold spans are now implemented; client visual matching still needs verification.
 - Real Paper adapter smoke checks these item identities and Archer enchant glint on both CI boots. This does not pass the production GUI fidelity or any other human-server gate.
 
 Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
+
+### v108 model integration and team capacity
+
+- `/ctdlivetest teamstart <arenaId> <red1,...,red6> <blue1,...,blue6> <wither|lightning|horde>` now accepts up to six players per team. This is an OP test entry point; `/ctdjoin` remains the two-player queue. Exact original minimum-start population/team assignment is not recovered by this change.
+- Real arena tower actions now use a SHA-256-bound external model catalog, loaded before bootstrap. Missing models remain explicit placeholders; `tower-models.require-complete: true` refuses incomplete catalogs. [Model format and fidelity limits](evidence/TOWER_MODEL_INTEGRATION.md).
+- Owned tower TileState snapshots can roll back failed upgrades/removals in the same arena process. Unowned map TileStates remain protected. Both Paper boots exercise a synthetic dispenser model, checksum refusal, strict-coverage refusal, forced upgrade failure with inventory/PDC restoration, successful upgrade and body cleanup. This does not certify every TileState or crash recovery.
+- No community model is silently promoted to original CubeCraft geometry. The original 2021 gameplay attachment was recovered for further visual comparison; full original tower bodies and Farm scenery are still pending.

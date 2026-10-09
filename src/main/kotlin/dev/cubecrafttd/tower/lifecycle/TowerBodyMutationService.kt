@@ -136,7 +136,7 @@ class TowerBodyMutationService(
             addAll(oldRecords.keys)
             addAll(newAbsolute.keys)
         }
-        val worldBefore = union.associateWith(world::snapshot)
+        val worldBefore = captureBefore(union, oldRecords.keys)
 
         try {
             // Restore old-only blocks first.
@@ -197,13 +197,15 @@ class TowerBodyMutationService(
             }
             ledger.restoreRecords(oldLedgerSnapshot)
             throw t
+        } finally {
+            worldBefore.values.forEach(world::releaseSnapshot)
         }
     }
 
     fun remove(towerInstanceId: Long): BodyRemovalResult {
         val owned = ledger.ownedBy(towerInstanceId)
         val ledgerBefore = ledger.snapshotRecords()
-        val worldBefore = owned.keys.associateWith(world::snapshot)
+        val worldBefore = captureBefore(owned.keys, owned.keys)
         val conflicts = mutableListOf<TowerBodyConflict>()
 
         try {
@@ -239,6 +241,8 @@ class TowerBodyMutationService(
             }
             ledger.restoreRecords(ledgerBefore)
             throw t
+        } finally {
+            worldBefore.values.forEach(world::releaseSnapshot)
         }
 
         return BodyRemovalResult(
@@ -247,12 +251,25 @@ class TowerBodyMutationService(
         )
     }
 
+    private fun captureBefore(keys: Iterable<BlockKey>, owned: Set<BlockKey>): Map<BlockKey, BlockSnapshot> {
+        val snapshots = linkedMapOf<BlockKey, BlockSnapshot>()
+        try {
+            keys.forEach { key -> snapshots[key] =
+                if (key in owned) world.snapshotOwned(key) else world.snapshot(key) }
+            return snapshots
+        } catch (t: Throwable) {
+            snapshots.values.forEach(world::releaseSnapshot)
+            throw t
+        }
+    }
+
     private fun absoluteBody(
         base: BlockPos,
         definition: TowerBodyDefinition,
         rotation: QuarterTurn
-    ): Map<BlockKey, BlockSnapshot> =
-        rotationCache.resolve(definition, rotation).associate { block ->
+    ): Map<BlockKey, BlockSnapshot> {
+        check(definition.blocks.map { it.pos }.distinct().size == definition.blocks.size) { "Duplicate tower body voxel" }
+        return rotationCache.resolve(definition, rotation).associate { block ->
             val key = BlockKey(
                 base.x + block.pos.x,
                 base.y + block.pos.y,
@@ -260,6 +277,7 @@ class TowerBodyMutationService(
             )
             key to BlockSnapshot(block.blockData)
         }
+    }
 
     private fun rollbackWritten(
         written: List<BlockKey>,

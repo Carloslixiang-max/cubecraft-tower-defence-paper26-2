@@ -15,8 +15,6 @@ import dev.cubecrafttd.tower.*
 import dev.cubecrafttd.tower.lifecycle.*
 import dev.cubecrafttd.tower.visual
     .RotationCache
-import dev.cubecrafttd.tower.visual
-    .EngineeringPlaceholderTowerBodyProvider
 import dev.cubecrafttd.truth.*
 import dev.cubecrafttd.ui.*
 import org.bukkit.plugin.java.JavaPlugin
@@ -299,25 +297,9 @@ class BukkitNormalArenaController(
             Map<UUID,PlayerMatchSettings> =
             emptyMap()
     ): ArenaId {
-        check(redPlayers.isNotEmpty()) {
-            "RED team must contain at least one player"
-        }
-        check(bluePlayers.isNotEmpty()) {
-            "BLUE team must contain at least one player"
-        }
-        check(redPlayers.size<=2) {
-            "Engineering team certification harness supports at most 2 RED players"
-        }
-        check(bluePlayers.size<=2) {
-            "Engineering team certification harness supports at most 2 BLUE players"
-        }
-        check(
-            redPlayers.intersect(
-                bluePlayers
-            ).isEmpty()
-        ) {
-            "A player cannot be on both teams"
-        }
+        TeamRosterPolicy.validate(redPlayers, bluePlayers)
+        // Validate every supplied model before any player capture or world mutation.
+        val towerBodies = BukkitTowerBodyCatalogLoader.load(plugin)
         val allPlayers=
             redPlayers +
                 bluePlayers
@@ -845,7 +827,7 @@ class BukkitNormalArenaController(
                     lifecycle=
                         towerLifecycle,
                     bodies=
-                        EngineeringPlaceholderTowerBodyProvider,
+                        towerBodies,
                     rotation=
                         EngineeringFixedR0RotationPolicy,
                     initialSequence=
