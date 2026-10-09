@@ -6,6 +6,7 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
 import dev.cubecrafttd.ui.TowerBuilderMenus
+import dev.cubecrafttd.ui.TowerManagementMenus
 import dev.cubecrafttd.ui.HistoricalSettingsControls
 import dev.cubecrafttd.ui.SettingsMenuProjector
 import dev.cubecrafttd.ui.PlayerMatchSettings
@@ -310,6 +311,18 @@ class PaperStage4GateStore(
             check((description.children()[1] as TextComponent).content() == "baby Zeus")
             check(description.children()[1].decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE)
             check(name.children()[1].decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE)
+            val rangefinder = TowerManagementMenus.mature2021(1, "Zeus Tower", 1, false)
+                .slots.first { it.slot == 45 }
+            val rangeStyle = requireNotNull(rangefinder.textStyle)
+            val rangeName = BukkitMenuText.render(requireNotNull(rangefinder.displayName),
+                rangeStyle.nameColor, true, rangeStyle.nameBoldSpans)
+            val rangeItem = BukkitEngineeringMenuRenderer().render(rangefinder.actionId, rangefinder.iconHint)
+            rangeItem.editMeta { it.displayName(rangeName) }
+            val savedName = ItemStack.deserializeBytes(rangeItem.serializeAsBytes()).itemMeta.displayName()!!
+            check(savedName == rangeName && savedName.color() == NamedTextColor.YELLOW)
+            check(savedName.children()[1].color() == NamedTextColor.GREEN)
+            check((savedName.children()[1] as TextComponent).content() == "Enable")
+            check(savedName.children()[1].decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE)
         }
 
         checkStep("scheduler-primary-thread") {

@@ -33,6 +33,16 @@ object HistoricalGuiFidelityFixture {
                     MenuTextColor.GRAY, loreBoldSpans = mapOf(line to spans)))
         }.isFailure
         return listOf(
+            FixtureResult("2021-rangefinder-name-keeps-yellow-base-and-only-enable-green-bold",
+                TowerManagementMenus.mature2021(1, "Zeus Tower", 1, false).toLiveView().let { view ->
+                    view.slotTextStyles[45]?.nameColor == MenuTextColor.YELLOW &&
+                        view.slotTextStyles[45]?.nameBoldSpans == listOf(MenuBoldSpan(9, 15, MenuTextColor.GREEN)) &&
+                        view.slotDisplayNames.getValue(45).substring(9, 15) == "Enable" &&
+                        view.slotActionIds[45] == "tower-manage:1:rangefinder"
+                } && TowerManagementMenus.mature2021(1, "Zeus Tower", 1, true).slots.first { it.slot == 45 }.let {
+                    it.evidenceStatus == UiEvidenceStatus.MATURE_CONTEXT &&
+                        it.textStyle?.nameBoldSpans?.isEmpty() == true
+                }),
             FixtureResult("2021-partial-bold-spans-preserve-target-substrings-and-blank-lines",
                 unlocked.all { view ->
                     view.slotTextStyles[11]?.nameBoldSpans?.map {

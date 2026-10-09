@@ -80,13 +80,20 @@ object TowerManagementMenus {
                 MenuSlot(
                     45,
                     "tower-manage:$towerInstanceId:rangefinder",
-                    UiEvidenceStatus
-                        .MATURE_DIRECT,
+                    if (rangefinderPinned) UiEvidenceStatus.MATURE_CONTEXT
+                    else UiEvidenceStatus.MATURE_DIRECT,
                     if(rangefinderPinned)
                         "Click to Disable this tower's rangefinder"
                     else
                         "Click to Enable this tower's rangefinder",
-                    "stick"
+                    "stick",
+                    textStyle = MenuTextStyle(
+                        MenuTextColor.YELLOW,
+                        // Screenshot_172 directly shows green bold Enable only.
+                        nameBoldSpans = if (!rangefinderPinned)
+                            listOf(MenuBoldSpan(9, 15, MenuTextColor.GREEN))
+                        else emptyList()
+                    )
                 ),
                 MenuSlot(
                     49,

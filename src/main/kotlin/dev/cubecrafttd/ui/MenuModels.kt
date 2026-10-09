@@ -8,10 +8,14 @@ enum class UiEvidenceStatus {
     UNKNOWN
 }
 
-enum class MenuTextColor { GREEN, RED, GRAY, GOLD }
+enum class MenuTextColor { GREEN, RED, GRAY, GOLD, YELLOW }
 
 /** UTF-16 offsets, end exclusive; only directly observed spans are styled. */
-data class MenuBoldSpan(val start: Int, val endExclusive: Int) {
+data class MenuBoldSpan(
+    val start: Int,
+    val endExclusive: Int,
+    val color: MenuTextColor? = null
+) {
     init { require(start >= 0 && endExclusive > start) }
 }
 

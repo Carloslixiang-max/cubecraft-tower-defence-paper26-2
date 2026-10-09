@@ -17,24 +17,29 @@ object BukkitMenuText {
         require(boldSpans.all { it.endExclusive <= text.length })
         require(boldSpans.zipWithNext().all { (a, b) -> a.endExclusive <= b.start })
         var component = if (boldSpans.isEmpty()) Component.text(text) else Component.empty()
-        if (color != null) component = component.color(when (color) {
-            MenuTextColor.GREEN -> NamedTextColor.GREEN
-            MenuTextColor.RED -> NamedTextColor.RED
-            MenuTextColor.GRAY -> NamedTextColor.GRAY
-            MenuTextColor.GOLD -> NamedTextColor.GOLD
-        })
+        if (color != null) component = component.color(color.adventureColor())
         if (explicitStyle) component = component
             .decoration(TextDecoration.ITALIC, false)
             .decoration(TextDecoration.BOLD, false)
         var offset = 0
         boldSpans.forEach { span ->
             if (offset < span.start) component = component.append(Component.text(text.substring(offset, span.start)))
-            component = component.append(Component.text(text.substring(span.start, span.endExclusive))
-                .decoration(TextDecoration.BOLD, true))
+            var highlighted = Component.text(text.substring(span.start, span.endExclusive))
+                .decoration(TextDecoration.BOLD, true)
+            if (span.color != null) highlighted = highlighted.color(span.color.adventureColor())
+            component = component.append(highlighted)
             offset = span.endExclusive
         }
         if (boldSpans.isNotEmpty() && offset < text.length)
             component = component.append(Component.text(text.substring(offset)))
         return component
+    }
+
+    private fun MenuTextColor.adventureColor() = when (this) {
+        MenuTextColor.GREEN -> NamedTextColor.GREEN
+        MenuTextColor.RED -> NamedTextColor.RED
+        MenuTextColor.GRAY -> NamedTextColor.GRAY
+        MenuTextColor.GOLD -> NamedTextColor.GOLD
+        MenuTextColor.YELLOW -> NamedTextColor.YELLOW
     }
 }
