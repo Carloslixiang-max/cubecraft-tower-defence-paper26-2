@@ -6,7 +6,7 @@ api-version: '26.2'
 load: POSTWORLD
 commands:
   ctdjoin:
-    description: Join the Engineering 1v1 Tower Defence queue
+    description: Join the configured Tower Defence team queue (default 6v6)
     usage: /ctdjoin
     permission: cubecrafttd.play
   ctdleave:

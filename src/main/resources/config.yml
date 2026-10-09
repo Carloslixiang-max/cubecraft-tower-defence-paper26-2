@@ -284,3 +284,8 @@ runtime-fallback:
 # Loaded once per match before snapshots. Restart/reload is not needed for next match.
 tower-models:
   require-complete: false
+
+# Full-roster FIFO/alternating teams are Engineering policy, not original matchmaking.
+# Restart to apply. 6 waits for 12 players; set 1 for a two-player playtest.
+queue:
+  team-size: 6

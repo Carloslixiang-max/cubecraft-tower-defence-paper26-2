@@ -44,6 +44,10 @@ object PregameQueueHudFixture {
             )
 
         return listOf(
+            FixtureResult("pregame-team-queue-hud-displays-eleven-of-twelve", PregameQueueHudProjection.text(
+                PregameQueueHudState(11, null, null, null, 6, 11)).contains("6v6 (11/12)")),
+            FixtureResult("pregame-team-countdown-hud-displays-complete-roster", PregameQueueHudProjection.text(
+                PregameQueueHudState(null, 3, null, null, 6, 12)).let { it.contains("6v6 (12/12)") && it.contains("starts in 3s") }),
             FixtureResult(
                 "pregame-queue-hud-shows-no-vote-defaults",
                 defaults.contains(

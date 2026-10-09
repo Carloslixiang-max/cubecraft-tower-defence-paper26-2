@@ -9,8 +9,15 @@ data class PregameQueueHudState(
     val armageddonVote:
         HistoricalPregameArmageddonVoteOption?,
     val pricingVote:
-        HistoricalPregamePricingVoteOption?
-)
+        HistoricalPregamePricingVoteOption?,
+    val teamSize: Int = 1,
+    val waitingPlayers: Int? = null
+) {
+    init {
+        require(teamSize in 1..dev.cubecrafttd.match.TeamRosterPolicy.MAX_TEAM_PLAYERS)
+        require(waitingPlayers == null || waitingPlayers in 0..teamSize * 2)
+    }
+}
 
 /**
  * Engineering-only non-invasive queue HUD.
@@ -56,6 +63,7 @@ object PregameQueueHudProjection {
                     }
                 ?: "TD queue"
 
-        return "$prefix · A:$armageddon · P:$pricing · /ctdvote"
+        val roster = state.waitingPlayers?.let { " · ${state.teamSize}v${state.teamSize} ($it/${state.teamSize * 2})" } ?: ""
+        return "$prefix$roster · A:$armageddon · P:$pricing · /ctdvote"
     }
 }

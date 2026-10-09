@@ -14,6 +14,7 @@ object DomainFixtureSuite {
         addAll(TowerBodyCatalogFixture.run())
         addAll(DepartedOwnerTowerInteractionFixture.run())
         addAll(EngineeringOneVsOneQueueFixture.run())
+        addAll(EngineeringTeamQueueFixture.run())
         addAll(HistoricalTowerDefenceStartCountdownFixture.run())
         addAll(HistoricalPregameArmageddonVoteFixture.run())
         addAll(HistoricalPregamePricingVoteFixture.run())

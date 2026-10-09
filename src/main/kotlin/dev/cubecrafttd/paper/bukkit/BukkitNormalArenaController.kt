@@ -265,6 +265,18 @@ class BukkitNormalArenaController(
                 playerSettingsOverrides
         )
 
+    fun startTeamResolvedTest(
+        arenaIdText: String,
+        redPlayers: Set<UUID>,
+        bluePlayers: Set<UUID>,
+        selection: ResolvedArmageddonSelection,
+        pricingMode: PricingMode = PricingMode.NORMAL,
+        playerSettingsOverrides: Map<UUID,PlayerMatchSettings> = emptyMap()
+    ): ArenaId = startTeamInternal(
+        arenaIdText, redPlayers, bluePlayers, selection.type,
+        resolvedSelection=selection, allowLiveArmageddonVoting=false,
+        pricingMode=pricingMode, playerSettingsOverrides=playerSettingsOverrides)
+
     fun startTeamCertificationTest(
         arenaIdText: String,
         redPlayers: Set<UUID>,

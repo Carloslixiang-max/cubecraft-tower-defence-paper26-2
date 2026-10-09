@@ -2,7 +2,7 @@
 
 此包包含通过 CI 的插件、已校验的社区改良 Farm 赛道、启动脚本与证据文件。
 **它不包含完整原版 Farm 世界，也不表示已经通过真人完整游玩认证。**
-游戏流程代码可用于两人 1v1 试玩；首次部署仍需完成下面的地图绑定和真人门禁。
+普通 `/ctdjoin` 默认 6v6，等待 12 名玩家；两人试玩请在首次重启前将插件 config.yml 的 `queue.team-size` 改为 `1`。首次部署仍需完成下面的地图绑定和真人门禁。
 
 ## 新建服务器
 
@@ -12,7 +12,7 @@
    此包随附的 `evidence/paper-smoke-*.log` 记录实际 CI 使用的 Paper build；复现 CI 时选择相同 build。
 4. Windows 双击 `start.bat`；Linux/macOS 运行 `bash start.sh`。默认内存为 1–4 GB，可按机器资源调整。
 5. 首次启动生成 `eula.txt`；阅读并接受 Minecraft EULA 后将 `eula=false` 改为 `eula=true`，再启动。
-6. 两位玩家使用 Minecraft Java **26.2** 连接服务器。管理员在控制台输入 `op <管理员玩家名>`。
+6. 玩家使用 Minecraft Java **26.2** 连接服务器。管理员在控制台输入 `op <管理员玩家名>`。
    同机连接 `localhost:25565`；局域网玩家连接服务器机器的局域网地址。公网连接需自行配置网络。
 
 ## 首次放置与绑定地图
@@ -21,7 +21,7 @@
    玩家当前方块 X/Z 是赛道的最小 X/Z 角；地图原点 Y 为脚下方块 Y + 8。
    需要预留 **125 × 18 × 191** 的空体积：原点至原点 + `(124,17,190)`。
 2. 输入 `/ctdplaytestsetup apply`。它生成明确标为 Engineering 的配置，并备份原配置。
-3. 在控制台输入 `stop`，等待保存退出，再启动服务器。
+3. 两人测试时，先将 `plugins/CubeCraftTowerDefence/config.yml` 的 `queue.team-size` 改为 `1`；保持 `6` 则需要 12 人。然后在控制台输入 `stop`，等待保存退出，再启动服务器。
 4. 管理员在线且不在比赛中，输入 `/ctdsnapshotcheck`；检查玩家状态保存/恢复结果。
 5. 输入 `/ctdmapcheck`，然后 `/ctdpastefarm 28d24136afe8`，等待粘贴完成。
    若提示目标区域非空气，换一处空区域重新绑定；不要直接用 WorldEdit 绕过检查。
@@ -62,8 +62,14 @@ Fast Fly 的准确语义/速度仍为 UNKNOWN。
 
 管理员可用 `/ctdlivetest teamstart test 红1,红2,红3,红4,红5,红6 蓝1,蓝2,蓝3,蓝4,蓝5,蓝6 wither`
 启动最多每队六人的团队测试。列出的玩家必须全部在线，两队不能有重复玩家；结束测试用
-`/ctdlivetest stop test`。普通 `/ctdjoin` 仍为两人排队，不表示已经还原原版团队匹配。
+`/ctdlivetest stop test`。v109 的普通 `/ctdjoin` 已接入团队排队，默认 6v6；FIFO/交替分队仍是 Engineering 规则，未宣称原版匹配完全一致。
 
 现在支持外部塔体模型目录 `plugins/CubeCraftTowerDefence/tower-models/catalog.yml`，模型文件有来源标签和 SHA-256 校验。
 **本包没有附带已认证原版塔体，缺失模型仍显示石头/玻璃占位。** 模型格式与安全恢复范围见源码仓库
 `evidence/TOWER_MODEL_INTEGRATION.md`；校验值能确认文件字节，不能自动证明模型与原版完全一致。
+
+## v109 普通团队排队
+
+12 名玩家分别输入 `/ctdjoin` 后会自动保留完整六人红队/六人蓝队，走投票、Settings 和 3→2→1 倒计时。等待 HUD 显示 `6v6 (当前人数/12)`。人数未满不会开局；倒计时中有人离开/离线，会取消并将其余可用玩家按原次序返回队首。后面排队玩家的投票不会混入当前比赛。服务器只使用当前绑定的单个 Farm，其他玩家等待地图可复用。
+
+`queue.team-size` 支持整数 1..6，需要重启生效；缺失该项的旧配置也默认六人一队。模式变更不会删除 hotbar、wins 或 recovery 文件。新默认值不会证明原版最低开局人数、组队/段位平衡或原版等待大厅已恢复。真人六人团队完整回合仍待认证。

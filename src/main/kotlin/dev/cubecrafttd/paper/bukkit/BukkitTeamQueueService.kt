@@ -1,14 +1,13 @@
 package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.match.ArmageddonType
-import dev.cubecrafttd.match.EngineeringOneVsOneQueuePair
-import dev.cubecrafttd.match.EngineeringOneVsOneQueueState
+import dev.cubecrafttd.match.EngineeringTeamQueueMatch
+import dev.cubecrafttd.match.PregameTeamStartResolver
+import dev.cubecrafttd.match.EngineeringTeamQueueState
 import dev.cubecrafttd.match.HistoricalPregameArmageddonResolution
 import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteOption
-import dev.cubecrafttd.match.HistoricalPregameArmageddonVoteRuntime
 import dev.cubecrafttd.match.HistoricalPregamePricingResolution
 import dev.cubecrafttd.match.HistoricalPregamePricingVoteOption
-import dev.cubecrafttd.match.HistoricalPregamePricingVoteRuntime
 import dev.cubecrafttd.match.HistoricalTowerDefenceStartCountdown
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
 import dev.cubecrafttd.ui.MenuActionInvocation
@@ -60,11 +59,11 @@ data class BukkitPregamePricingVoteReport(
 /**
  * Engineering player-facing bridge for the single configured Farm arena.
  *
- * FIFO order and first=RED/second=BLUE remain Engineering behavior. Once two
- * eligible players are paired, the service uses the recovered historical
+ * Full-roster FIFO and alternating RED/BLUE assignment remain Engineering behavior. Once
+ * the configured number of eligible players are reserved, the service uses the recovered historical
  * 3 -> 2 -> 1 Tower Defence chat countdown before creating the live arena.
  */
-class BukkitOneVsOneQueueService(
+class BukkitTeamQueueService(
     private val plugin: JavaPlugin,
     private val controller:
         BukkitNormalArenaController,
@@ -79,8 +78,9 @@ class BukkitOneVsOneQueueService(
     private val lifetimeWinStore:
         BukkitLifetimeWinStore
 ) {
-    private val queue=
-        EngineeringOneVsOneQueueState()
+    val teamSize: Int = BukkitTeamQueueConfig.teamSize(plugin.config)
+    private val queue = EngineeringTeamQueueState(teamSize)
+    val matchLabel: String get() = "${teamSize}v${teamSize}"
 
     private var nextArenaSequence=
         1L
@@ -88,8 +88,8 @@ class BukkitOneVsOneQueueService(
     private var failedStartCooldownTicks=
         0
 
-    private var pendingPair:
-        EngineeringOneVsOneQueuePair? =
+    private var pendingMatch:
+        EngineeringTeamQueueMatch? =
         null
 
     private var pendingArenaId:
@@ -155,7 +155,7 @@ class BukkitOneVsOneQueueService(
         check(
             playerUuid !in
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -207,7 +207,7 @@ class BukkitOneVsOneQueueService(
         val inCountdown=
             playerUuid in
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -253,7 +253,7 @@ class BukkitOneVsOneQueueService(
         val inCountdown=
             playerUuid in
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -286,7 +286,7 @@ class BukkitOneVsOneQueueService(
         val inCountdown=
             playerUuid in
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -478,7 +478,7 @@ class BukkitOneVsOneQueueService(
         if(
             playerUuid in
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -549,7 +549,7 @@ class BukkitOneVsOneQueueService(
     fun queuedPlayerCount(): Int =
         queue.size() +
             (
-                pendingPair
+                pendingMatch
                     ?.players
                     ?.size
                     ?: 0
@@ -559,7 +559,7 @@ class BukkitOneVsOneQueueService(
         (
             queue.snapshot() +
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -576,7 +576,7 @@ class BukkitOneVsOneQueueService(
         updateWaitingHud()
 
         val pair=
-            pendingPair
+            pendingMatch
         if(pair!=null) {
             val ineligible=
                 pair.players
@@ -643,7 +643,7 @@ class BukkitOneVsOneQueueService(
     }
 
     private fun prepareCountdownIfPossible() {
-        if(pendingPair!=null) {
+        if(pendingMatch!=null) {
             return
         }
         if(failedStartCooldownTicks>0) {
@@ -665,24 +665,24 @@ class BukkitOneVsOneQueueService(
         pruneWaitingPlayers()
 
         val pair=
-            queue.pairIfArenaAvailable(
+            queue.matchIfArenaAvailable(
                 true
             ) ?: return
 
-        pendingPair=pair
+        pendingMatch=pair
         pendingArenaId=
             "queue-" +
                 nextArenaSequence++
         pendingCountdown=
             HistoricalTowerDefenceStartCountdown()
 
-        // Announce "3" immediately when the second eligible player is paired.
+        // Announce "3" immediately after reserving a complete roster.
         advancePendingCountdown()
     }
 
     private fun advancePendingCountdown() {
         val pair=
-            pendingPair
+            pendingMatch
                 ?: return
         val countdown=
             pendingCountdown
@@ -736,15 +736,15 @@ class BukkitOneVsOneQueueService(
         check(step.startNow)
 
         clearPendingCountdown()
-        startPair(
+        startMatch(
             pair,
             arenaId
         )
     }
 
-    private fun startPair(
+    private fun startMatch(
         pair:
-            EngineeringOneVsOneQueuePair,
+            EngineeringTeamQueueMatch,
         arenaId: String
     ) {
         val resolvedStart=
@@ -769,74 +769,19 @@ class BukkitOneVsOneQueueService(
                     "No runnable Armageddon mode is available"
                 }
 
-                val pregameVote=
-                    HistoricalPregameArmageddonVoteRuntime(
-                        eligiblePlayers=
-                            pair.players.toSet(),
-                        runnableTypes=
-                            runnable.toSet()
-                    )
-                pair.players.forEach { uuid ->
-                    pregameArmageddonVotes[
-                        uuid
-                    ]?.let { option ->
-                        pregameVote.cast(
-                            uuid,
-                            option
-                        )
-                    }
-                }
+                val randomChoice = runnable[java.util.concurrent.ThreadLocalRandom.current().nextInt(runnable.size)]
+                val startVotes = PregameTeamStartResolver.resolve(
+                    pair, pregameArmageddonVotes, pregamePricingVotes, runnable.toSet(), randomChoice)
+                val resolved = startVotes.armageddon
+                val resolvedPricing = startVotes.pricing
 
-                val randomChoice=
-                    runnable[
-                        java.util.concurrent
-                            .ThreadLocalRandom
-                            .current()
-                            .nextInt(
-                                runnable.size
-                            )
-                    ]
-                val resolved=
-                    pregameVote.resolve(
-                        randomChoice
-                    )
-
-                val pricingVote=
-                    HistoricalPregamePricingVoteRuntime(
-                        pair.players.toSet()
-                    )
-                pair.players.forEach { uuid ->
-                    pregamePricingVotes[
-                        uuid
-                    ]?.let { option ->
-                        pricingVote.cast(
-                            uuid,
-                            option
-                        )
-                    }
-                }
-                val resolvedPricing=
-                    pricingVote.resolve()
-
-                val settingsOverrides=
-                    pair.players
-                        .mapNotNull {
-                            uuid ->
-                            pregamePreferences[
-                                uuid
-                            ]?.settings
-                                ?.copy()
-                                ?.let {
-                                    uuid to it
-                                }
-                        }
-                        .toMap()
+                val settingsOverrides = PregameTeamStartResolver.settings(pair, pregamePreferences)
 
                 controller
-                    .startOneVsOneResolvedTest(
+                    .startTeamResolvedTest(
                         arenaId,
-                        pair.redPlayer,
-                        pair.bluePlayer,
+                        pair.redPlayers,
+                        pair.bluePlayers,
                         resolved.selection,
                         resolvedPricing
                             .pricingMode,
@@ -854,7 +799,7 @@ class BukkitOneVsOneQueueService(
                 // pair. This catch therefore owns only the pre-start/start
                 // transaction. A controller failure is expected to tear down
                 // any partial arena state before control returns here.
-                queue.restorePairToFront(
+                queue.restoreMatchToFront(
                     pair
                 )
                 failedStartCooldownTicks=5
@@ -873,7 +818,7 @@ class BukkitOneVsOneQueueService(
                         )
                 }
                 plugin.logger.warning(
-                    "Engineering 1v1 queue start failed for " +
+                    "Engineering $matchLabel queue start failed for " +
                         arenaId +
                         ": " +
                         t.stackTraceToString()
@@ -970,14 +915,14 @@ class BukkitOneVsOneQueueService(
                             "Selected Normal gamemode! Due to no votes."
                         )
                         sendMessage(
-                            "TD Engineering 1v1 started: " +
+                            "TD Engineering $matchLabel started: " +
                                 arenaId
                         )
                     }
             }
         } catch(t:Throwable) {
             plugin.logger.warning(
-                "Engineering 1v1 arena " +
+                "Engineering $matchLabel arena " +
                     arenaId +
                     " started successfully, but post-start presentation failed. " +
                     "Players were NOT requeued: " +
@@ -991,11 +936,11 @@ class BukkitOneVsOneQueueService(
         reason: String
     ) {
         val pair=
-            pendingPair
+            pendingMatch
                 ?: return
 
         clearPendingCountdown()
-        queue.restorePairToFront(
+        queue.restoreMatchToFront(
             pair
         )
         dropPlayers.forEach {
@@ -1023,7 +968,7 @@ class BukkitOneVsOneQueueService(
     }
 
     private fun clearPendingCountdown() {
-        pendingPair=null
+        pendingMatch=null
         pendingArenaId=null
         pendingCountdown=null
     }
@@ -1063,7 +1008,7 @@ class BukkitOneVsOneQueueService(
         val inCountdown=
             playerUuid in
                 (
-                    pendingPair
+                    pendingMatch
                         ?.players
                         ?: emptyList()
                 )
@@ -1139,7 +1084,9 @@ class BukkitOneVsOneQueueService(
                     pricingVote=
                         pregamePricingVotes[
                             playerUuid
-                        ]
+                        ],
+                    teamSize=teamSize,
+                    waitingPlayers=if (countdownSeconds != null) queue.requiredPlayers else minOf(queue.size(), queue.requiredPlayers)
                 )
             )
 

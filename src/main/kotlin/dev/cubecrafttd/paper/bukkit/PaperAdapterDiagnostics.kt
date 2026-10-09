@@ -118,7 +118,7 @@ data class PaperAdapterDiagnostics(
                 "historical-style player departure lifecycle",
                 "departed-owner teammate tower management",
                 "engineering match-end UI cleanup and result presentation",
-                "regular-player Engineering 1v1 queue/join/leave bridge",
+                "regular-player configurable team queue/join/leave bridge",
                 "historical direct-log 3-second pre-game countdown",
                 "historical pregame Armageddon vote/no-vote Random resolution",
                 "historical pregame Pricing vote with live economy binding",

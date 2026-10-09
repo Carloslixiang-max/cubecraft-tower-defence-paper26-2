@@ -43,7 +43,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var towerPlacementListener: BukkitTowerPlacementListener
     private lateinit var matchSafetyListener: BukkitMatchSafetyListener
     private lateinit var matchDepartureListener: BukkitMatchDepartureListener
-    private lateinit var oneVsOneQueue: BukkitOneVsOneQueueService
+    private lateinit var teamQueue: BukkitTeamQueueService
     private lateinit var rangefinderService: BukkitEngineeringRangefinderService
     private var fallbackMissing: List<MissingFallback> = emptyList()
 
@@ -153,8 +153,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 "Previous TD process was not cleanly shut down. Farm reuse is hard-blocked until /ctdresetfarm completes a verified tagged-entity cleanup + schematic reset."
             )
         }
-        oneVsOneQueue =
-            BukkitOneVsOneQueueService(
+        teamQueue =
+            BukkitTeamQueueService(
                 this,
                 liveArenaController,
                 readinessService,
@@ -388,17 +388,17 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         runCatching {
                             when(navigation) {
                                 "vote" ->
-                                    oneVsOneQueue
+                                    teamQueue
                                         .pregameVoteMenu(
                                             invocation.playerUuid
                                         )
                                 "settings" ->
-                                    oneVsOneQueue
+                                    teamQueue
                                         .pregameSettingsMenu(
                                             invocation.playerUuid
                                         )
                                 "hotbar" ->
-                                    oneVsOneQueue
+                                    teamQueue
                                         .pregameHotbarMenu(
                                             invocation.playerUuid
                                         )
@@ -428,7 +428,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }
                     } else {
                         runCatching {
-                            oneVsOneQueue
+                            teamQueue
                                 .handlePregameMenuAction(
                                     invocation
                                 )
@@ -457,7 +457,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                         .startsWith(
                                             "pregame-settings:"
                                         ) ->
-                                        oneVsOneQueue
+                                        teamQueue
                                             .pregameSettingsMenu(
                                                 invocation.playerUuid
                                             )
@@ -465,12 +465,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                         .startsWith(
                                             "pregame-hotbar:"
                                         ) ->
-                                        oneVsOneQueue
+                                        teamQueue
                                             .pregameHotbarMenu(
                                                 invocation.playerUuid
                                             )
                                     else ->
-                                        oneVsOneQueue
+                                        teamQueue
                                             .pregameVoteMenu(
                                                 invocation.playerUuid
                                             )
@@ -565,7 +565,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v108 enabled; " +
+            "CubeCraftTowerDefence shell v109 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -609,8 +609,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
     override fun onDisable() {
-        if (::oneVsOneQueue.isInitialized) {
-            oneVsOneQueue.close()
+        if (::teamQueue.isInitialized) {
+            teamQueue.close()
         }
         if (::liveArenaController.isInitialized) {
             liveArenaController.stopAll()
@@ -633,7 +633,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v108 disabled; " +
+            "CubeCraftTowerDefence shell v109 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -667,9 +667,10 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v108, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v109, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
-                    "queuedPlayers=${if(::oneVsOneQueue.isInitialized) oneVsOneQueue.queuedPlayerCount() else 0}, " +
+                    "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
+                    "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +
                     "reuse=" +
                     (if(::liveArenaController.isInitialized)
                         liveArenaController.farmReuseStatus().summary()
@@ -925,7 +926,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         if(args.isEmpty()) {
             runCatching {
-                oneVsOneQueue
+                teamQueue
                     .pregameVoteMenu(
                         player.uniqueId
                     )
@@ -980,7 +981,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     }
 
                 runCatching {
-                    oneVsOneQueue
+                    teamQueue
                         .castArmageddonVote(
                             player.uniqueId,
                             option
@@ -1036,7 +1037,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     }
 
                 runCatching {
-                    oneVsOneQueue
+                    teamQueue
                         .castPricingVote(
                             player.uniqueId,
                             option
@@ -1094,20 +1095,20 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 }
 
         runCatching {
-            oneVsOneQueue.join(
+            teamQueue.join(
                 player.uniqueId
             )
         }.onSuccess { report ->
             when {
                 !report.added ->
                     sender.sendMessage(
-                        "Already waiting for TD 1v1; position #" +
+                        "Already waiting for TD ${teamQueue.matchLabel}; position #" +
                             report.position
                     )
 
                 report.blockingCode!=null ->
                     sender.sendMessage(
-                        "Joined TD 1v1 queue at position #" +
+                        "Joined TD ${teamQueue.matchLabel} queue at position #" +
                             report.position +
                             ". Start is currently blocked by " +
                             report.blockingCode +
@@ -1116,7 +1117,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
                 else ->
                     sender.sendMessage(
-                        "Joined TD 1v1 queue at position #" +
+                        "Joined TD ${teamQueue.matchLabel} queue at position #" +
                             report.position +
                             ". Waiting players=" +
                             report.waitingCount +
@@ -1157,19 +1158,19 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 }
 
         runCatching {
-            oneVsOneQueue.leave(
+            teamQueue.leave(
                 player.uniqueId
             )
         }.onSuccess { report ->
             when {
                 report.removedFromWaiting ->
                     sender.sendMessage(
-                        "Left the TD 1v1 waiting queue."
+                        "Left the TD ${teamQueue.matchLabel} waiting queue."
                     )
 
                 report.cancelledStartCountdown ->
                     sender.sendMessage(
-                        "Left the TD start countdown; the other player returned to the front of the queue."
+                        "Left the TD start countdown; the remaining players returned to the front of the queue."
                     )
 
                 report.leftActiveMatch ->
@@ -2284,7 +2285,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             args[2] +
                             " BLUE=" +
                             args[3] +
-                            ". This does NOT change regular /ctdjoin 1v1 matchmaking."
+                            ". Regular /ctdjoin follows the configured queue.team-size."
                     )
                     if(
                         redPlayers.size>1 ||

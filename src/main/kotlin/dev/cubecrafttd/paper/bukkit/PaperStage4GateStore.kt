@@ -337,6 +337,10 @@ class PaperStage4GateStore(
             BukkitTowerModelSmoke.run(plugin)
         }
 
+        checkStep("team-queue-profile-loading") {
+            BukkitTeamQueueConfig.smoke()
+        }
+
         if(failures.isEmpty()) {
             props.setProperty(
                 "adapterSmokePassed",
