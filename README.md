@@ -12,7 +12,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Java target: **25**
 - Kotlin/JVM plugin
 - Current shell lineage: **v109 engineering playtest shell**
-- Pure-domain suite: **555 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Pure-domain suite: **570 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
