@@ -7,8 +7,8 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -342,46 +342,13 @@ class BukkitMenuBridge(
         val actions=
             openActions[player.uniqueId]
                 ?: return
-        val raw=event.rawSlot
-        if(
-            raw < 0 ||
-            raw >=
-                event.view
-                    .topInventory.size
-        ) return
+        BukkitMenuInteractionGuard.click(event, actions)?.let(actionSink::accept)
+    }
 
-        event.isCancelled=true
-        val action=
-            actions[raw]
-                ?: return
-
-        if(
-            action.startsWith(
-                "noop:"
-            )
-        ) {
-            return
-        }
-
-        val click=when(event.click) {
-            ClickType.LEFT ->
-                ClickKind.LEFT
-            ClickType.RIGHT ->
-                ClickKind.RIGHT
-            ClickType.SHIFT_LEFT ->
-                ClickKind.SHIFT_LEFT
-            ClickType.SHIFT_RIGHT ->
-                ClickKind.SHIFT_RIGHT
-            else -> return
-        }
-
-        actionSink.accept(
-            MenuActionInvocation(
-                player.uniqueId,
-                action,
-                click
-            )
-        )
+    @EventHandler
+    fun onDrag(event: InventoryDragEvent) {
+        val player = event.whoClicked as? Player ?: return
+        if (player.uniqueId in openActions) BukkitMenuInteractionGuard.drag(event)
     }
 
     @EventHandler

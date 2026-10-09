@@ -279,7 +279,11 @@ class PaperStage4GateStore(
                 "torch" to Material.TORCH,
                 "bricks" to Material.BRICKS,
                 "splash-potion" to Material.SPLASH_POTION,
-                "barrier" to Material.BARRIER
+                "barrier" to Material.BARRIER,
+                "feather" to Material.FEATHER,
+                "blaze-powder" to Material.BLAZE_POWDER,
+                "glass-pane-red" to Material.RED_STAINED_GLASS_PANE,
+                "glass-pane-lime" to Material.LIME_STAINED_GLASS_PANE
             ).forEach { (hint, material) ->
                 check(renderer.render("noop:gui-smoke", hint).type == material)
             }
@@ -339,6 +343,10 @@ class PaperStage4GateStore(
 
         checkStep("team-queue-profile-loading") {
             BukkitTeamQueueConfig.smoke()
+        }
+
+        checkStep("menu-transfer-guard-and-empty-slot-dispatch") {
+            BukkitMenuInteractionSmoke.run()
         }
 
         if(failures.isEmpty()) {

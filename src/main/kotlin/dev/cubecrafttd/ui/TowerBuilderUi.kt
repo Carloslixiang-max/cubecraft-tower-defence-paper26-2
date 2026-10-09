@@ -17,10 +17,10 @@ object TowerBuilderMenus {
         evidenceStatus = UiEvidenceStatus.MATURE_DIRECT,
         slots = listOf(
             MenuSlot(2,"tower:archer",UiEvidenceStatus.MATURE_DIRECT,"Archer Tower","bow"),
-            MenuSlot(3,"tower:ice",UiEvidenceStatus.MATURE_DIRECT,"Ice Tower","ice-like"),
-            MenuSlot(5,"tower:mage",UiEvidenceStatus.MATURE_DIRECT,"Mage Tower","coal"),
+            MenuSlot(3,"tower:ice",UiEvidenceStatus.MATURE_CONTEXT,"Ice Tower","ice-like"),
+            MenuSlot(5,"tower:mage",UiEvidenceStatus.MATURE_CONTEXT,"Mage Tower","coal"),
             MenuSlot(6,"tower:artillery",UiEvidenceStatus.MATURE_DIRECT,"Artillery Tower","tnt"),
-            MenuSlot(11,"tower:sorcerer",UiEvidenceStatus.MATURE_DIRECT,"Sorcerer Tower","ender-eye"),
+            MenuSlot(11,"tower:sorcerer",UiEvidenceStatus.MATURE_CONTEXT,"Sorcerer Tower","ender-eye"),
             MenuSlot(12,"tower:zeus",UiEvidenceStatus.MATURE_DIRECT,"Zeus Tower","beacon"),
             MenuSlot(14,"tower:quake",UiEvidenceStatus.MATURE_DIRECT,"Quake Tower","dirt"),
             MenuSlot(15,"tower:poison",UiEvidenceStatus.MATURE_DIRECT,"Poison Tower","potion"),

@@ -286,12 +286,12 @@ object DynamicMatchMenus {
             evidenceStatus=
                 UiEvidenceStatus
                     .MATURE_CONTEXT,
-            slots=listOf(
+            slots=HistoricalSettingsControls.unresolvedVisuals() + listOf(
                 // Official 2021 screenshot recovers the 5x9 Settings shell,
                 // but the exact slot/icon mapping for these controls is not
                 // fully recovered. Keep those positions explicitly fallback.
                 MenuSlot(
-                    10,
+                    16,
                     "settings:particle-density",
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
@@ -429,6 +429,7 @@ object DynamicMatchMenus {
 
         val slots=
             buildList {
+                add(HistoricalSettingsControls.inventoryLayoutArrow())
                 RecommendedMatureBazaarDefinitions
                     .aoePotions
                     .filter {

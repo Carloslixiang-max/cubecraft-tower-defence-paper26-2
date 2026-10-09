@@ -53,7 +53,7 @@ class BukkitEngineeringMenuRenderer :
             "item-frame" ->
                 Material.ITEM_FRAME
             "empty-slot" ->
-                Material.GRAY_STAINED_GLASS_PANE
+                Material.AIR
             "tnt" -> Material.TNT
             "beacon" -> Material.BEACON
             "dirt" -> Material.DIRT
@@ -62,6 +62,10 @@ class BukkitEngineeringMenuRenderer :
             "anvil" -> Material.ANVIL
             "stick" -> Material.STICK
             "torch" -> Material.TORCH
+            "feather" -> Material.FEATHER
+            "blaze-powder" -> Material.BLAZE_POWDER
+            "glass-pane-red" -> Material.RED_STAINED_GLASS_PANE
+            "glass-pane-lime" -> Material.LIME_STAINED_GLASS_PANE
             "bricks" -> Material.BRICKS
             "splash-potion" -> Material.SPLASH_POTION
             "barrier" -> Material.BARRIER

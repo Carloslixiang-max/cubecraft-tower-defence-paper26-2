@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v109 engineering playtest shell**
-- Pure-domain suite: **570 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Current shell lineage: **v110 engineering playtest shell**
+- Pure-domain suite: **575 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -265,3 +265,9 @@ Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
 - Domain checks cover incomplete/full/busy rosters, duplicate joins, 12-player recovery order, replacement after countdown departure, all supported sizes, 12-player vote majority/ties/defaults, outsider isolation and copied Settings. Existing 1v1 compatibility fixtures remain.
 - Six players per team are supported by the contemporary [11 August 2017 playing guide](https://www.cubecraft.net/threads/smanbgs-playing-guide.195328/). It does not establish original minimum-player start thresholds, party/rank balancing, automatic team choice or lobby timers; those policies are not claimed recovered.
 - Full original scenery/tower bodies, unresolved values, Fast Fly and human Stage-4 certification remain incomplete.
+
+## v110 GUI visual controls and waiting-inventory protection
+
+- Restore observed Settings silhouettes and editor Arrow without guessing their click semantics; particle runtime remains accessible at explicit Engineering slot 16. Empty hotbar editor cells now render as empty, while raw-slot action dispatch keeps AoE placement usable. [Evidence and uncertainty](evidence/GUI_FIDELITY_2021.md).
+- Prevent real waiting-lobby items from entering projected menus through bottom shift-click, collection, swaps, outside drops or drag. Production menu guard is exercised with real Paper event objects and synthetic viewers on both boots. This does not certify human inventory roundtrip or client visual fidelity.
+- Inferred Ice/Mage/Sorcerer builder identities are explicitly contextual. Original pane actions, click sounds, Fast Fly and complete tower models remain unresolved.

@@ -565,7 +565,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v109 enabled; " +
+            "CubeCraftTowerDefence shell v110 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -633,7 +633,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v109 disabled; " +
+            "CubeCraftTowerDefence shell v110 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -667,7 +667,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v109, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v110, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +

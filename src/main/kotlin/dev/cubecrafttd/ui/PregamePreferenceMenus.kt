@@ -23,9 +23,9 @@ object PregamePreferenceMenus {
             evidenceStatus=
                 UiEvidenceStatus
                     .MATURE_CONTEXT,
-            slots=listOf(
+            slots=HistoricalSettingsControls.unresolvedVisuals() + listOf(
                 MenuSlot(
-                    10,
+                    16,
                     "pregame-settings:particle-density",
                     UiEvidenceStatus
                         .ENGINEERING_FALLBACK,
@@ -100,6 +100,7 @@ object PregamePreferenceMenus {
 
         val slots=
             buildList {
+                add(HistoricalSettingsControls.inventoryLayoutArrow())
                 RecommendedMatureBazaarDefinitions
                     .aoePotions
                     .take(sourceSlots.size)

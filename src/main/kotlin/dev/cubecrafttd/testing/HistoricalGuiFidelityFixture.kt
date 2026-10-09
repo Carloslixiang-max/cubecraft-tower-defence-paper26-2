@@ -33,6 +33,27 @@ object HistoricalGuiFidelityFixture {
                     MenuTextColor.GRAY, loreBoldSpans = mapOf(line to spans)))
         }.isFailure
         return listOf(
+            FixtureResult("2021-settings-visible-powder-feather-and-panes-stay-non-functional",
+                unlocked.all { view -> mapOf(4 to "blaze-powder", 10 to "feather", 19 to "glass-pane-red", 20 to "glass-pane-lime").all { (slot, hint) ->
+                    view.slotIconHints[slot] == hint && view.slotActionIds[slot]?.startsWith("noop:") == true
+                } }),
+            FixtureResult("settings-particle-runtime-remains-reachable-away-from-observed-feather",
+                unlocked[0].slotActionIds[16] == "pregame-settings:particle-density" &&
+                    unlocked[1].slotActionIds[16] == "settings:particle-density"),
+            FixtureResult("2021-hotbar-editor-arrow-slot-eight-is-visual-only-on-both-surfaces",
+                editors.all { it.slotIconHints[8] == "arrow" && it.slotActionIds[8] == "noop:hotbar:2021-arrow-unresolved" }),
+            FixtureResult("2021-hotbar-empty-cell-keeps-position-based-place-action",
+                PregamePreferenceMenus.hotbar(layout, HotbarEditorSelection.AoE("meteor")).toLiveView().let {
+                    it.slotIconHints[30] == "empty-slot" && it.slotActionIds[30] == "pregame-hotbar:place:3"
+                } && player.interaction.let { interaction ->
+                    interaction.hotbarEditorSelection = HotbarEditorSelection.AoE("meteor")
+                    DynamicMatchMenus.hotbarEditor(player).toLiveView().let {
+                        it.slotIconHints[30] == "empty-slot" && it.slotActionIds[30] == "hotbar:place:3"
+                    }
+                }),
+            FixtureResult("builder-inferred-icon-identities-remain-contextual-evidence",
+                TowerBuilderMenus.threeByThree2021.slots.filter { it.actionId in setOf("tower:ice", "tower:mage", "tower:sorcerer") }
+                    .all { it.evidenceStatus == UiEvidenceStatus.MATURE_CONTEXT }),
             FixtureResult("2021-rangefinder-name-keeps-yellow-base-and-only-enable-green-bold",
                 TowerManagementMenus.mature2021(1, "Zeus Tower", 1, false).toLiveView().let { view ->
                     view.slotTextStyles[45]?.nameColor == MenuTextColor.YELLOW &&

@@ -7,6 +7,22 @@ package dev.cubecrafttd.ui
  * Source: https://www.cubecraft.net/attachments/screenshot_173-png.184956/
  */
 object HistoricalSettingsControls {
+    // These item positions are visible, but their names/actions are not exposed by the hover.
+    fun unresolvedVisuals(): List<MenuSlot> = listOf(
+        MenuSlot(4, "noop:settings:2021-powder-unresolved", UiEvidenceStatus.MATURE_CONTEXT,
+            "2021 control (action unresolved)", "blaze-powder"),
+        MenuSlot(10, "noop:settings:2021-feather-unresolved", UiEvidenceStatus.MATURE_CONTEXT,
+            "2021 control (action unresolved)", "feather"),
+        MenuSlot(19, "noop:settings:2021-red-pane-unresolved", UiEvidenceStatus.MATURE_CONTEXT,
+            "2021 pane (action unresolved)", "glass-pane-red"),
+        MenuSlot(20, "noop:settings:2021-green-pane-unresolved", UiEvidenceStatus.MATURE_CONTEXT,
+            "2021 pane (action unresolved)", "glass-pane-lime")
+    )
+
+    fun inventoryLayoutArrow(): MenuSlot = MenuSlot(
+        8, "noop:hotbar:2021-arrow-unresolved", UiEvidenceStatus.MATURE_CONTEXT,
+        "2021 control (action unresolved)", "arrow")
+
     fun autoCentre(
         model: SettingsMenuModel,
         actionId: String
