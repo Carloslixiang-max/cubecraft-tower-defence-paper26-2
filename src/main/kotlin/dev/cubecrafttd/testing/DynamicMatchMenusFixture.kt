@@ -275,13 +275,20 @@ object DynamicMatchMenusFixture {
                         .MATURE_DIRECT &&
                 settings.slots
                     .filterNot {
-                        it.slot==40 || it.slot==11
+                        it.slot in setOf(4, 10, 11, 19, 20, 40)
                     }
                     .all {
                         it.evidenceStatus==
                             UiEvidenceStatus
                                 .ENGINEERING_FALLBACK
                     } &&
+                settings.slots.filter { it.slot in setOf(4, 10, 19, 20) }.let { observed ->
+                    observed.map { it.slot }.toSet()==setOf(4, 10, 19, 20) &&
+                        observed.all {
+                            it.evidenceStatus==UiEvidenceStatus.MATURE_CONTEXT &&
+                                it.actionId.startsWith("noop:")
+                        }
+                } &&
                 settings.slots.first { it.slot==11 }.let {
                     it.evidenceStatus==UiEvidenceStatus.MATURE_CONTEXT &&
                         it.iconHint=="torch" &&

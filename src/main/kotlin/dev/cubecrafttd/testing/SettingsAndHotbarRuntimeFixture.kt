@@ -389,13 +389,17 @@ object SettingsAndHotbarRuntimeFixture {
                 "hotbar-editor-no-longer-projects-invented-fixed-action-palette",
                 hotbarMenu.slots
                     .filter {
-                        it.slot<27
+                        it.slot<27 && it.slot!=8
                     }
                     .all {
                         it.actionId.startsWith(
                             "hotbar:select-aoe:"
                         )
-                    }
+                    } &&
+                hotbarMenu.slots.single { it.slot==8 }.let {
+                    it.iconHint=="arrow" && it.actionId.startsWith("noop:") &&
+                        it.evidenceStatus==UiEvidenceStatus.MATURE_CONTEXT
+                }
             ),
             FixtureResult(
                 "hotbar-editor-owned-aoe-can-fill-empty-slot",
