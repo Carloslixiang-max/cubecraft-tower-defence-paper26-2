@@ -268,43 +268,8 @@ class BukkitMenuBridge(
         menu: LiveMenuView
     ) {
         inventory.clear()
-        menu.slotActionIds.forEach {
-            (slot,action) ->
-            val item=
-                renderer.render(
-                    action,
-                    menu.slotIconHints[
-                        slot
-                    ]
-                )
-            item.editMeta {
-                meta ->
-                val style = menu.slotTextStyles[slot]
-                menu.slotDisplayNames[
-                    slot
-                ]?.let {
-                    displayName ->
-                    meta.displayName(
-                        BukkitMenuText.render(displayName, style?.nameColor, style != null,
-                            style?.nameBoldSpans.orEmpty())
-                    )
-                }
-                menu.slotLore[
-                    slot
-                ]?.let {
-                    lore ->
-                    meta.lore(
-                        lore.mapIndexed { index, line ->
-                            BukkitMenuText.render(line, style?.loreColors?.get(index), style != null,
-                                style?.loreBoldSpans?.get(index).orEmpty())
-                        }
-                    )
-                }
-            }
-            inventory.setItem(
-                slot,
-                item
-            )
+        menu.slotActionIds.keys.forEach { slot ->
+            inventory.setItem(slot, BukkitMenuItemProjection.render(menu, slot, renderer))
         }
     }
 

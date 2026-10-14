@@ -10,15 +10,16 @@ import net.kyori.adventure.text.format.TextDecoration
 object BukkitMenuText {
     fun render(
         text: String,
-        color: MenuTextColor?,
-        explicitStyle: Boolean,
+        color: MenuTextColor? = null,
         boldSpans: List<MenuBoldSpan> = emptyList()
     ): Component {
         require(boldSpans.all { it.endExclusive <= text.length })
         require(boldSpans.zipWithNext().all { (a, b) -> a.endExclusive <= b.start })
         var component = if (boldSpans.isEmpty()) Component.text(text) else Component.empty()
         if (color != null) component = component.color(color.adventureColor())
-        if (explicitStyle) component = component
+        // All menu text must override the client's inherited item/lore italics.
+        // Unknown historical colors stay unset; only recovered spans add bold.
+        component = component
             .decoration(TextDecoration.ITALIC, false)
             .decoration(TextDecoration.BOLD, false)
         var offset = 0

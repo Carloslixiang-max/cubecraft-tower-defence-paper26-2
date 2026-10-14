@@ -291,19 +291,23 @@ class PaperStage4GateStore(
                 .itemMeta.enchantmentGlintOverride == true)
         }
 
+        checkStep("menu-production-item-projection-roundtrip") {
+            BukkitMenuProjectionSmoke.run()
+        }
+
         checkStep("historical-gui-partial-bold-item-roundtrip") {
             val zeus = TowerBuilderMenus.pathSelector2021("zeus").slots.first { it.slot == 15 }
             val style = requireNotNull(zeus.textStyle)
             val item = BukkitEngineeringMenuRenderer().render(zeus.actionId, zeus.iconHint)
             val lore = zeus.lore.mapIndexed { index, text ->
-                BukkitMenuText.render(text, style.loreColors[index], true,
+                BukkitMenuText.render(text, style.loreColors[index],
                     style.loreBoldSpans[index].orEmpty())
             }
             val autoCentre = HistoricalSettingsControls.autoCentre(
                 SettingsMenuProjector.project(PlayerMatchSettings(lifetimeWins = 20)), "noop:smoke")
             val nameStyle = requireNotNull(autoCentre.textStyle)
             val name = BukkitMenuText.render(requireNotNull(autoCentre.displayName),
-                nameStyle.nameColor, true, nameStyle.nameBoldSpans)
+                nameStyle.nameColor, nameStyle.nameBoldSpans)
             item.editMeta { it.displayName(name); it.lore(lore) }
             val restored = ItemStack.deserializeBytes(item.serializeAsBytes()).itemMeta
             check(restored.displayName() == name && restored.lore() == lore)
@@ -319,7 +323,7 @@ class PaperStage4GateStore(
                 .slots.first { it.slot == 45 }
             val rangeStyle = requireNotNull(rangefinder.textStyle)
             val rangeName = BukkitMenuText.render(requireNotNull(rangefinder.displayName),
-                rangeStyle.nameColor, true, rangeStyle.nameBoldSpans)
+                rangeStyle.nameColor, rangeStyle.nameBoldSpans)
             val rangeItem = BukkitEngineeringMenuRenderer().render(rangefinder.actionId, rangefinder.iconHint)
             rangeItem.editMeta { it.displayName(rangeName) }
             val savedName = ItemStack.deserializeBytes(rangeItem.serializeAsBytes()).itemMeta.displayName()!!

@@ -35,3 +35,12 @@ Screenshot_172 was also reopened: the rangefinder label is yellow (not gold), wi
 - Empty example hotbar cells are visually empty. Renderer now uses AIR instead of gray panes for `empty-slot`. Actions remain keyed by raw inventory position, so an empty cell can still receive a selected AoE through the editor; no actual item drag is used.
 - Existing Ice/Mage/Sorcerer builder icon interpretations are downgraded from MATURE_DIRECT to MATURE_CONTEXT, matching their documented inference. No new builder slot or item identity is invented.
 - Tracked menus now cancel bottom-inventory transfers, number-key/offhand swaps, collection, outside drops and drags as well as top clicks. Previously active matches had an additional safety listener, but waiting-lobby menus did not share its protection. Real Paper event/inventory smoke checks exercise the production guard with synthetic viewers, including raw-position actions on visually empty cells. This is API dispatch evidence, not human/client packet certification.
+
+
+## v111 typography inheritance and production projection
+
+[Paper's Adventure FAQ](https://docs.papermc.io/adventure/faq/) explains that item lore inherits an italic parent style unless explicitly disabled. The previous menu renderer disabled italics only when a recovered `MenuTextStyle` existed; unstyled controls could therefore still become italic. All projected names and lore now start with explicit non-italic/non-bold styling. Unknown colors remain unset; recovered partial-bold spans retain their own decorations. This is a renderer compatibility correction, not new evidence for any unknown label or color.
+
+`BukkitMenuItemProjection` is now used by both real inventory population/redraw and the dual-boot Paper smoke. Real item byte roundtrips cover builder, Archer/Zeus selector, tower management, waiting Settings and inventory editor, plus unstyled/fallback/blank-lore cases. Arrow glint stays independent of text bold; AIR cells bypass item metadata and retain position-based actions. The test uses real Paper items without a human client and cannot certify on-screen appearance.
+
+Screenshot_172 was reopened again at native resolution. Its colored panes may represent level/path availability; state-dependent semantics remain unresolved, so they are not copied across every live tower/level. No new pane actions or path-close placement behavior is inferred.
