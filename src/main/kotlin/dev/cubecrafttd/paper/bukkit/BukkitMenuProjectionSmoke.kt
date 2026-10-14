@@ -34,22 +34,25 @@ object BukkitMenuProjectionSmoke {
                 } else {
                     val before = item.itemMeta
                     val saved = ItemStack.deserializeBytes(item.serializeAsBytes()).itemMeta
-                    check(saved.displayName() == before.displayName() && saved.lore() == before.lore())
+                    check(saved.displayName() == before.displayName() && saved.lore() == before.lore()) { "Text roundtrip changed ${menu.title}/$slot" }
                     val name = requireNotNull(saved.displayName())
-                    check(name.decoration(TextDecoration.ITALIC) == TextDecoration.State.FALSE)
-                    check(name.decoration(TextDecoration.BOLD) == TextDecoration.State.FALSE)
+                    check(name.decoration(TextDecoration.ITALIC) == TextDecoration.State.FALSE) { "Italic name ${menu.title}/$slot" }
+                    check(name.decoration(TextDecoration.BOLD) == TextDecoration.State.FALSE) { "Bold name root ${menu.title}/$slot" }
                     saved.lore().orEmpty().forEach { line ->
-                        check(line.decoration(TextDecoration.ITALIC) == TextDecoration.State.FALSE)
-                        check(line.decoration(TextDecoration.BOLD) == TextDecoration.State.FALSE)
+                        check(line.decoration(TextDecoration.ITALIC) == TextDecoration.State.FALSE) { "Italic lore ${menu.title}/$slot" }
+                        check(line.decoration(TextDecoration.BOLD) == TextDecoration.State.FALSE) { "Bold lore root ${menu.title}/$slot" }
                     }
                 }
             }
         }
         val archer = TowerBuilderMenus.pathSelector2021("archer").toLiveView()
-        val top = BukkitMenuItemProjection.render(archer, 11, renderer)
-        val bottom = BukkitMenuItemProjection.render(archer, 15, renderer)
+        val top = ItemStack.deserializeBytes(BukkitMenuItemProjection.render(archer, 11, renderer).serializeAsBytes())
+        val bottom = ItemStack.deserializeBytes(BukkitMenuItemProjection.render(archer, 15, renderer).serializeAsBytes())
         check(top.type == Material.ARROW && bottom.type == Material.ARROW)
-        check(top.itemMeta.enchantmentGlintOverride != true && bottom.itemMeta.enchantmentGlintOverride == true)
+        check(!top.itemMeta.hasEnchantmentGlintOverride() &&
+            bottom.itemMeta.hasEnchantmentGlintOverride() && bottom.itemMeta.enchantmentGlintOverride == true) {
+            "Archer path glint changed in production projection/byte roundtrip"
+        }
         val zeus = TowerBuilderMenus.pathSelector2021("zeus").toLiveView()
         val description = BukkitMenuItemProjection.render(zeus, 15, renderer).itemMeta.lore()!![1]
         check((description.children()[1] as TextComponent).content() == "baby Zeus")

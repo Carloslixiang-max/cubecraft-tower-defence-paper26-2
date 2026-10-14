@@ -64,6 +64,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          trap 'cat /tmp/ctd-server-1.log 2>/dev/null || true' ERR
           rm -rf run
           mkdir -p run
           echo "eula=true" > run/eula.txt
@@ -104,6 +105,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          trap 'cat /tmp/ctd-server-2.log 2>/dev/null || true' ERR
           mkfifo /tmp/ctd-server-in-2
           gradle runServer --no-daemon < /tmp/ctd-server-in-2 > /tmp/ctd-server-2.log 2>&1 &
           SERVER_PID=$!
