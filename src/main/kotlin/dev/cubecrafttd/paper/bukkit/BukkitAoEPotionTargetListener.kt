@@ -4,7 +4,6 @@ import org.bukkit.Particle
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.plugin.Plugin
 import kotlin.math.PI
@@ -28,6 +27,8 @@ class BukkitAoEPotionTargetListener(
     fun onInteract(
         event: PlayerInteractEvent
     ) {
+        // Reject offhand/left/physical/denied input before looking up or arming stock.
+        if (!BukkitMatchInteractPolicy.acceptsRightClick(event)) return
         val player=event.player
         val potionId=
             controller.hotbarAoEPotionAt(
@@ -41,13 +42,6 @@ class BukkitAoEPotionTargetListener(
                 player.uniqueId,
                 potionId
             )
-        ) return
-
-        if(
-            event.action!=
-                Action.RIGHT_CLICK_AIR &&
-            event.action!=
-                Action.RIGHT_CLICK_BLOCK
         ) return
 
         event.isCancelled=true

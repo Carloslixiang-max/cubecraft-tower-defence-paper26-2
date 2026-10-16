@@ -291,6 +291,10 @@ class PaperStage4GateStore(
                 .itemMeta.enchantmentGlintOverride == true)
         }
 
+        checkStep("main-hand-air-click-and-denied-interaction-policy") {
+            BukkitMatchInteractSmoke.run(plugin)
+        }
+
         checkStep("menu-production-item-projection-roundtrip") {
             BukkitMenuProjectionSmoke.run()
         }

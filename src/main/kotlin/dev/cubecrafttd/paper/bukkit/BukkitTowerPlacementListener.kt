@@ -5,7 +5,6 @@ import dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.plugin.Plugin
 
@@ -35,8 +34,7 @@ class BukkitTowerPlacementListener(
     fun onInteract(
         event: PlayerInteractEvent
     ) {
-        if(event.action!=Action.RIGHT_CLICK_BLOCK)
-            return
+        if (!BukkitMatchInteractPolicy.acceptsBlockRightClick(event)) return
         val block=event.clickedBlock ?: return
         val player=event.player
         val pos=BlockPos(block.x,block.y,block.z)

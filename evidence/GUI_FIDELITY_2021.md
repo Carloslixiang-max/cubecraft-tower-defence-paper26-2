@@ -44,3 +44,12 @@ Screenshot_172 was also reopened: the rangefinder label is yellow (not gold), wi
 `BukkitMenuItemProjection` is now used by both real inventory population/redraw and the dual-boot Paper smoke. Real item byte roundtrips cover builder, Archer/Zeus selector, tower management, waiting Settings and inventory editor, plus unstyled/fallback/blank-lore cases. Arrow glint stays independent of text bold; AIR cells bypass item metadata and retain position-based actions. The test uses real Paper items without a human client and cannot certify on-screen appearance.
 
 Screenshot_172 was reopened again at native resolution. Its colored panes may represent level/path availability; state-dependent semantics remain unresolved, so they are not copied across every live tower/level. No new pane actions or path-close placement behavior is inferred.
+
+
+## v112 menu access and interaction routing
+
+This is a Paper adapter correction, not newly recovered historical gesture evidence. [Paper 26.2 PlayerInteractEvent](https://jd.papermc.io/paper/26.2/org/bukkit/event/player/PlayerInteractEvent.html) documents per-hand delivery and vanilla no-op air events arriving as cancelled. Its API source initializes a null-block event to block DENY/item DEFAULT; the deprecated combined cancellation test is based on the block result.
+
+The hotbar listener previously ignored all cancelled events, preventing native right-click-air input from reaching Summoner/Bazaar/Settings. It now receives those events and applies a shared main-hand/right-click policy. The four match interaction listeners reject offhand, left and physical input before looking up/arming any AoE or changing a tower. Explicit item DENY, and block DENY for a world click, remain rejected; no event is uncancelled. Main-hand actions continue through existing active-session, held-slot, economy and placement checks.
+
+The dual-boot smoke uses real Paper event constructors and `RegisteredListener.callEvent`, with synthetic Player/Block actors. It verifies air dispatch despite block-DENY, exactly one accepted input across a main/offhand pair, world-only filtering, explicit cancellation/denial rejection, and preservation of the incoming result flags. It also checks the production hotbar/AoE listener cancellation annotations. Human-client packet/interaction certification remains Stage-4.

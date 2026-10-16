@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v111 engineering playtest shell**
+- Current shell lineage: **v112 engineering playtest shell**
 - Pure-domain suite: **575 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
@@ -278,3 +278,10 @@ Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
 - Every projected menu item name and lore line explicitly disables inherited italics and baseline bold. Unknown colors remain unset, and only recovered spans add bold/color accents. This fixes previously unstyled labels inheriting the modern client's item/lore typography.
 - Opening and dynamic redraw now share `BukkitMenuItemProjection`. AIR slots remain empty without metadata editing, and action dispatch still uses the raw-slot map.
 - Both Paper boots construct and byte-roundtrip builder, Archer/Zeus selector, management, Settings and hotbar items through that production projection. Checks cover plain/fallback names, blank lore, partial bold, independent Arrow glint and visually empty cells. Human-client fidelity remains pending; no pane semantics, sounds, Fast Fly speed or missing map/model assets are guessed.
+
+
+## v112 right-click input boundaries
+
+- Hotbar menus now receive Paper's initially cancelled/no-op right-click-air events and distinguish the block result from an explicitly denied item action. The policy never uncancels vanilla use; active-session and held-slot ownership checks remain in the controller.
+- Hotbar menus, AoE targeting, tower management/quick-upgrade and tower placement/quick-place accept only main-hand right clicks. Offhand duplicates, left clicks, physical input and unknown hands are rejected before controller work. AoE stock is no longer armed before checking the gesture.
+- Explicit item DENY and right-click-block DENY remain rejected. Both Paper boots exercise actual `PlayerInteractEvent` and `RegisteredListener` delivery with synthetic actors, including the native air block-DENY/item-DEFAULT state and duplicate-hand sequences. This verifies API dispatch, not real client packet delivery or a completed human match.
