@@ -59,7 +59,7 @@ class BukkitTowerPlacementListener(
         }.onSuccess { result ->
             when(result) {
                 is TowerPlacementInteractionResult.OpenBuilder ->
-                    menus.open(
+                    menus.openPlacementMenu(
                         player.uniqueId,
                         result.menu.toLiveView()
                     )
@@ -68,7 +68,7 @@ class BukkitTowerPlacementListener(
                         "Tower placed: ${result.result.selection.towerId}"
                     )
                 is TowerPlacementInteractionResult.OpenPathSelector ->
-                    menus.open(
+                    menus.openPlacementMenu(
                         player.uniqueId,
                         result.menu.toLiveView()
                     )

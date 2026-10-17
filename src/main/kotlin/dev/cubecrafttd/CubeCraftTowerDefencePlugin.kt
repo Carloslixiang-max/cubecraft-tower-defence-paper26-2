@@ -230,12 +230,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             )
                         when(result) {
                             is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.OpenBuilder ->
-                                menuBridge.open(
+                                menuBridge.openPlacementMenu(
                                     invocation.playerUuid,
                                     result.menu.toLiveView()
                                 )
                             is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.OpenPathSelector ->
-                                menuBridge.open(
+                                menuBridge.openPlacementMenu(
                                     invocation.playerUuid,
                                     result.menu.toLiveView()
                                 )
@@ -352,6 +352,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     ?.let(
                         stage4Gate::recordUiEvidence
                     )
+            },
+            BukkitMenuExitSink { playerUuid ->
+                liveArenaController.cancelPendingTowerPlacement(playerUuid)
             }
         )
         menuBridge.enableDynamicRefresh(
@@ -565,7 +568,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v112 enabled; " +
+            "CubeCraftTowerDefence shell v113 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -633,7 +636,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v112 disabled; " +
+            "CubeCraftTowerDefence shell v113 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -667,7 +670,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v112, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v113, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +

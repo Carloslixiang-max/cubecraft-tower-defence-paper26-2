@@ -291,6 +291,10 @@ class PaperStage4GateStore(
                 .itemMeta.enchantmentGlintOverride == true)
         }
 
+        checkStep("menu-view-ownership-and-placement-exit-lifecycle") {
+            BukkitMenuViewLifecycleSmoke.run()
+        }
+
         checkStep("main-hand-air-click-and-denied-interaction-policy") {
             BukkitMatchInteractSmoke.run(plugin)
         }

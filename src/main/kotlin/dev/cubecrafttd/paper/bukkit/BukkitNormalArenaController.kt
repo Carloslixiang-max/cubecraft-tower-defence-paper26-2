@@ -1155,6 +1155,11 @@ class BukkitNormalArenaController(
             ?: error("Tower placement service is not initialized")
     }
 
+    fun cancelPendingTowerPlacement(playerUuid: UUID) {
+        handleForPlayer(playerUuid)?.session?.players?.get(playerUuid)
+            ?.interaction?.towerPlacement?.cancel()
+    }
+
     fun quickPlaceTower(
         playerUuid: UUID,
         clickedBlock: dev.cubecrafttd.map.BlockPos

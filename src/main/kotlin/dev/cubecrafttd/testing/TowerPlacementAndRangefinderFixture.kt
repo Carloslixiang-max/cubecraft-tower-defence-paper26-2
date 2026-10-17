@@ -97,6 +97,30 @@ object TowerPlacementAndRangefinderFixture {
                 TowerPlacementInteractionResult
                     .Placed
 
+        val historyBeforeExitChecks = ledger.history()
+        val towerCountBeforeExitChecks = context.entityIndex.towersByInstanceId.size
+        flow.beginRegular(player, BlockPos(9, 0, 9))
+        flow.chooseTower(player, "archer")
+        flow.cancel(player)
+        val cancelledPathRejected = runCatching { flow.choosePathAndPlace(player, TowerPath.BOTTOM) }.isFailure &&
+            playerState.interaction.towerPlacement.pending == null &&
+            ledger.history() == historyBeforeExitChecks && context.entityIndex.towersByInstanceId.size == towerCountBeforeExitChecks
+
+        // The occupied Mage footprint forces a real lifecycle rejection, not a fake failure port.
+        flow.beginRegular(player, BlockPos(0, 0, 2))
+        flow.chooseTower(player, "archer")
+        val failedRegularKeepsQuickSelection = runCatching { flow.choosePathAndPlace(player, TowerPath.BOTTOM) }.isFailure &&
+            playerState.interaction.towerPlacement.pending == null &&
+            playerState.interaction.builder.quickPlaceSelection()?.towerId == "mage" &&
+            ledger.history() == historyBeforeExitChecks && context.entityIndex.towersByInstanceId.size == towerCountBeforeExitChecks
+
+        flow.beginRegular(player, BlockPos(9, 0, 9))
+        flow.chooseTower(player, "archer")
+        val failedQuickClearsPending = runCatching { flow.quickPlace(player, BlockPos(0, 0, 2)) }.isFailure &&
+            playerState.interaction.towerPlacement.pending == null &&
+            playerState.interaction.builder.quickPlaceSelection()?.towerId == "mage" &&
+            ledger.history() == historyBeforeExitChecks && context.entityIndex.towersByInstanceId.size == towerCountBeforeExitChecks
+
         val ids=(1L..12L).associate {
             TowerInstanceId(it) to it.toDouble()
         }
@@ -110,6 +134,9 @@ object TowerPlacementAndRangefinderFixture {
         )
 
         return listOf(
+            FixtureResult("placement-cancel-rejects-stale-path-without-world-or-economy-change", cancelledPathRejected),
+            FixtureResult("placement-failure-preserves-last-successful-quick-selection", failedRegularKeepsQuickSelection),
+            FixtureResult("placement-failed-quick-gesture-clears-older-menu-target", failedQuickClearsPending),
             FixtureResult(
                 "placement-regular-opens-combined-builder",
                 begin.menu.title=="Tower builder" &&

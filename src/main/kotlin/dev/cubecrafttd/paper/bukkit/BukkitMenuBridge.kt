@@ -42,6 +42,10 @@ fun interface BukkitMenuOpenObservationSink {
     )
 }
 
+fun interface BukkitMenuExitSink {
+    fun accept(playerUuid: UUID)
+}
+
 class BukkitMenuBridge(
     private val plugin: Plugin,
     private val renderer:
@@ -52,8 +56,10 @@ class BukkitMenuBridge(
         BukkitMenuOpenObservationSink =
         BukkitMenuOpenObservationSink {
             _,_ -> Unit
-        }
+        },
+    exitSink: BukkitMenuExitSink = BukkitMenuExitSink { }
 ) : LiveMenuOpenPort, Listener {
+    private val viewLifecycle = BukkitMenuViewLifecycle(exitSink::accept)
     private val openActions =
         linkedMapOf<
             UUID,
@@ -99,7 +105,13 @@ class BukkitMenuBridge(
     override fun open(
         playerUuid: UUID,
         menu: LiveMenuView
-    ) {
+    ) = openMenu(playerUuid, menu, preservePlacement = false)
+
+    /** Only the explicit world-placement builder/path transition preserves its pending target. */
+    fun openPlacementMenu(playerUuid: UUID, menu: LiveMenuView) =
+        openMenu(playerUuid, menu, preservePlacement = true)
+
+    private fun openMenu(playerUuid: UUID, menu: LiveMenuView, preservePlacement: Boolean) {
         val player = plugin.server
             .getPlayer(playerUuid)
             ?: return
@@ -113,17 +125,15 @@ class BukkitMenuBridge(
                     menu.title
                 )
             )
-        populate(
-            inventory,
-            menu
-        )
-
         // Opening a replacement inventory closes the previous view and may fire
         // InventoryCloseEvent synchronously. Register the NEW state only after
         // that transition so the old close cannot delete the refreshed state.
-        player.openInventory(
-            inventory
-        )
+        val opened = viewLifecycle.replace(playerUuid, inventory, preservePlacement) {
+            populate(inventory, menu)
+            val view = player.openInventory(inventory)
+            view != null && view.topInventory == inventory && player.openInventory.topInventory == inventory
+        }
+        if (!opened) return
         rememberOpenMenu(
             playerUuid,
             menu
@@ -168,7 +178,7 @@ class BukkitMenuBridge(
             player.openInventory
                 .topInventory
         if(
-            top.size!=menu.size
+            top.size!=menu.size || !viewLifecycle.owns(playerUuid, top)
         ) {
             return false
         }
@@ -227,6 +237,7 @@ class BukkitMenuBridge(
                         .remove(
                             playerUuid
                         )
+                    viewLifecycle.forget(playerUuid)
                     return@forEach
                 }
 
@@ -307,13 +318,23 @@ class BukkitMenuBridge(
         val actions=
             openActions[player.uniqueId]
                 ?: return
-        BukkitMenuInteractionGuard.click(event, actions)?.let(actionSink::accept)
+        if (!viewLifecycle.owns(player.uniqueId, event.view.topInventory)) return
+        val invocation = BukkitMenuInteractionGuard.click(event, actions) ?: return
+        val inventory = event.view.topInventory
+        val rawSlot = event.rawSlot
+        // InventoryClickEvent is inside an inventory transaction. View changes
+        // must run next tick, and stale queued clicks must not target a new view.
+        plugin.server.scheduler.runTask(plugin, viewLifecycle.whenCurrent(player.uniqueId, inventory) {
+            if (openActions[invocation.playerUuid]?.get(rawSlot) == invocation.actionId)
+                actionSink.accept(invocation)
+        })
     }
 
     @EventHandler
     fun onDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player ?: return
-        if (player.uniqueId in openActions) BukkitMenuInteractionGuard.drag(event)
+        if (player.uniqueId in openActions && viewLifecycle.owns(player.uniqueId, event.view.topInventory))
+            BukkitMenuInteractionGuard.drag(event)
     }
 
     @EventHandler
@@ -322,6 +343,7 @@ class BukkitMenuBridge(
     ) {
         val uuid=
             event.player.uniqueId
+        if (!viewLifecycle.close(uuid, event.inventory)) return
         openActions.remove(
             uuid
         )

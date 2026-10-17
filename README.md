@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v112 engineering playtest shell**
-- Pure-domain suite: **575 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Current shell lineage: **v113 engineering playtest shell**
+- Pure-domain suite: **578 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -285,3 +285,11 @@ Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
 - Hotbar menus now receive Paper's initially cancelled/no-op right-click-air events and distinguish the block result from an explicitly denied item action. The policy never uncancels vanilla use; active-session and held-slot ownership checks remain in the controller.
 - Hotbar menus, AoE targeting, tower management/quick-upgrade and tower placement/quick-place accept only main-hand right clicks. Offhand duplicates, left clicks, physical input and unknown hands are rejected before controller work. AoE stock is no longer armed before checking the gesture.
 - Explicit item DENY and right-click-block DENY remain rejected. Both Paper boots exercise actual `PlayerInteractEvent` and `RegisteredListener` delivery with synthetic actors, including the native air block-DENY/item-DEFAULT state and duplicate-hand sequences. This verifies API dispatch, not real client packet delivery or a completed human match.
+
+
+## v113 menu ownership and placement exit
+
+- Closing an owned match menu clears a pending placement target. Explicit world-placement builder/path replacements preserve that flow; ordinary navigation and rejected/throwing opens clear it. No automatic placement on close or unrecovered original path-close behavior is inferred.
+- Menu ownership is tied to the concrete Paper inventory, not UUID/title/size alone. Foreign or older close events cannot remove replacement ownership, and click/drag/refresh require the owned view. A rejected open that leaves the previous view visible retains its protection and does not record a new menu observation.
+- Clicks are cancelled immediately but actions run next tick, as required for inventory-view changes. Dispatch rechecks inventory ownership and the raw-slot action; old-view queued clicks are discarded.
+- Quick-place explicitly cancels an older pending menu target. Domain cases verify cancelled paths and occupied-footprint failures do not spend coins/add towers or replace the last successful quick selection. Dual Paper boots check real inventory equality with simulated close/open/queued-delivery sequences; human packet/client certification remains pending.

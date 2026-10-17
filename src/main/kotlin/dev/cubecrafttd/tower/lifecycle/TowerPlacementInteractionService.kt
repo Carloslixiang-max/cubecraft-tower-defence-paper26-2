@@ -90,14 +90,17 @@ class TowerPlacementInteractionService(
     fun quickPlace(
         playerUuid: UUID,
         clickedBlock: BlockPos
-    ): TowerPlacementInteractionResult.Placed =
-        TowerPlacementInteractionResult.Placed(
+    ): TowerPlacementInteractionResult.Placed {
+        // A fresh world gesture must not leave an older menu target armed.
+        cancel(playerUuid)
+        return TowerPlacementInteractionResult.Placed(
             worldActions.place(
                 playerUuid,
                 clickedBlock,
                 quickPlace=true
             )
         )
+    }
 
     fun cancel(playerUuid: UUID) {
         player(playerUuid)
