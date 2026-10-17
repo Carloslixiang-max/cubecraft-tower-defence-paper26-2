@@ -14,7 +14,8 @@ object BukkitTowerBodyCatalogLoader {
     fun load(plugin: JavaPlugin): TowerBodyCatalog {
         val strict = plugin.config.getBoolean("tower-models.require-complete", false)
         val root = plugin.dataFolder.toPath().resolve("tower-models")
-        return loadDirectory(root, strict).also {
+        return (if (Files.exists(root.resolve("catalog.yml"))) loadDirectory(root, strict)
+            else loadBundled(plugin, strict)).also {
             plugin.logger.info("Tower body catalog: ${it.loadedCount()} supplied stages; ${it.missingStages().size} placeholder stages; strict=$strict; client fidelity remains unverified")
         }
     }
@@ -22,7 +23,22 @@ object BukkitTowerBodyCatalogLoader {
     fun loadDirectory(root: Path, strict: Boolean): TowerBodyCatalog {
         val manifest = root.resolve("catalog.yml")
         if (!Files.exists(manifest)) return TowerBodyCatalog(emptyList(), strict)
-        val catalog = readBounded(manifest)
+        return loadCatalog(boundedBytes(manifest), strict) { relative ->
+            val file = root.resolve(relative)
+            require(file.toRealPath().startsWith(root.toRealPath())) { "Model file escapes catalog directory" }
+            boundedBytes(file)
+        }
+    }
+
+    fun loadBundled(plugin: JavaPlugin, strict: Boolean): TowerBodyCatalog {
+        fun resource(name: String): ByteArray = requireNotNull(plugin.getResource("reconstruction/tower-models/$name")) {
+            "Missing bundled reconstructed model: $name"
+        }.use { it.readNBytes(1_048_577) }.also { require(it.size in 1..1_048_576) }
+        return loadCatalog(resource("catalog.yml"), strict, ::resource)
+    }
+
+    private fun loadCatalog(catalogBytes: ByteArray, strict: Boolean, readModel: (String) -> ByteArray): TowerBodyCatalog {
+        val catalog = YamlConfiguration().also { it.loadFromString(catalogBytes.toString(Charsets.UTF_8)) }
         require(catalog.get("format-version") == 1) { "Unsupported tower catalog format" }
         val entries = catalog.getMapList("models")
         require(entries.size <= 100) { "Too many model stages" }
@@ -30,9 +46,7 @@ object BukkitTowerBodyCatalogLoader {
             fun text(key: String) = entry[key] as? String ?: error("Missing model catalog $key")
             val relative = Path.of(text("file"))
             require(!relative.isAbsolute && relative.nameCount == 1 && relative.toString() !in setOf(".", ".."))
-            val file = root.resolve(relative)
-            require(file.toRealPath().startsWith(root.toRealPath())) { "Model file escapes catalog directory" }
-            val bytes = boundedBytes(file)
+            val bytes = readModel(relative.toString())
             val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
             require(text("sha256") == sha) { "Tower model checksum mismatch: $relative" }
             val body = YamlConfiguration()

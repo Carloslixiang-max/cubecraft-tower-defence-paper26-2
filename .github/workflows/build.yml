@@ -41,7 +41,7 @@ jobs:
 
       - name: Validate playtest packaging scripts
         run: |
-          python3 -m py_compile scripts/package-playtest.py scripts/verify-farm-deployment.py scripts/verify-saved-farm.py scripts/import-tower-model.py
+          python3 -m py_compile scripts/package-playtest.py scripts/verify-farm-deployment.py scripts/verify-saved-farm.py scripts/import-tower-model.py scripts/build-reconstruction-assets.py scripts/render-reconstruction-preview.py
           python3 scripts/package-playtest.py --help
           python3 scripts/verify-farm-deployment.py --help
           python3 scripts/verify-saved-farm.py --help
@@ -144,5 +144,6 @@ jobs:
           path: |
             build/libs/*.jar
             build/paper-smoke-*.log
+            build/generated/reconstruction-assets/reconstruction/
           if-no-files-found: error
           retention-days: 14

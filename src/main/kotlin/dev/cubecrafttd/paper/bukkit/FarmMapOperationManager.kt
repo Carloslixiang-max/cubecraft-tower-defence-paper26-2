@@ -66,7 +66,9 @@ class FarmMapOperationManager(
                 world.uid,
                 origin
             )
-        val d=plan.volume.dimensions
+        ReconstructedFarmAssets.validate(plugin, world, origin)
+        val d=if (ReconstructedFarmAssets.enabled(plugin)) ReconstructedFarmAssets.scene(plugin).dimensions
+            else plan.volume.dimensions
         val bound=
             runCatching {
                 PaperMapRuntimeGeometryBinder
@@ -146,12 +148,14 @@ class FarmMapOperationManager(
                 bytes,world.uid,origin
             )
 
+        ReconstructedFarmAssets.validate(plugin, world, origin)
+        val visual = ReconstructedFarmAssets.placement(plugin, plan.volume, origin)
         activePaste=
             BukkitSchematicPasteService(
                 plugin,world
             ).pasteIntoEmptyRegion(
-                plan.volume,
-                origin,
+                visual.volume,
+                visual.origin,
                 binding.pasteBlocksPerTick,
                 onProgress,
                 {
@@ -219,13 +223,15 @@ class FarmMapOperationManager(
                 origin
             )
 
+        ReconstructedFarmAssets.validate(plugin, world, origin)
+        val visual = ReconstructedFarmAssets.placement(plugin, plan.volume, origin)
         activePaste=
             BukkitVerifiedSchematicResetService(
                 plugin,
                 world
             ).resetToVolume(
-                volume=plan.volume,
-                origin=origin,
+                volume=visual.volume,
+                origin=visual.origin,
                 blocksPerTick=
                     binding.pasteBlocksPerTick,
                 onProgress=onProgress,

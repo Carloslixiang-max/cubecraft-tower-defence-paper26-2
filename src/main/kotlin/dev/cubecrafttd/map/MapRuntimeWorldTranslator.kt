@@ -77,7 +77,8 @@ object MapRuntimeWorldTranslator {
             },
             guardAnchors = source.guardAnchors.mapValues { (_,anchors) ->
                 anchors.map { it.copy(position=translation.vec(it.position)) }
-            }
+            },
+            sceneryReservationPoints = source.sceneryReservationPoints.map(translation::vec)
         )
     }
 }

@@ -1,5 +1,10 @@
 # Farm asset scope — 2026-09-30
 
+v114 update: the user accepted approximate visual reconstruction on 17 October
+2026. A decorated generated scene is now available around this track; see
+[reconstruction delivery](RECONSTRUCTED_ASSETS.md). This document audits the
+unchanged source track only, not the larger composed scene.
+
 The verified `ImprovedFarm.schem` is a **community-adjusted track and tower-spot asset**, not a complete original CubeCraft Farm world. Farm import, geometry, placement, paste and verified-reset code can be near implementation completion while full scene reconstruction remains unfinished. These are separate deliverables.
 
 ## Direct provenance

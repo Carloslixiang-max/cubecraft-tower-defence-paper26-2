@@ -102,5 +102,6 @@ data class MapRuntimeDefinition(
     val castleContactRegionsExact: Map<TeamId, ExactCastleContactRegion?> = emptyMap(),
     val guardAnchors: Map<TeamId, List<GuardAnchor>> = emptyMap(),
     val sourceHash: String?,
-    val evidenceRefs: List<String> = emptyList()
+    val evidenceRefs: List<String> = emptyList(),
+    val sceneryReservationPoints: List<Vec3> = emptyList()
 )

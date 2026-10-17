@@ -72,9 +72,10 @@ class BukkitLiveCompositionPreflight(
         val bound=
             PaperMapRuntimeGeometryBinder
                 .bind(
-                    plan.runtime,
+                    plan.runtime.copy(sceneryReservationPoints = ReconstructedFarmAssets.reservationBounds(plugin, origin)),
                     mapBinding
                 )
+        ReconstructedFarmAssets.validate(plugin, world, origin)
         val gameplay=
             NormalGameplayConfigResolver
                 .resolve(fallback)

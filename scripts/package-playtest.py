@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 import re
 import struct
+import tempfile
+import runpy
 import zipfile
 
 FARM_SHA = "28d24136afe80358b89556d0fbe3b08d00e518af38c7c518819fa7fc225e613e"
@@ -138,6 +140,8 @@ def main():
     parser.add_argument("--run", type=int, required=True, help="Green Actions run producing that artifact")
     parser.add_argument("--output", type=Path, required=True, help="New ZIP path; existing file is never replaced")
     parser.add_argument("--deployment-evidence", type=Path, help="Optional successful console deployment directory for the identical plugin bytes")
+    parser.add_argument("--reconstructed-scene", action="store_true", help="Include the generated full Farm approximation and complete tower catalog")
+    parser.add_argument("--visual-previews", type=Path, help="Optional directory with actual voxel preview PNGs")
     args = parser.parse_args()
     if not re.fullmatch("[0-9a-f]{40}", args.head) or args.run <= 0:
         parser.error("A full commit SHA and positive Actions run ID are required")
@@ -151,6 +155,9 @@ def main():
         logs = {f"paper-smoke-{i}.log": artifact.read(f"paper-smoke-{i}.log") for i in (1, 2)}
     with zipfile.ZipFile(io.BytesIO(plugin)) as jar:
         metadata = jar.read("plugin.yml").decode()
+        reconstruction = ({name: jar.read(name) for name in jar.namelist()
+                           if name.startswith("reconstruction/") and not name.endswith("/")}
+                          if args.reconstructed_scene else {})
     if "name: CubeCraftTowerDefence" not in metadata or "api-version: '26.2'" not in metadata:
         raise ValueError("Unexpected plugin metadata")
     paper_builds = []
@@ -183,6 +190,45 @@ def main():
         **{f"evidence/{name}": raw for name, raw in logs.items()},
         **{name: (template / name).read_bytes() for name in ("README.zh-CN.md", "start.sh", "start.bat", "server.properties")},
     }
+    if args.reconstructed_scene:
+        source = reconstruction["reconstruction/FarmScenery.schem"]
+        asset_manifest = json.loads(reconstruction["reconstruction/manifest.json"])
+        if digest(source) != asset_manifest["scene"]["sha256"] or asset_manifest["catalog-stage-keys"] != 82:
+            raise ValueError("Bundled reconstruction assets do not match their manifest")
+        builder = runpy.run_path(str(Path(__file__).with_name("build-reconstruction-assets.py")))
+        source_nbt = read_nbt(gzip.decompress(source))
+        scene = builder["Voxels"]()
+        w, h, length = (source_nbt[k] for k in ("Width", "Height", "Length"))
+        inverse = {i: state for state, i in source_nbt["Palette"].items()}
+        ox, oy, oz = source_nbt["Offset"]
+        if any(i >= 128 for i in source_nbt["BlockData"]):
+            raise ValueError("Expected one-byte reconstruction palette IDs")
+        for i, block_id in enumerate(source_nbt["BlockData"]):
+            if block_id:
+                scene.blocks[i % w + ox, i // (w * length) + oy, (i // w) % length + oz] = inverse[block_id]
+        track_nbt = read_nbt(gzip.decompress(farm))
+        builder["compose_track"](scene, track_nbt)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "Farm-Reconstructed.schem"
+            complete = builder["write_schematic"](path, scene, block_entities=track_nbt.get("BlockEntities", []))
+            entries["maps/Farm-Reconstructed.schem"] = path.read_bytes()
+        for name, raw in reconstruction.items():
+            if name.startswith("reconstruction/tower-models/"):
+                entries["plugins/CubeCraftTowerDefence/tower-models/" + name.rsplit("/", 1)[1]] = raw
+        entries["plugins/CubeCraftTowerDefence/config.yml"] = (
+            "farm-scene:\n  enabled: true\n"
+            "tower-models:\n  require-complete: true\n"
+            "map-binding:\n  paste-blocks-per-tick: 8000\n").encode()
+        entries["evidence/reconstruction-assets.json"] = reconstruction["reconstruction/manifest.json"]
+        manifest.update({"reconstructed_scene_included": True, "full_original_map": False,
+                         "reconstruction_scene": complete, "tower_model_stage_keys": 82,
+                         "tower_model_classification": "COMMUNITY_RECONSTRUCTION"})
+        entries["evidence/build-manifest.json"] = json.dumps(manifest, indent=2).encode()
+    if args.visual_previews:
+        if not args.reconstructed_scene:
+            parser.error("--visual-previews requires --reconstructed-scene")
+        for name in ("Farm-preview.png", "Tower-models-preview.png"):
+            entries["previews/" + name] = (args.visual_previews / name).read_bytes()
     if args.deployment_evidence:
         directory = args.deployment_evidence
         evidence_bytes = (directory / "deployment-report.json").read_bytes()

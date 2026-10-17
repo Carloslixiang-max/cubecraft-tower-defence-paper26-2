@@ -55,6 +55,7 @@ class BukkitEngineeringPlaytestConfigurator(
 
         val dimensions=SpongeSchematicV2Decoder().decode(bytes).dimensions
         EngineeringMapPlacementBounds.validate(origin, dimensions, world.minHeight, world.maxHeight)
+        ReconstructedFarmAssets.validate(plugin, world, origin)
 
         val runtime=
             FarmPaperMapBinder()

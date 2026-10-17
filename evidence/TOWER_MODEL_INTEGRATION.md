@@ -1,5 +1,11 @@
 # Tower model catalog and original-fidelity boundary
 
+v114 now bundles a complete **11-family / 82-key visual reconstruction** when no
+external catalog exists. It is generated from historical silhouettes with
+inferred tier details; see [reconstruction delivery](RECONSTRUCTED_ASSETS.md).
+The absence of an extracted original pack below remains true, but no longer
+means that the default playable models are the two-block placeholders.
+
 The live controller previously always selected the two-block stone/glass placeholder. It now loads `plugins/CubeCraftTowerDefence/tower-models/catalog.yml` before player capture or world mutation. A supplied model is selected by exact tower ID, level and path. Prices, ranges, combat and upgrade stages continue to come from the existing authoritative tower definitions.
 
 ## Catalog

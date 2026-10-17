@@ -353,6 +353,10 @@ class PaperStage4GateStore(
             BukkitTowerModelSmoke.run(plugin)
         }
 
+        checkStep("bundled-farm-scene-and-all-tower-models") {
+            BukkitReconstructionSmoke.run(plugin)
+        }
+
         checkStep("team-queue-profile-loading") {
             BukkitTeamQueueConfig.smoke()
         }

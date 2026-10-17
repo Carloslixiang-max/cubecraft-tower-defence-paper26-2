@@ -116,6 +116,8 @@ object ArenaSpatialEnvelopeResolver {
                 points += anchor.position
             }
 
+        points += map.sceneryReservationPoints
+
         check(points.isNotEmpty()) {
             "Arena map has no spatial geometry"
         }

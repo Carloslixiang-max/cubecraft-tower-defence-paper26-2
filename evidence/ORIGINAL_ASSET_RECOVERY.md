@@ -1,5 +1,10 @@
 # Original map and tower asset recovery — 2026-10-17
 
+**Later update:** the user subsequently authorized approximate reconstruction.
+v114 now supplies a generated Farm scene and all tower-family models; see
+[the reconstruction delivery](RECONSTRUCTED_ASSETS.md). The findings below are
+the earlier original-file acquisition audit, not the current approximation status.
+
 ## Actual delivery status
 
 The current plugin does **not** include a complete original CubeCraft Tower

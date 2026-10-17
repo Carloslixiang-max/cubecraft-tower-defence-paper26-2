@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "dev.cubecrafttd"
-version = "0.113.0-SNAPSHOT"
+version = "0.114.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -33,6 +33,14 @@ kotlin {
     }
 }
 
+val reconstructionOutput = layout.buildDirectory.dir("generated/reconstruction-assets")
+val generateReconstructionAssets by tasks.registering(Exec::class) {
+    inputs.file("scripts/build-reconstruction-assets.py")
+    inputs.file("src/main/kotlin/dev/cubecrafttd/tower/TowerDefinitionRepository.kt")
+    outputs.dir(reconstructionOutput)
+    commandLine("python3", "scripts/build-reconstruction-assets.py", "--output", reconstructionOutput.get().asFile.absolutePath)
+}
+
 tasks {
     test {
         useJUnitPlatform()
@@ -55,6 +63,8 @@ tasks {
     }
 
     processResources {
+        dependsOn(generateReconstructionAssets)
+        from(reconstructionOutput)
         val props = mapOf("version" to project.version)
         inputs.properties(props)
         filteringCharset = "UTF-8"

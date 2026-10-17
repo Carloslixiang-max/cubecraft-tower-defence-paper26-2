@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v113 engineering playtest shell**
-- Pure-domain suite: **578 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Current shell lineage: **v114 Farm / tower visual reconstruction**
+- Pure-domain suite: **580 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -25,13 +25,18 @@ Unknown original values are not silently invented.
 
 ### Map and tower assets
 
-**A complete original map and original tower models are not included yet.**
-The available Farm schematic contains community-adjusted track/tower spots,
-not the full original buildings, landscape or lobby. External tower-model
-loading is implemented, but an original model pack has not been recovered.
-These asset gaps are separate from gameplay implementation and green CI.
-See the [original asset recovery audit](evidence/ORIGINAL_ASSET_RECOVERY.md)
-for the DeathRun comparison, inspected downloads and remaining concrete leads.
+**v114 includes an approximate full Farm scene and models for all 11 tower families.**
+The user authorized reconstruction rather than exact original extraction on
+17 October 2026. The generated scene adds the giant barn, silos, apple trees,
+chickens/sheep/pigs, hay stacks, crops, fences, ground and a viewing lobby to the
+retained community-adjusted track. All **82 runtime level/path keys** have
+bundled models, with strict catalog coverage checked on real Paper.
+
+These are **community visual reconstructions**, with inferred dimensions,
+hidden surfaces and tier/branch details; they are not certified original world
+bytes or block-for-block copies. Full scene paste/reset is opt-in for existing
+servers (`farm-scene.enabled`); the reconstructed playtest kit opts in explicitly.
+See [installation and evidence](evidence/RECONSTRUCTED_ASSETS.md).
 
 ## What is implemented
 

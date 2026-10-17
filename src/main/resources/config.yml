@@ -4,6 +4,11 @@
 # The command backs up this strict config and requires a full server restart.
 
 
+# Enable only for a fresh empty deployment; adds the bundled approximate Farm scene.
+# Existing servers retain track-only paste/reset unless explicitly opted in.
+farm-scene:
+  enabled: false
+
 # World binding is intentionally unset by default. No world/origin is guessed.
 map-binding:
   world: null
