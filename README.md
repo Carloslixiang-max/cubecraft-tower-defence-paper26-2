@@ -23,6 +23,16 @@ The implementation deliberately separates:
 
 Unknown original values are not silently invented.
 
+### Map and tower assets
+
+**A complete original map and original tower models are not included yet.**
+The available Farm schematic contains community-adjusted track/tower spots,
+not the full original buildings, landscape or lobby. External tower-model
+loading is implemented, but an original model pack has not been recovered.
+These asset gaps are separate from gameplay implementation and green CI.
+See the [original asset recovery audit](evidence/ORIGINAL_ASSET_RECOVERY.md)
+for the DeathRun comparison, inspected downloads and remaining concrete leads.
+
 ## What is implemented
 
 The codebase already contains substantial runtime work, including:
