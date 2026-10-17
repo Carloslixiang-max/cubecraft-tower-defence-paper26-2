@@ -8,7 +8,9 @@ import kotlin.math.sqrt
 
 class BukkitTowerMobGeometryProvider(
     private val server: Server,
-    private val lineOfSight: BukkitLineOfSightPort
+    private val lineOfSight: BukkitLineOfSightPort,
+    private val firingOrigin: (TowerRuntimeState) -> Vec3 = { it.geometry.firingOrigins.firstOrNull() ?: it.geometry.rangeOrigin },
+    private val ownsBody: (TowerRuntimeState, org.bukkit.block.Block) -> Boolean = { _, _ -> false }
 ) : MobGeometryProvider {
     override fun geometry(
         tower: TowerRuntimeState,
@@ -23,11 +25,7 @@ class BukkitTowerMobGeometryProvider(
         val dz = location.z-origin.z
         return MobGeometryView(
             sqrt(dx*dx+dy*dy+dz*dz),
-            lineOfSight.hasLineOfSight(
-                tower.geometry.firingOrigins
-                    .firstOrNull() ?: origin,
-                mobUuid
-            )
+            lineOfSight.hasTowerLineOfSight(firingOrigin(tower), mobUuid) { ownsBody(tower, it) }
         )
     }
 }

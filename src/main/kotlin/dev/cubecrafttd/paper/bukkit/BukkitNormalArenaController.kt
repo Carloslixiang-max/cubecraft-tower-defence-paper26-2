@@ -436,10 +436,15 @@ class BukkitNormalArenaController(
             BukkitLineOfSightPort(
                 plugin.server
             )
+        val visualOrigins = BukkitTowerVisualOrigins(towerBodies)
         val towerGeometry=
             BukkitTowerMobGeometryProvider(
                 plugin.server,
-                lineOfSight
+                lineOfSight,
+                visualOrigins::origin,
+                { tower, block -> context.towerBodyLedger.get(
+                    dev.cubecrafttd.tower.visual.BlockKey(block.x, block.y, block.z)
+                )?.towerInstanceId == tower.identity.instanceId.value }
             )
 
         val areaTargets=
@@ -497,7 +502,8 @@ class BukkitNormalArenaController(
                             plannerProvider,
                         towerAttackFeedback=
                             BukkitEngineeringTowerAttackFeedback(
-                                plugin.server
+                                plugin.server,
+                                visualOrigins::origin
                             ),
                         aoePotionFeedback=
                             BukkitEngineeringAoEPotionFeedback(

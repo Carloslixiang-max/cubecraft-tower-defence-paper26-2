@@ -17,17 +17,17 @@ import kotlin.math.max
  * fired at which live mob. Particle style/density are not original truth.
  */
 class BukkitEngineeringTowerAttackFeedback(
-    private val server: Server
+    private val server: Server,
+    private val visualOrigin: (TowerRuntimeState) -> dev.cubecrafttd.map.Vec3 = {
+        it.geometry.firingOrigins.firstOrNull() ?: it.geometry.rangeOrigin
+    }
 ) : TowerAttackFeedbackPort {
     override fun onAttack(
         context: ArenaContext,
         tower: TowerRuntimeState,
         report: TowerAttackCycleReport
     ) {
-        val origin=
-            tower.geometry.firingOrigins
-                .firstOrNull()
-                ?: tower.geometry.rangeOrigin
+        val origin=visualOrigin(tower)
 
         val targets=
             report.application

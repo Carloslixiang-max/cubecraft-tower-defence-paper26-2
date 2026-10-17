@@ -34,6 +34,26 @@ object BukkitReconstructionSmoke {
             val towerId = 11400L + index
             try {
                 mutations.place(towerId, base, models.definition(id, 1, TowerPath.TOP), QuarterTurn.R0, 0)
+                if (id == "mage") {
+                    val target = world.spawnEntity(org.bukkit.Location(world, base.x + 12.5, base.y + 0.5, base.z + 0.5),
+                        org.bukkit.entity.EntityType.ARMOR_STAND)
+                    target.setGravity(false)
+                    val wall = BlockKey(base.x + 6, base.y, base.z)
+                    val previous = adapter.snapshot(wall)
+                    try {
+                        val ray = BukkitLineOfSightPort(plugin.server)
+                        val inside = dev.cubecrafttd.map.Vec3(base.x + 0.5, base.y + 0.5, base.z + 0.5)
+                        fun owned(block: org.bukkit.block.Block) =
+                            ledger.get(BlockKey(block.x, block.y, block.z))?.towerInstanceId == towerId
+                        check(!ray.hasLineOfSight(inside, target.uniqueId))
+                        check(ray.hasTowerLineOfSight(inside, target.uniqueId, ::owned))
+                        adapter.apply(wall, BlockSnapshot("minecraft:stone"), false)
+                        check(!ray.hasTowerLineOfSight(inside, target.uniqueId, ::owned))
+                    } finally {
+                        target.remove()
+                        adapter.apply(wall, previous, false)
+                    }
+                }
                 mutations.upgrade(towerId, base, models.definition(id, maxLevel, TowerPath.TOP), QuarterTurn.R0, 1)
                 mutations.upgrade(towerId, base, models.definition(id, maxLevel, TowerPath.BOTTOM), QuarterTurn.R0, 2)
                 check(!mutations.remove(towerId).conflictReport.hasConflicts)
@@ -42,6 +62,6 @@ object BukkitReconstructionSmoke {
                 mutations.remove(towerId)
             }
         }
-        plugin.logger.info("Reconstruction assets PASS: 11 tower families, 82 stages, zero placeholders; scene palette/composition and model restore checked")
+        plugin.logger.info("Reconstruction assets PASS: 11 tower families, 82 stages, zero placeholders; scene composition, model restore and self-body/external-wall raytrace checked")
     }
 }

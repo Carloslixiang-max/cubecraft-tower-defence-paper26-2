@@ -15,7 +15,8 @@ does not authorize claiming that inferred geometry is an original extraction.
 - **11 tower families / 82 valid level/path catalog keys**, generated from the
   actual runtime stage declarations. Shared pre-branch stages are geometrically
   identical for both paths. Later differences are visual approximations. No
-  costs, damage, range, speed or firing origin is changed by this asset work.
+  costs, damage, range or speed is changed by this asset work. The Paper-side
+  visual/LOS firing point is inferred from the model top, as described below.
 - Bundled tower models load when no external catalog exists. Existing external
   catalogs retain precedence and their original strict/incomplete behavior.
 - A private playtest kit can include `maps/Farm-Reconstructed.schem` with the
@@ -46,6 +47,14 @@ package and is not an exact original pregame lobby. No Fast Fly value is added.
 Every model declares `COMMUNITY_RECONSTRUCTION`; a complete catalog means
 coverage, not a percentage score for original visual fidelity. Preview PNGs
 are CPU renders of the generated voxels/block shapes, not Minecraft screenshots.
+
+The earlier base-corner firing point could start inside a full body and let the
+tower obstruct its own ray. Paper now uses an explicitly inferred point above
+the current model top (updated automatically on upgrade) for LOS and the visible
+attack trace. Only this tower's ledger-owned blocks are skipped along that ray;
+external walls, scenery and other towers still obstruct it. Numeric range still
+uses the unchanged range origin. Exact original firing-origin fidelity remains
+a separate real-client gate.
 
 ## Coordinates and map operations
 
@@ -83,6 +92,8 @@ to an isolated volume and bind it explicitly.
 - Paper adapter smoke loads every model with strict coverage, canonicalizes all
   model/scene BlockData states, places each family, upgrades through both final
   paths, removes it and checks the restoration ledger is empty.
+- A live Paper raytrace from inside a supplied body proves self-occlusion is
+  skipped while an independently placed external stone wall still blocks it.
 - A separate synthetic composition check verifies source preservation,
   clearance, offset and source immutability on real Paper.
 - Full compile, domain fixtures, shadowJar and both real Paper boot/shutdown
