@@ -45,10 +45,10 @@ object BukkitReconstructionSmoke {
                         val inside = dev.cubecrafttd.map.Vec3(base.x + 0.5, base.y + 0.5, base.z + 0.5)
                         fun owned(block: org.bukkit.block.Block) =
                             ledger.get(BlockKey(block.x, block.y, block.z))?.towerInstanceId == towerId
-                        check(!ray.hasLineOfSight(inside, target.uniqueId))
-                        check(ray.hasTowerLineOfSight(inside, target.uniqueId, ::owned))
+                        check(!ray.hasTowerLineOfSight(inside, target) { false }) { "Unfiltered ray did not hit the supplied Mage body" }
+                        check(ray.hasTowerLineOfSight(inside, target, ::owned)) { "Filtered ray remained blocked by its own Mage body; target=${target.location}" }
                         adapter.apply(wall, BlockSnapshot("minecraft:stone"), false)
-                        check(!ray.hasTowerLineOfSight(inside, target.uniqueId, ::owned))
+                        check(!ray.hasTowerLineOfSight(inside, target, ::owned)) { "Filtered ray incorrectly ignored an external stone wall" }
                     } finally {
                         target.remove()
                         adapter.apply(wall, previous, false)

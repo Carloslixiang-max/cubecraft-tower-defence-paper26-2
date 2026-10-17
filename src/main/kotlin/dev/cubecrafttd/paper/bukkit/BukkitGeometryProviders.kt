@@ -25,7 +25,7 @@ class BukkitTowerMobGeometryProvider(
         val dz = location.z-origin.z
         return MobGeometryView(
             sqrt(dx*dx+dy*dy+dz*dz),
-            lineOfSight.hasTowerLineOfSight(firingOrigin(tower), mobUuid) { ownsBody(tower, it) }
+            lineOfSight.hasTowerLineOfSight(firingOrigin(tower), entity) { ownsBody(tower, it) }
         )
     }
 }

@@ -6,6 +6,7 @@ import org.bukkit.FluidCollisionMode
 import org.bukkit.Location
 import org.bukkit.Server
 import org.bukkit.block.Block
+import org.bukkit.entity.Entity
 import java.util.UUID
 
 class BukkitLineOfSightPort(
@@ -14,14 +15,15 @@ class BukkitLineOfSightPort(
     override fun hasLineOfSight(
         origin: Vec3,
         targetEntityUuid: UUID
-    ): Boolean = trace(origin, targetEntityUuid) { false }
+    ): Boolean = server.getEntity(targetEntityUuid)?.let { trace(origin, it) { false } } ?: false
 
     fun hasTowerLineOfSight(origin: Vec3, targetEntityUuid: UUID, owns: (Block) -> Boolean): Boolean =
-        trace(origin, targetEntityUuid, owns)
+        server.getEntity(targetEntityUuid)?.let { trace(origin, it, owns) } ?: false
 
-    private fun trace(origin: Vec3, targetEntityUuid: UUID, owns: (Block) -> Boolean): Boolean {
-        val target = server.getEntity(targetEntityUuid)
-            ?: return false
+    fun hasTowerLineOfSight(origin: Vec3, target: Entity, owns: (Block) -> Boolean): Boolean =
+        trace(origin, target, owns)
+
+    private fun trace(origin: Vec3, target: Entity, owns: (Block) -> Boolean): Boolean {
         val targetLocation = target.location
         val start = Location(
             target.world,
