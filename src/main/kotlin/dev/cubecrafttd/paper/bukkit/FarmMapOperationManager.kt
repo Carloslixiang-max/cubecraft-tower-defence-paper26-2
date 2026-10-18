@@ -247,8 +247,7 @@ class FarmMapOperationManager(
     }
 
     fun cancelActivePaste() {
-        activePaste?.cancel()
-        activePaste=null
+        try { activePaste?.cancel() } finally { activePaste=null }
     }
 
     fun hasActivePaste(): Boolean =

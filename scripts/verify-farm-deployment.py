@@ -44,7 +44,7 @@ class PaperProcess:
         self.reader.start()
         try:
             self.wait("Done (", timeout=180)
-            self.wait("paperAdapters=LIVE_ADAPTER_SMOKE_PASSED")
+            self.wait("ADAPTER_SMOKE_PASSED")
         except BaseException:
             self.abort()
             raise

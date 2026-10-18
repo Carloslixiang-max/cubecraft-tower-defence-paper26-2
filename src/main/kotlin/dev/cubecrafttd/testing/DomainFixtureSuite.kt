@@ -3,6 +3,7 @@ package dev.cubecrafttd.testing
 object DomainFixtureSuite {
     fun runAll(): List<FixtureResult> = buildList {
         addAll(RouteTargetingFixture.run())
+        addAll(SchematicProgressFixture.run())
         addAll(EconomyAndQueueFixture.run())
         addAll(CastleEconomyQueueFixture.run())
         addAll(FarmMapImportFixture.run().let { listOf(it) })

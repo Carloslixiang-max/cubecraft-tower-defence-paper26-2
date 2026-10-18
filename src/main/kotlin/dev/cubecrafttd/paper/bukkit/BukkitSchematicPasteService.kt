@@ -14,8 +14,17 @@ data class SchematicPasteProgress(
     val phase: String,
     val scannedBlocks: Int,
     val writtenBlocks: Int,
-    val totalBlocks: Int
-)
+    val totalBlocks: Int,
+    /** Includes AIR cells traversed during PASTE; writtenBlocks only counts actual mutations. */
+    val processedBlocks: Int = writtenBlocks
+) {
+    val percentage: Int? get() = when (phase) {
+        "PREFLIGHT" -> (scannedBlocks.toLong() * 50 / totalBlocks).toInt()
+        "PASTE" -> 50 + (processedBlocks.toLong() * 50 / totalBlocks).toInt()
+        "COMPLETE" -> 100
+        else -> null
+    }
+}
 
 class BukkitSchematicPasteService(
     private val plugin: Plugin,
@@ -62,14 +71,21 @@ class BukkitSchematicPasteService(
         )
         fun report()=onProgress(
             SchematicPasteProgress(
-                phase.name,scanned,written,total
+                phase.name,scanned,written,total,
+                if (phase == PastePhase.PREFLIGHT) 0 else cursor
             )
         )
-        fun rollbackWritten() {
+        fun rollbackWritten(): Throwable? {
+            var failure: Throwable? = null
             writtenPositions.asReversed().forEach { p ->
-                world.getBlockAt(p.x,p.y,p.z)
-                    .setType(org.bukkit.Material.AIR,false)
+                try {
+                    world.getBlockAt(p.x,p.y,p.z).setType(org.bukkit.Material.AIR,false)
+                } catch (t: Throwable) {
+                    if (failure == null) failure = t
+                    else if (failure!!.suppressed.size < 8) failure!!.addSuppressed(t)
+                }
             }
+            return failure
         }
 
         task=plugin.server.scheduler.runTaskTimer(
@@ -120,11 +136,10 @@ class BukkitSchematicPasteService(
                     }
                     report()
                 } catch(t:Throwable) {
-                    if(phase==PastePhase.PASTE) {
-                        rollbackWritten()
-                    }
+                    val needsRollback = phase == PastePhase.PASTE
                     phase=PastePhase.FAILED
                     task.cancel()
+                    if (needsRollback) rollbackWritten()?.let { t.addSuppressed(it) }
                     onFailure(t)
                 }
             },
@@ -136,8 +151,12 @@ class BukkitSchematicPasteService(
                 get()=task.isCancelled
             override fun cancel() {
                 if(!task.isCancelled) task.cancel()
-                if(phase==PastePhase.PASTE) rollbackWritten()
+                val needsRollback = phase == PastePhase.PASTE
                 phase=PastePhase.CANCELLED
+                if (needsRollback) rollbackWritten()?.let {
+                    onFailure(it)
+                    throw it
+                }
             }
         }
     }

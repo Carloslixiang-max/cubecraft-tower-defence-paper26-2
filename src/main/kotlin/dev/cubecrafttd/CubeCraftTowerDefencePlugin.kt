@@ -51,7 +51,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     override fun onEnable() {
         dataFolder.mkdirs()
         saveDefaultConfig()
-        managedFarm = BukkitManagedFarmWorld(this)
+        managedFarm = BukkitManagedFarmWorld(this, onBuildFailure = {
+            if (::liveArenaController.isInitialized) liveArenaController.blockFarmReuseAfterFailedInstallation()
+        })
         managedFarm.loadExisting()
         stage4Gate = PaperStage4GateStore(this)
         fallbackConfig = BukkitRuntimeFallbackLoader.load(config)
@@ -147,6 +149,10 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             hotbarPreferences,
             lifetimeWinStore
         )
+        if (managedFarm.needsVerifiedReset()) {
+            liveArenaController.blockFarmReuseAfterFailedInstallation()
+            logger.warning("Failed/interrupted Farm installation is locked until /ctdresetfarm 28d24136afe8 completes")
+        }
         if(
             stage4Gate.status()
                 .previousBootWasUnclean
@@ -561,24 +567,26 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
         stage4Gate.recordDomainFixtures(true)
 
+        val smokeWorld = BukkitManagedFarmWorld.runInstallSmoke(this)
         val adapterSmokeFailures =
-            stage4Gate.runAndRecordAdapterSmoke()
+            stage4Gate.runAndRecordAdapterSmoke(smokeWorld)
         check(adapterSmokeFailures.isEmpty()) {
             "Paper adapter smoke gate failed: " +
                 adapterSmokeFailures.joinToString()
         }
+        if (smokeWorld != null) BukkitFarmInstallRegressionSmoke.start(this, smokeWorld)
 
         val pendingRecovery =
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v115 enabled; " +
+            "CubeCraftTowerDefence shell v116 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
                 "fallbackMissing=${fallbackMissing.size}; " +
                 "readiness=${readiness.summary()}; " +
-                "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED"
+                "paperAdapters=" + (if (smokeWorld != null) "LIVE_ADAPTER_SMOKE_PASSED" else "READ_ONLY_ADAPTER_SMOKE_PASSED")
         )
 
         if (fallbackMissing.isNotEmpty()) {
@@ -613,7 +621,6 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }
             )
         }
-        BukkitManagedFarmWorld.runInstallSmoke(this)
         server.scheduler.runTask(this, Runnable {
             runCatching { managedFarm.startPendingBuild(mapOperations, mapBindingConfig) }
                 .onFailure { logger.severe("Managed Farm build BLOCKED: ${it.message}") }
@@ -641,12 +648,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
         val clean=
             arenaService.contexts().isEmpty() &&
-                !mapOperations.hasActivePaste()
+                (!::mapOperations.isInitialized || !mapOperations.hasActivePaste())
         if(::stage4Gate.isInitialized) {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v115 disabled; " +
+            "CubeCraftTowerDefence shell v116 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -680,7 +687,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v115, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v116, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +
@@ -1765,6 +1772,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             return
         }
         try {
+            managedFarm.verifyBindingOwnership(mapBindingConfig)
             mapOperations.startSafePaste(
                 onProgress={ p ->
                     if(
@@ -1841,6 +1849,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             return
         }
 
+        runCatching { managedFarm.verifyBindingOwnership(mapBindingConfig) }.onFailure {
+            sender.sendMessage("Farm reset refused: ${it.message}")
+            return
+        }
+
         val before=
             liveArenaController
                 .farmReuseStatus()
@@ -1909,9 +1922,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }
                     },
                     onComplete={
+                        managedFarm.markBuilt(mapBindingConfig)
                         liveArenaController
                             .clearFarmReuseAfterVerifiedWorldReset()
-                        managedFarm.markBuilt(mapBindingConfig)
 
                         val evidence=
                             runCatching {
@@ -2086,9 +2099,9 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             return
         }
 
-        if(arenaService.contexts().isNotEmpty()) {
+        if(arenaService.contexts().isNotEmpty() || teamQueue.queuedPlayerCount() > 0) {
             sender.sendMessage(
-                "Stop all TD arenas before changing the playtest profile."
+                "Stop all TD arenas and empty the TD queue before changing the playtest profile."
             )
             return
         }

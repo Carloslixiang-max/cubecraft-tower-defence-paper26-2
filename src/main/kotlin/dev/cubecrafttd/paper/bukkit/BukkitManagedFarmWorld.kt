@@ -16,7 +16,8 @@ import java.nio.file.StandardCopyOption
 class BukkitManagedFarmWorld(
     private val plugin: JavaPlugin,
     private val worldName: String = "ctd_farm",
-    manifestName: String = "managed-farm.yml"
+    manifestName: String = "managed-farm.yml",
+    private val onBuildFailure: () -> Unit = {}
 ) {
     private val manifest = File(plugin.dataFolder, manifestName)
     private var loadError: String? = null
@@ -27,6 +28,7 @@ class BukkitManagedFarmWorld(
         YamlConfiguration() // Keep the failed installation visible and blocked.
     } else null
     private var waitingForRestart = false
+    private var activeInitialBuild = false
     val phase: String? get() = state?.getString("phase")
     val installed: Boolean get() = state != null
 
@@ -119,35 +121,50 @@ class BukkitManagedFarmWorld(
 
     fun startPendingBuild(operations: FarmMapOperationManager, binding: PaperMapBindingConfig) {
         if (phase != "PREPARED" || waitingForRestart || loadError != null) return
-        check(binding.worldName == worldName && binding.origin == ORIGIN && ReconstructedFarmAssets.enabled(plugin)) { "Restart with the saved managed Farm configuration before building" }
+        verifyBindingOwnership(binding)
         setPhase("BUILDING")
+        activeInitialBuild = true
         try {
             var lastPercent = -1
             operations.startSafePaste(
                 onProgress = { p ->
-                    val percent = ((p.scannedBlocks.toLong() + p.writtenBlocks) * 100 / (p.totalBlocks.toLong() * 2)).toInt()
+                    val percent = p.percentage ?: 0
                     if (percent / 10 != lastPercent / 10 || p.phase == "COMPLETE") {
                         lastPercent = percent
                         plugin.logger.info("Managed Farm build ${p.phase}: $percent%")
                     }
                 },
-                onComplete = { markBuilt(binding) },
+                onComplete = { activeInitialBuild = false; markBuilt(binding) },
                 onFailure = {
-                    setPhase("BUILD_FAILED")
-                    plugin.logger.severe("Managed Farm build failed: ${it.message}; destination was not overwritten. Check the log before /ctdinstall build")
+                    recordBuildFailure()
+                    plugin.logger.severe("Managed Farm build failed: ${it.message}; installation is blocked. Repair with /ctdresetfarm 28d24136afe8 after checking the log")
                 }
             )
         } catch (t: Throwable) {
-            setPhase("BUILD_FAILED")
+            recordBuildFailure()
             throw t
         }
     }
 
     fun retryBuild(operations: FarmMapOperationManager, binding: PaperMapBindingConfig) {
-        check(phase in setOf("PREPARED", "BUILD_FAILED")) { "An interrupted BUILDING world needs /ctdresetfarm 28d24136afe8; a READY world is never rebuilt" }
+        check(!waitingForRestart && loadError == null) { "Restart with a valid managed Farm before building" }
+        check(phase == "PREPARED") { "A failed/interrupted build needs /ctdresetfarm 28d24136afe8; a READY world is never rebuilt" }
         check(!operations.hasActivePaste()) { "Farm map operation already active" }
-        setPhase("PREPARED")
         startPendingBuild(operations, binding)
+    }
+
+    fun needsVerifiedReset(): Boolean = installed && phase in setOf("BUILDING", "BUILD_FAILED")
+
+    fun verifyBindingOwnership(binding: PaperMapBindingConfig) {
+        if (!installed) return
+        check(!waitingForRestart) { "Restart with the saved Farm configuration before map operations" }
+        check(binding.worldName == worldName && binding.origin == ORIGIN && ReconstructedFarmAssets.enabled(plugin)) { "Managed Farm configuration differs from the installation profile" }
+        check(loadExisting() != null) { loadError ?: "Managed world ownership could not be verified" }
+    }
+
+    private fun recordBuildFailure() {
+        activeInitialBuild = false
+        try { setPhase("BUILD_FAILED") } finally { onBuildFailure() }
     }
 
     /** Also used after the existing verified reset repairs an interrupted install. */
@@ -170,7 +187,8 @@ class BukkitManagedFarmWorld(
 
     // A graceful disable cancels and rolls back the initial empty-region paste first.
     fun buildCancelledCleanly() {
-        if (phase == "BUILDING") setPhase("PREPARED")
+        if (activeInitialBuild && phase == "BUILDING") setPhase("PREPARED")
+        activeInitialBuild = false
     }
 
     private fun setPhase(value: String) {
@@ -205,8 +223,8 @@ class BukkitManagedFarmWorld(
         val ORIGIN = BlockPos(0, 80, 0)
 
         /** CI-only opt-in: real empty-world creation, collision refusal and UUID/block reload on boot two. */
-        fun runInstallSmoke(plugin: JavaPlugin) {
-            if (!java.lang.Boolean.getBoolean("cubecrafttd.install-smoke")) return
+        fun runInstallSmoke(plugin: JavaPlugin): World? {
+            if (!java.lang.Boolean.getBoolean("cubecrafttd.install-smoke")) return null
             val primary = plugin.server.worlds.first()
             val primaryRule = primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS)
             val primarySpawn = primary.spawnLocation.clone()
@@ -225,6 +243,7 @@ class BukkitManagedFarmWorld(
             check(primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS) == primaryRule && primary.spawnLocation == primarySpawn)
             check(primary.fullTime == primaryClock) { "Installer changed the shared world clock" }
             plugin.logger.info("Managed Farm install smoke PASS: ${if (reload) "RELOADED" else "CREATED"}; world UUID, void generation, collision refusal and primary-world settings checked")
+            return world
         }
     }
 }

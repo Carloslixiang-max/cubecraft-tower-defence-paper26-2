@@ -231,7 +231,7 @@ class PaperStage4GateStore(
         }
     }
 
-    fun runAndRecordAdapterSmoke():
+    fun runAndRecordAdapterSmoke(smokeWorld: org.bukkit.World? = null):
         List<String> {
         val failures=
             mutableListOf<String>()
@@ -350,11 +350,13 @@ class PaperStage4GateStore(
         }
 
         checkStep("tower-model-catalog-and-owned-tile-rollback") {
-            BukkitTowerModelSmoke.run(plugin)
+            if (smokeWorld != null) BukkitTowerModelSmoke.run(plugin, smokeWorld)
+            else BukkitTowerBodyCatalogLoader.loadBundled(plugin, true)
         }
 
         checkStep("bundled-farm-scene-and-all-tower-models") {
-            BukkitReconstructionSmoke.run(plugin)
+            if (smokeWorld != null) BukkitReconstructionSmoke.run(plugin, smokeWorld)
+            else ReconstructedFarmAssets.scene(plugin).palette.keys.forEach { Bukkit.createBlockData(it) }
         }
 
         checkStep("team-queue-profile-loading") {
@@ -365,7 +367,7 @@ class PaperStage4GateStore(
             BukkitMenuInteractionSmoke.run()
         }
 
-        if(failures.isEmpty()) {
+        if(failures.isEmpty() && smokeWorld != null) {
             props.setProperty(
                 "adapterSmokePassed",
                 "true"

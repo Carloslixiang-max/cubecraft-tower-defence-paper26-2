@@ -16,7 +16,7 @@ import java.security.MessageDigest
 
 /** Synthetic models only; validates real Paper data and rollback, not original models. */
 object BukkitTowerModelSmoke {
-    fun run(plugin: JavaPlugin) {
+    fun run(plugin: JavaPlugin, world: org.bukkit.World) {
         val directory = Files.createTempDirectory(plugin.dataFolder.toPath(), "tower-model-smoke-")
         try {
             val model = """
@@ -41,7 +41,6 @@ object BukkitTowerModelSmoke {
             Files.writeString(directory.resolve("test.yml"), "tampered")
             check(runCatching { BukkitTowerBodyCatalogLoader.loadDirectory(directory, false) }.isFailure)
 
-            val world = plugin.server.worlds.first()
             val base = BlockPos(world.spawnLocation.blockX, world.maxHeight - 4, world.spawnLocation.blockZ)
             val key = BlockKey(base.x, base.y, base.z)
             val second = BlockKey(base.x + 1, base.y, base.z)

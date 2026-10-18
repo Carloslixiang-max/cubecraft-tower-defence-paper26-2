@@ -140,7 +140,8 @@ class BukkitNormalArenaController(
             java.io.File(
                 plugin.dataFolder,
                 "farm-reuse-gate.yml"
-            )
+            ),
+            plugin.logger::severe
         )
 
     private val farmReuseGate=
@@ -179,6 +180,11 @@ class BukkitNormalArenaController(
         }
         farmReuseGate
             .markUncleanRestartSuspectedResidue()
+    }
+
+    fun blockFarmReuseAfterFailedInstallation() {
+        check(handles.isEmpty()) { "Cannot repair a Farm installation while an arena is active" }
+        farmReuseGate.markWorldIntegrityUnknown()
     }
 
     fun beginFarmVerifiedReset() {

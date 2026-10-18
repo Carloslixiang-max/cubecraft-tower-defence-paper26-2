@@ -10,7 +10,7 @@ import org.bukkit.plugin.java.JavaPlugin
 
 /** Loads every supplied state and exercises real world placement/upgrade/restore. */
 object BukkitReconstructionSmoke {
-    fun run(plugin: JavaPlugin) {
+    fun run(plugin: JavaPlugin, world: org.bukkit.World) {
         val models = BukkitTowerBodyCatalogLoader.loadBundled(plugin, true)
         check(models.loadedCount() == 82 && models.missingStages().isEmpty())
         val scenery = ReconstructedFarmAssets.scene(plugin)
@@ -24,7 +24,6 @@ object BukkitReconstructionSmoke {
         check(composed.blockAt(61, 7, 46) == "minecraft:air")
         check(scenery.blockAt(61, 6, 46) != "minecraft:oak_planks") // Source stays immutable.
 
-        val world = plugin.server.worlds.first()
         val base = BlockPos(world.spawnLocation.blockX + 8, world.maxHeight - 20, world.spawnLocation.blockZ + 8)
         val adapter = BukkitBlockWorldAdapter(world)
         val ledger = TowerBodyLedger()
