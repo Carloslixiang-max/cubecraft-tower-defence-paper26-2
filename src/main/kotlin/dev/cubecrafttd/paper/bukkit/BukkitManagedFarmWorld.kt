@@ -80,10 +80,7 @@ class BukkitManagedFarmWorld(
         }
         // Only this new dedicated world receives environment settings.
         world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false)
-        world.setGameRule(org.bukkit.GameRules.ADVANCE_TIME, false)
-        world.setGameRule(org.bukkit.GameRules.ADVANCE_WEATHER, false)
-        world.time = 6000
-        world.setStorm(false)
+        // Paper 26.2 NORMAL dimensions share a default world clock. Do not set time or freeze it.
         world.save()
         persist()
         return world
@@ -213,6 +210,7 @@ class BukkitManagedFarmWorld(
             val primary = plugin.server.worlds.first()
             val primaryRule = primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS)
             val primarySpawn = primary.spawnLocation.clone()
+            val primaryClock = primary.fullTime
             val manager = BukkitManagedFarmWorld(plugin, "ctd_install_smoke", "managed-farm-smoke.yml")
             val reload = manager.installed
             val world = if (reload) manager.loadExisting() ?: error("Managed world reload failed") else manager.createEmpty()
@@ -225,6 +223,7 @@ class BukkitManagedFarmWorld(
             val collision = BukkitManagedFarmWorld(plugin, "ctd_install_smoke", "unclaimed-smoke.yml")
             check(runCatching { collision.createEmpty() }.isFailure) { "Installer adopted an existing unclaimed world" }
             check(primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS) == primaryRule && primary.spawnLocation == primarySpawn)
+            check(primary.fullTime == primaryClock) { "Installer changed the shared world clock" }
             plugin.logger.info("Managed Farm install smoke PASS: ${if (reload) "RELOADED" else "CREATED"}; world UUID, void generation, collision refusal and primary-world settings checked")
         }
     }
