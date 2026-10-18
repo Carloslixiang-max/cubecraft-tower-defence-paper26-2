@@ -32,9 +32,9 @@ class BukkitManagedFarmWorld(
 
     private fun folder(): File {
         require(worldName.matches(Regex("[a-z0-9_]+")))
-        val root = plugin.server.worldContainer.canonicalFile
-        val folder = File(root, worldName)
-        check(folder.canonicalFile.parentFile == root && !Files.isSymbolicLink(folder.toPath())) { "Unsafe managed-world path" }
+        val root = plugin.server.levelDirectory.toFile().canonicalFile
+        val folder = File(root, "dimensions/minecraft/$worldName")
+        check(folder.canonicalFile == File(root, "dimensions/minecraft/$worldName").absoluteFile && !Files.isSymbolicLink(folder.toPath())) { "Unsafe managed-world path" }
         return folder
     }
 
@@ -45,9 +45,10 @@ class BukkitManagedFarmWorld(
             val s = state!!
             check(s.getInt("schema") == 1 && s.getString("world") == worldName) { "Invalid managed-world manifest" }
             val directory = folder()
-            check(File(directory, "level.dat").isFile) { "Managed world level.dat is missing; restore the world backup" }
+            check(directory.isDirectory) { "Managed dimension is missing; restore the world backup" }
             check(File(directory, ".cubecrafttd-owner").readText().trim() == s.getString("owner")) { "Managed-world ownership token mismatch" }
             val world = plugin.server.getWorld(worldName) ?: creator().createWorld() ?: error("Paper could not load $worldName")
+            check(world.worldPath.toFile().canonicalFile == directory.canonicalFile) { "Managed dimension path mismatch" }
             check(world.uid.toString() == s.getString("uuid")) { "Managed-world UUID mismatch" }
             loadError = null
             plugin.logger.info("Managed Farm world loaded: $worldName uuid=${world.uid} phase=$phase")
@@ -59,13 +60,15 @@ class BukkitManagedFarmWorld(
         }
     }
 
-    private fun creator() = WorldCreator(worldName).generator(VoidGenerator()).generateStructures(false)
+    private fun creator() = WorldCreator.ofKey(org.bukkit.NamespacedKey.minecraft(worldName)).generator(VoidGenerator()).generateStructures(false)
 
     fun createEmpty(): World {
         check(!installed && !manifest.exists()) { "A managed Farm already exists; use /ctdinstall status" }
         val directory = folder()
-        check(!directory.exists() && plugin.server.getWorld(worldName) == null) { "World $worldName already exists; it will not be adopted or overwritten" }
+        val legacyDirectory = File(plugin.server.worldContainer, worldName)
+        check(!directory.exists() && !legacyDirectory.exists() && plugin.server.getWorld(worldName) == null) { "World $worldName already exists; it will not be adopted or overwritten" }
         val world = creator().createWorld() ?: error("Paper could not create $worldName")
+        check(world.worldPath.toFile().canonicalFile == directory.canonicalFile) { "Paper returned an unexpected dimension path" }
         val token = java.util.UUID.randomUUID().toString()
         Files.writeString(File(directory, ".cubecrafttd-owner").toPath(), token, java.nio.file.StandardOpenOption.CREATE_NEW)
         state = YamlConfiguration().also {
