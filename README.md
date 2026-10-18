@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v114 Farm / tower visual reconstruction**
+- Current shell lineage: **v115 existing-server add-on deployment**
 - Pure-domain suite: **580 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
@@ -37,6 +37,10 @@ hidden surfaces and tier/branch details; they are not certified original world
 bytes or block-for-block copies. Full scene paste/reset is opt-in for existing
 servers (`farm-scene.enabled`); the reconstructed playtest kit opts in explicitly.
 See [installation and evidence](evidence/RECONSTRUCTED_ASSETS.md).
+
+## Installing on an existing shared server
+
+Use the [existing-server add-on guide](deployment/README.zh-CN.md), not the fresh-server playtest kit. The distribution is a separate plugin JAR and a data-only ZIP. `/ctdinstall create [1-6]` explicitly creates an unoccupied dedicated `ctd_farm` world and backs up/updates only TD configuration. After a normal restart, the plugin loads that world and pastes the full scene in bounded batches. Subsequent boots load the saved world without repasting. No Multiverse, WorldEdit, resource pack, main-world replacement or server.properties changes are required. Ownership/UUID checks and install readiness block unintended world adoption and matches during installation.
 
 ## What is implemented
 

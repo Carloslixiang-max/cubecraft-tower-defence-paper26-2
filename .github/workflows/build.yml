@@ -91,6 +91,7 @@ jobs:
           fi
           grep -q "CubeCraftTowerDefence shell" /tmp/ctd-server-1.log
           grep -q "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED" /tmp/ctd-server-1.log
+          grep -q "Managed Farm install smoke PASS: CREATED" /tmp/ctd-server-1.log
           echo "ctdstatus" >&3
           echo "ctdfixtures" >&3
           sleep 4
@@ -129,6 +130,7 @@ jobs:
           fi
           grep -q "CubeCraftTowerDefence shell" /tmp/ctd-server-2.log
           grep -q "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED" /tmp/ctd-server-2.log
+          grep -q "Managed Farm install smoke PASS: RELOADED" /tmp/ctd-server-2.log
           echo "ctdstatus" >&3
           sleep 2
           echo "stop" >&3

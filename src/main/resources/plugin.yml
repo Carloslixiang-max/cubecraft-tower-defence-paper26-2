@@ -5,6 +5,10 @@ description: High-fidelity CubeCraft Tower Defence recreation runtime
 api-version: '26.2'
 load: POSTWORLD
 commands:
+  ctdinstall:
+    description: Install the Farm add-on into its own managed world on an existing server
+    usage: /ctdinstall <create [teamSize]|configure [teamSize]|status|build|visit>
+    permission: cubecrafttd.admin
   ctdjoin:
     description: Join the configured Tower Defence team queue (default 6v6)
     usage: /ctdjoin

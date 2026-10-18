@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "dev.cubecrafttd"
-version = "0.114.0-SNAPSHOT"
+version = "0.115.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -60,6 +60,7 @@ tasks {
 
     runServer {
         minecraftVersion("26.2")
+        jvmArgs("-Dcubecrafttd.install-smoke=true")
     }
 
     processResources {

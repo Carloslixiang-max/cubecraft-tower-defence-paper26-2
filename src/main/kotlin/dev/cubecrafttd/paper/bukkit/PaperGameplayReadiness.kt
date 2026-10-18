@@ -45,7 +45,8 @@ class PaperGameplayReadinessService(
     private val recoveryJournalFailureCount:
         () -> Int,
     private val liveGate:
-        PaperStage4GateStore
+        PaperStage4GateStore,
+    private val installationBlocker: () -> String? = { null }
 ) {
     companion object {
         const val EXPECTED_FARM_SHA256 =
@@ -56,6 +57,10 @@ class PaperGameplayReadinessService(
         PaperGameplayReadinessReport {
         val issues=
             mutableListOf<ReadinessIssue>()
+
+        installationBlocker()?.let {
+            issues += ReadinessIssue("MANAGED_FARM_NOT_READY", ReadinessSeverity.BLOCKING, it)
+        }
 
         GameplayFallbackCompletenessValidator
             .validate(

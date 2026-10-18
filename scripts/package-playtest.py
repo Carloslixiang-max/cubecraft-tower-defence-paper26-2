@@ -141,8 +141,11 @@ def main():
     parser.add_argument("--output", type=Path, required=True, help="New ZIP path; existing file is never replaced")
     parser.add_argument("--deployment-evidence", type=Path, help="Optional successful console deployment directory for the identical plugin bytes")
     parser.add_argument("--reconstructed-scene", action="store_true", help="Include the generated full Farm approximation and complete tower catalog")
+    parser.add_argument("--existing-server", action="store_true", help="Data-only add-on ZIP for an existing server; plugin is delivered separately, with no config/world overwrites")
     parser.add_argument("--visual-previews", type=Path, help="Optional directory with actual voxel preview PNGs")
     args = parser.parse_args()
+    if args.existing_server and not args.reconstructed_scene:
+        parser.error("--existing-server requires --reconstructed-scene")
     if not re.fullmatch("[0-9a-f]{40}", args.head) or args.run <= 0:
         parser.error("A full commit SHA and positive Actions run ID are required")
     farm = args.farm.read_bytes()
@@ -160,6 +163,8 @@ def main():
                           if args.reconstructed_scene else {})
     if "name: CubeCraftTowerDefence" not in metadata or "api-version: '26.2'" not in metadata:
         raise ValueError("Unexpected plugin metadata")
+    if args.existing_server and "  ctdinstall:" not in metadata:
+        raise ValueError("This plugin lacks the managed-world installer required by the add-on kit")
     paper_builds = []
     for name, raw in logs.items():
         log = raw.decode()
@@ -175,6 +180,7 @@ def main():
     if not match or match[1] != match[2]:
         raise ValueError("Missing fully passing domain fixture evidence")
     manifest = {"source_commit": args.head, "actions_run": args.run,
+                "deployment_type": "EXISTING_SERVER_ADD_ON" if args.existing_server else "FRESH_PLAYTEST_SERVER",
                 "paper_version": "26.2", "paper_build": paper_builds[0], "java_required": 25,
                 "domain_fixtures_passed": int(match[1]), "paper_smoke_boots": 2,
                 "certification": "CI_BOOT_ONLY_HUMAN_MATCH_PENDING", "full_original_map": False,
@@ -188,8 +194,14 @@ def main():
         "evidence/farm-top-view.svg": svg.encode(),
         "evidence/build-manifest.json": json.dumps(manifest, indent=2).encode(),
         **{f"evidence/{name}": raw for name, raw in logs.items()},
-        **{name: (template / name).read_bytes() for name in ("README.zh-CN.md", "start.sh", "start.bat", "server.properties")},
+        **({"README.zh-CN.md": (template.parent / "deployment/README.zh-CN.md").read_bytes()} if args.existing_server else
+           {name: (template / name).read_bytes() for name in ("README.zh-CN.md", "start.sh", "start.bat", "server.properties")}),
     }
+    if args.existing_server:
+        del entries["plugins/CubeCraftTowerDefence.jar"]
+        for i, token in ((1, "CREATED"), (2, "RELOADED")):
+            if f"Managed Farm install smoke PASS: {token}" not in logs[f"paper-smoke-{i}.log"].decode():
+                raise ValueError(f"Missing managed-world {token} CI evidence")
     if args.reconstructed_scene:
         source = reconstruction["reconstruction/FarmScenery.schem"]
         asset_manifest = json.loads(reconstruction["reconstruction/manifest.json"])
@@ -211,14 +223,15 @@ def main():
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "Farm-Reconstructed.schem"
             complete = builder["write_schematic"](path, scene, block_entities=track_nbt.get("BlockEntities", []))
-            entries["maps/Farm-Reconstructed.schem"] = path.read_bytes()
-        for name, raw in reconstruction.items():
-            if name.startswith("reconstruction/tower-models/"):
-                entries["plugins/CubeCraftTowerDefence/tower-models/" + name.rsplit("/", 1)[1]] = raw
-        entries["plugins/CubeCraftTowerDefence/config.yml"] = (
-            "farm-scene:\n  enabled: true\n"
-            "tower-models:\n  require-complete: true\n"
-            "map-binding:\n  paste-blocks-per-tick: 8000\n").encode()
+            entries[("optional-schematics/" if args.existing_server else "maps/") + "Farm-Reconstructed.schem"] = path.read_bytes()
+        if not args.existing_server:
+            for name, raw in reconstruction.items():
+                if name.startswith("reconstruction/tower-models/"):
+                    entries["plugins/CubeCraftTowerDefence/tower-models/" + name.rsplit("/", 1)[1]] = raw
+            entries["plugins/CubeCraftTowerDefence/config.yml"] = (
+                "farm-scene:\n  enabled: true\n"
+                "tower-models:\n  require-complete: true\n"
+                "map-binding:\n  paste-blocks-per-tick: 8000\n").encode()
         entries["evidence/reconstruction-assets.json"] = reconstruction["reconstruction/manifest.json"]
         manifest.update({"reconstructed_scene_included": True, "full_original_map": False,
                          "reconstruction_scene": complete, "tower_model_stage_keys": 82,
@@ -250,6 +263,12 @@ def main():
             if digest(raw) != expected_sha:
                 raise ValueError(f"Deployment log checksum mismatch: {name}")
             entries[f"evidence/deployment/{name}"] = raw
+    if args.existing_server:
+        deployable = {name for name in entries if name.startswith("plugins/")}
+        if deployable != {"plugins/CubeCraftTowerDefence/maps/ImprovedFarm.schem"}:
+            raise ValueError("Add-on kit would overwrite unexpected plugin data")
+        if any(Path(name).name in {"server.properties", "eula.txt", "start.sh", "start.bat", "config.yml", "level.dat"} for name in entries):
+            raise ValueError("Add-on kit contains server-wide configuration or an overwrite-prone world/config file")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.output, "x", compression=zipfile.ZIP_DEFLATED) as output:
         for name, data in entries.items():

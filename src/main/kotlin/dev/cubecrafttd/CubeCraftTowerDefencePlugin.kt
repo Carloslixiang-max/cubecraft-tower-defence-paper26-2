@@ -28,6 +28,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private lateinit var recoveryListener: BukkitRecoveryListener
     private lateinit var mapBindingConfig: PaperMapBindingConfig
     private lateinit var mapOperations: FarmMapOperationManager
+    private lateinit var managedFarm: BukkitManagedFarmWorld
     private lateinit var readinessService: PaperGameplayReadinessService
     private lateinit var stage4Gate: PaperStage4GateStore
     private lateinit var liveArenaController: BukkitNormalArenaController
@@ -50,6 +51,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     override fun onEnable() {
         dataFolder.mkdirs()
         saveDefaultConfig()
+        managedFarm = BukkitManagedFarmWorld(this)
+        managedFarm.loadExisting()
         stage4Gate = PaperStage4GateStore(this)
         fallbackConfig = BukkitRuntimeFallbackLoader.load(config)
         fallbackMissing = RuntimeFallbackValidator.validateForNormal(fallbackConfig)
@@ -117,7 +120,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             mapBindingConfig,
             { recoveryListener.pendingCount() },
             { recoveryJournalLoadFailures.size },
-            stage4Gate
+            stage4Gate,
+            { managedFarm.blocker(mapBindingConfig) }
         )
         hotbarPreferences =
             BukkitHotbarPreferenceStore(
@@ -568,7 +572,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v114 enabled; " +
+            "CubeCraftTowerDefence shell v115 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -609,6 +613,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }
             )
         }
+        BukkitManagedFarmWorld.runInstallSmoke(this)
+        server.scheduler.runTask(this, Runnable {
+            runCatching { managedFarm.startPendingBuild(mapOperations, mapBindingConfig) }
+                .onFailure { logger.severe("Managed Farm build BLOCKED: ${it.message}") }
+        })
     }
 
     override fun onDisable() {
@@ -623,6 +632,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
         if (::mapOperations.isInitialized) {
             mapOperations.cancelActivePaste()
+            managedFarm.buildCancelledCleanly()
         }
         arenaService.closeAll { context ->
             check(context.towerBodyLedger.isEmpty()) {
@@ -636,7 +646,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v114 disabled; " +
+            "CubeCraftTowerDefence shell v115 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -670,7 +680,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v114, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v115, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +
@@ -907,6 +917,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             runEngineeringPlaytestSetup(
                 sender,args.toList()
             )
+            true
+        }
+
+        "ctdinstall" -> {
+            runFarmInstall(sender, args.toList())
             true
         }
 
@@ -1896,6 +1911,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     onComplete={
                         liveArenaController
                             .clearFarmReuseAfterVerifiedWorldReset()
+                        managedFarm.markBuilt(mapBindingConfig)
 
                         val evidence=
                             runCatching {
@@ -2011,6 +2027,50 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     }
 
 
+
+    private fun runFarmInstall(sender: CommandSender, args: List<String>) {
+        val usage = "Usage: /ctdinstall <create [teamSize:1-6]|configure [teamSize:1-6]|status|build|visit>"
+        try {
+            when (args.firstOrNull()) {
+                "status" -> {
+                    require(args.size == 1) { usage }
+                    sender.sendMessage(managedFarm.status())
+                }
+                "visit" -> {
+                    require(args.size == 1) { usage }
+                    val player = sender as? org.bukkit.entity.Player ?: error("Visit requires an in-game player")
+                    check(!liveArenaController.isActivePlayer(player.uniqueId)) { "Leave your TD match before visiting" }
+                    check(player.teleport(managedFarm.visitLocation())) { "Preview teleport was rejected by another plugin" }
+                }
+                "create", "configure", "build" -> {
+                    check(arenaService.contexts().isEmpty() && teamQueue.queuedPlayerCount() == 0 && !mapOperations.hasActivePaste()) {
+                        "All TD arenas, queues and map operations must be idle before installation"
+                    }
+                    if (args[0] == "build") {
+                        require(args.size == 1) { usage }
+                        managedFarm.retryBuild(mapOperations, mapBindingConfig)
+                        sender.sendMessage("Managed Farm safe build started; follow the server log")
+                    } else {
+                        require(args.size in 1..2) { usage }
+                        val teamSize = if (args.size == 1) 6 else args[1].toIntOrNull() ?: error(usage)
+                        require(teamSize in 1..6) { usage }
+                        val farm = File(dataFolder, "maps/ImprovedFarm.schem").readBytes()
+                        val sha = java.security.MessageDigest.getInstance("SHA-256").digest(farm).joinToString("") { "%02x".format(it) }
+                        check(sha == PaperGameplayReadinessService.EXPECTED_FARM_SHA256) { "Verified ImprovedFarm.schem is missing or has the wrong SHA-256" }
+                        BukkitTowerBodyCatalogLoader.loadBundled(this, true)
+                        if (args[0] == "create") managedFarm.createEmpty()
+                        managedFarm.configure(teamSize)
+                        sender.sendMessage("Managed Farm configured for ${teamSize}v${teamSize}. Restart this server normally; Farm builds automatically after restart. Check /ctdinstall status for READY.")
+                        sender.sendMessage("Only the new ctd_farm world and TD configuration were changed; config backup is in plugins/CubeCraftTowerDefence/.")
+                    }
+                }
+                else -> sender.sendMessage(usage)
+            }
+        } catch (t: Throwable) {
+            sender.sendMessage("ctdinstall ERROR: ${t.message}")
+            logger.warning("Farm installation: ${t.javaClass.simpleName}: ${t.message}")
+        }
+    }
 
     private fun runEngineeringPlaytestSetup(
         sender: CommandSender,
