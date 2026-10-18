@@ -123,7 +123,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             { recoveryListener.pendingCount() },
             { recoveryJournalLoadFailures.size },
             stage4Gate,
-            { managedFarm.blocker(mapBindingConfig) }
+            { managedFarm.blocker(mapBindingConfig) },
+            { ::liveArenaController.isInitialized && liveArenaController.farmReuseStatus().blocked }
         )
         hotbarPreferences =
             BukkitHotbarPreferenceStore(

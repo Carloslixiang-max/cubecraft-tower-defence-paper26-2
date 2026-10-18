@@ -46,7 +46,8 @@ class PaperGameplayReadinessService(
         () -> Int,
     private val liveGate:
         PaperStage4GateStore,
-    private val installationBlocker: () -> String? = { null }
+    private val installationBlocker: () -> String? = { null },
+    private val farmReuseBlocked: () -> Boolean = { false }
 ) {
     companion object {
         const val EXPECTED_FARM_SHA256 =
@@ -60,6 +61,10 @@ class PaperGameplayReadinessService(
 
         installationBlocker()?.let {
             issues += ReadinessIssue("MANAGED_FARM_NOT_READY", ReadinessSeverity.BLOCKING, it)
+        }
+        if (runCatching(farmReuseBlocked).getOrDefault(true)) {
+            issues += ReadinessIssue("FARM_REUSE_BLOCKED", ReadinessSeverity.BLOCKING,
+                "Farm world integrity/residue is blocked; inspect /ctdreuse and perform the required verified reset")
         }
 
         GameplayFallbackCompletenessValidator
