@@ -24,6 +24,7 @@ object BukkitFarmInstallRegressionSmoke {
             }
             persistence.save(FarmReuseGatePersistentState(uncleanRestartSuspectedResidue = true))
             check(persistence.load().uncleanRestartSuspectedResidue)
+            check(directory.toFile().listFiles()!!.any { it.name.contains(".corrupt-") && it.readText().contains("garbage") })
             persistence.save(FarmReuseGatePersistentState())
             check(persistence.load() == FarmReuseGatePersistentState())
         } finally {

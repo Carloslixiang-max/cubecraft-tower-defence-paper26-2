@@ -12,6 +12,7 @@ class BukkitFarmReuseGatePersistence(
     private val file: File,
     private val reportFailure: (String) -> Unit = {}
 ) {
+    private var corruptSource = false
     fun load(): FarmReuseGatePersistentState {
         if (Files.notExists(file.toPath(), java.nio.file.LinkOption.NOFOLLOW_LINKS)) return FarmReuseGatePersistentState()
         return runCatching {
@@ -33,6 +34,7 @@ class BukkitFarmReuseGatePersistence(
                 uncleanRestartSuspectedResidue = flag("unclean-restart-suspected-residue")
             )
         }.getOrElse {
+            corruptSource = true
             reportFailure("Farm reuse evidence is unreadable; reuse remains BLOCKED until verified reset: ${it.message}")
             FarmReuseGatePersistentState(uncleanRestartSuspectedResidue = true)
         }
@@ -40,6 +42,13 @@ class BukkitFarmReuseGatePersistence(
 
     fun save(state: FarmReuseGatePersistentState) {
         file.parentFile?.mkdirs()
+        if (corruptSource) {
+            check(file.isFile) { "Unreadable reuse evidence must be restored before it can be replaced" }
+            val backup = File(file.parentFile, file.name + ".corrupt-" + UUID.randomUUID() + ".bak")
+            Files.copy(file.toPath(), backup.toPath())
+            corruptSource = false
+            reportFailure("Original unreadable Farm reuse evidence preserved in ${backup.name}")
+        }
         val yaml = YamlConfiguration()
         yaml.set("schema", 1)
         yaml.set("hard-tower-conflicts", state.hardTowerConflictKeys.sorted())
