@@ -13,6 +13,9 @@ object BukkitReconstructionSmoke {
     fun run(plugin: JavaPlugin, world: org.bukkit.World) {
         val models = BukkitTowerBodyCatalogLoader.loadBundled(plugin, true)
         check(models.loadedCount() == 82 && models.missingStages().isEmpty())
+        check("facing=east" in BukkitTowerBlockRotation.rotate("minecraft:oak_stairs[facing=north]", QuarterTurn.R90))
+        check("axis=z" in BukkitTowerBlockRotation.rotate("minecraft:oak_log[axis=x]", QuarterTurn.R90))
+        check("east=true" in BukkitTowerBlockRotation.rotate("minecraft:oak_fence[north=true]", QuarterTurn.R90))
         val scenery = ReconstructedFarmAssets.scene(plugin)
         scenery.palette.keys.forEach { Bukkit.createBlockData(it) }
         check(scenery.countBlock("minecraft:air") < scenery.blockIds.size - 400_000)
@@ -27,7 +30,7 @@ object BukkitReconstructionSmoke {
         val base = BlockPos(world.spawnLocation.blockX + 8, world.maxHeight - 20, world.spawnLocation.blockZ + 8)
         val adapter = BukkitBlockWorldAdapter(world)
         val ledger = TowerBodyLedger()
-        val mutations = TowerBodyMutationService(adapter, ledger, RotationCache { data, _ -> data })
+        val mutations = TowerBodyMutationService(adapter, ledger, RotationCache(BukkitTowerBlockRotation::rotate))
         RecommendedMatureTowerDefinitions.all().keys.forEachIndexed { index, id ->
             val maxLevel = if (id in setOf("turret", "necromancer", "leach")) 3 else 4
             val towerId = 11400L + index
@@ -57,10 +60,22 @@ object BukkitReconstructionSmoke {
                 mutations.upgrade(towerId, base, models.definition(id, maxLevel, TowerPath.BOTTOM), QuarterTurn.R0, 2)
                 check(!mutations.remove(towerId).conflictReport.hasConflicts)
                 check(ledger.isEmpty())
+                // Exercise EVERY supplied level/path/state in all orientations,
+                // including upgrades' stairs, connected panes and log axes.
+                for (path in TowerPath.entries) {
+                    for (level in 1..maxLevel) {
+                        for (turn in QuarterTurn.entries) {
+                            val body = models.definition(id, level, path)
+                            mutations.place(towerId, base, body, turn, 3)
+                            check(!mutations.remove(towerId).conflictReport.hasConflicts)
+                            check(ledger.isEmpty())
+                        }
+                    }
+                }
             } finally {
                 mutations.remove(towerId)
             }
         }
-        plugin.logger.info("Reconstruction assets PASS: 11 tower families, 82 stages, zero placeholders; scene composition, model restore and self-body/external-wall raytrace checked")
+        plugin.logger.info("Reconstruction assets PASS: 11 tower families, 82 stages in all four rotations, zero placeholders; scene composition, model restore and self-body/external-wall raytrace checked")
     }
 }

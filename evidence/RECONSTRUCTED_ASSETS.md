@@ -1,4 +1,43 @@
-# v114 — Farm and all tower-family visual reconstructions
+# v117 — Farm and historical tower silhouettes
+
+## v117 visual corrections
+
+All 11 families / 82 catalog entries now use a second silhouette pass against
+the actual official lineup and gameplay images below. Archer has open legs,
+a log balcony, a visible rail and stepped eaves; Ice has a squat windowed stone
+casing rather than an invented tall ice spike. Zeus has a heavy four-support
+quartz monument. Sorcerer has a rising bookshelf/oak staircase. Artillery has
+recessed grey facades and chiseled battlements; Turret has arched windows,
+cobbled insets, a wood mount and paired black barrels. Nether cornices/arches,
+Poison's olive columns/wood cap and Quake's sculpted stone arms replace the
+earlier generic boxes.
+
+The [official May 2016 update](https://www.cubecraft.net/threads/112415/)
+links the actual [Leach gameplay GIF](https://i.imgur.com/BsqI9NH.gif) and
+[Quake gameplay GIF](https://i.imgur.com/bZqSagC.gif). Both were downloaded and
+multiple native frames inspected. Leach's visible green prismarine body and
+interlocking white quartz bands directly contradict the earlier guessed purple
+beacon spire; the latter has been removed. Exact hidden surfaces, proportions
+and upgrade-stage variations remain reconstruction, not recovered originals.
+No numeric balance, footprint, route or Farm scenery changes are made here.
+
+A network-client queue test also reproduced a previously untested real-player
+startup failure: Paper 26.2 rejects serializing an empty offhand or cursor.
+The snapshot adapter now encodes those as zero-length payloads, restores them
+as empty items, and still reads old nonempty NBT payloads. Both Paper boots
+check empty/AIR and nonempty round trips. Full network-match results are
+reported separately from human visual certification.
+
+The Paper rotation adapter now rotates directional BlockData with coordinates
+(stairs, fence/pane connections and log axes). CI places and restores all 82
+entries in all four quarter turns. The existing fixed-R0 gameplay placement
+policy is unchanged; no original aiming/rotation behavior is inferred.
+
+The preview renderer optionally reads an operator-supplied official client JAR
+for block textures (`--client-jar`). These are CPU geometry QA images, not
+client screenshots. No Minecraft textures/client files are bundled in the
+plugin or source repository. Use packed ice/static light cores so models add
+no melting ice, flowing lava or spreading fire to the arena.
 
 On 17 October 2026 the user explicitly accepted an approximate recreation and
 authorized filling missing geometry from historical visual references. This

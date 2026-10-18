@@ -27,8 +27,7 @@ class BukkitPlayerStateAdapter(
             armorPayload = ItemStack.serializeItemsAsBytes(
                 p.inventory.armorContents
             ),
-            offhandPayload = p.inventory.itemInOffHand
-                .serializeAsBytes(),
+            offhandPayload = BukkitSnapshotItemCodec.encode(p.inventory.itemInOffHand),
             level = p.level,
             expProgress = p.exp,
             totalExperience = p.totalExperience,
@@ -49,7 +48,7 @@ class BukkitPlayerStateAdapter(
             heldItemSlot =
                 p.inventory.heldItemSlot,
             cursorItemPayload =
-                p.itemOnCursor.serializeAsBytes(),
+                BukkitSnapshotItemCodec.encode(p.itemOnCursor),
             flySpeed=
                 p.flySpeed
         )
@@ -103,9 +102,7 @@ class BukkitPlayerStateAdapter(
             )
         )
         p.inventory.setItemInOffHand(
-            ItemStack.deserializeBytes(
-                snapshot.offhandPayload
-            )
+            BukkitSnapshotItemCodec.decode(snapshot.offhandPayload)
         )
         p.inventory.heldItemSlot =
             snapshot.heldItemSlot
@@ -233,4 +230,24 @@ class BukkitPlayerStateAdapter(
                 )
             }
         }
+}
+
+/** Paper 26.2 rejects serializeAsBytes on AIR; zero bytes represent no item.
+ * Nonempty bytes retain the previous raw-NBT format for journal compatibility.
+ */
+internal object BukkitSnapshotItemCodec {
+    fun encode(item: ItemStack): ByteArray =
+        if (item.isEmpty) byteArrayOf() else item.serializeAsBytes()
+
+    fun decode(payload: ByteArray): ItemStack =
+        if (payload.isEmpty()) ItemStack.empty() else ItemStack.deserializeBytes(payload)
+
+    fun verify() {
+        check(encode(ItemStack.empty()).isEmpty())
+        check(encode(ItemStack(Material.AIR)).isEmpty())
+        check(decode(byteArrayOf()).isEmpty)
+        val item = ItemStack(Material.DIAMOND, 7)
+        check(decode(encode(item)) == item)
+        check(decode(item.serializeAsBytes()) == item) // Existing nonempty journal.
+    }
 }

@@ -551,10 +551,7 @@ class BukkitNormalArenaController(
                     world
                 ),
                 context.towerBodyLedger,
-                RotationCache {
-                    blockData,_ ->
-                    blockData
-                }
+                RotationCache(BukkitTowerBlockRotation::rotate)
             )
         val armageddonRuntime=
             BukkitArenaArmageddonRuntime(

@@ -19,6 +19,7 @@ import struct
 FARM_REF = "https://www.cubecraft.net/threads/274681/"
 TOWER_REF = "https://www.cubecraft.net/threads/96401/"
 MATURE_REF = "https://www.cubecraft.net/threads/how-to-defend-in-tower-defense.283335/"
+LEACH_REF = "https://www.cubecraft.net/threads/112415/"
 QUAKE_REF = "https://www.cubecraft.net/threads/113397/"
 OFFSET = (-60, -3, -45)
 SIZE = (245, 82, 285)
@@ -81,187 +82,262 @@ class Voxels:
 
 
 def tower(tower_id, level, path):
+    """Historical silhouettes within the gameplay footprint; hidden/tier details inferred."""
     v = Voxels()
     b, put = v.box, v.put
+    sides = [(-1, 0, "east"), (1, 0, "west"), (0, -1, "south"), (0, 1, "north")]
+
+    def ring(radius, y, material):
+        for x in range(-radius, radius+1):
+            for z in range(-radius, radius+1):
+                if max(abs(x), abs(z)) == radius:
+                    put(x, y, z, material)
+
+    def cornice(radius, y, material, half="bottom"):
+        # Face inwards so the low side forms the outer eave. Explicit corners
+        # avoid relying on neighbor physics (all model writes are physics-free).
+        for x in range(-radius, radius+1):
+            for z in range(-radius, radius+1):
+                if max(abs(x), abs(z)) != radius:
+                    continue
+                facing = "east" if x == -radius else "west" if x == radius else "south" if z == -radius else "north"
+                corner = "straight"
+                if abs(x) == radius and abs(z) == radius:
+                    corner = "outer_right" if (x < 0) == (z < 0) else "outer_left"
+                put(x, y, z, f"{material}_stairs[facing={facing},half={half},shape={corner}]")
+
+    def fence(x, y, z, wood, east=False, west=False, north=False, south=False):
+        flags = dict(east=east, west=west, north=north, south=south)
+        put(x, y, z, wood + "_fence[" + ",".join(f"{k}={str(v).lower()}" for k,v in flags.items()) + "]")
+
     if tower_id == "archer":
-        h = 2 + (level >= 3)
+        # Two-level watchtower: open legs, log balcony, rail and stepped roof.
+        # v114 accidentally overwrote its rail with a solid plank slab.
+        b(0, 0, 0, 0, 2, 0, "oak_log[axis=y]")
         for x in (-1, 1):
             for z in (-1, 1):
-                b(x, 0, z, x, h-1, z, "oak_log[axis=y]")
-        for y in (1, h):
-            for x, z in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-                put(x, y, z, "oak_fence[north=true,south=true,east=true,west=true]")
-        b(-1, h, -1, 1, h, 1, "oak_planks")
-        b(-1, h+1, -1, 1, h+1, 1, "oak_slab[type=bottom]")
-        if level >= 2:
-            for x in (-1, 1):
-                for z in (-1, 1):
-                    put(x, h+1, z, "spruce_slab[type=bottom]")
+                for y in (0, 1, 3):
+                    fence(x, y, z, "oak")
+                put(x, 2, z, "oak_log[axis=y]")
+        for x,z,_ in sides:
+            put(x, 2, z, "oak_planks")
+            fence(x, 3, z, "oak", east=z!=0, west=z!=0, north=x!=0, south=x!=0)
+        put(0, 2, 0, "oak_planks")
+        cornice(1, 4, "spruce" if level >= 2 else "oak")
+        put(0, 4, 0, "oak_planks")
+        put(0, 5, 0, "oak_slab[type=bottom]")
         if level >= 3:
-            put(0, h+1, 0, "light_gray_terracotta" if path == "TOP" else "red_terracotta")
+            # Branch colour is an inferred small roof/core accent, not a new skin.
+            put(0, 4, 0, "light_gray_terracotta" if path == "TOP" else "red_terracotta")
         if level == 4:
-            for x in (-1, 1):
-                put(x, h+1, 0, "oak_stairs[facing=" + ("west" if x == -1 else "east") + "]")
-            if path == "BOTTOM":
-                put(0, h, 0, "glowstone")
+            for x,z,_ in sides:
+                put(x, 2, z, "oak_log[axis=" + ("z" if x else "x") + "]")
+            put(0, 5, 0, "spruce_slab[type=bottom]")
     elif tower_id == "artillery":
-        stone = "stone_bricks"
-        b(-1, 0, -1, 1, 0, 1, stone)
-        for x in (-1, 1):
-            for z in (-1, 1):
-                b(x, 1, z, x, 2, z, stone)
-                put(x, 3, z, "chiseled_stone_bricks")
-        b(0, 1, 0, 0, 2, 0, "gray_terracotta")
-        for x, z in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-            put(x, 3, z, "stone_brick_slab[type=bottom]")
-        put(0, 3, 0, "tnt" if level >= 3 and path == "TOP" else "polished_andesite")
-        if level >= 2:
-            for x in (-1, 1):
-                put(x, 1, 0, "cobblestone_wall")
-        if level >= 3 and path == "BOTTOM":
-            put(0, 3, 0, "dark_oak_pressure_plate")
-        if level == 4:
-            put(0, 4, 0, "tnt" if path == "TOP" else "coal_block")
-    elif tower_id == "ice":
         b(-1, 0, -1, 1, 0, 1, "stone_bricks")
         for x in (-1, 1):
             for z in (-1, 1):
-                put(x, 1, z, "cobblestone_wall")
-                put(x, 2, z, "chiseled_stone_bricks")
-        b(-1, 2, -1, 1, 2, 1, "stone_brick_slab[type=bottom]")
-        b(0, 1, 0, 0, 2+level, 0, "packed_ice")
-        if level >= 2:
-            for x, z in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-                put(x, 3, z, "packed_ice")
+                b(x, 1, z, x, 2, z, "gray_terracotta")
+                put(x, 3, z, "chiseled_stone_bricks")
+        for x,z,_ in sides:
+            b(x, 1, z, x, 2, z, "gray_terracotta" if level == 1 else "cobblestone")
+            put(x, 3, z, "stone_brick_slab[type=bottom]")
+        put(0, 1, 0, "polished_andesite")
+        put(0, 2, 0, "gray_terracotta")
+        put(0, 3, 0, "polished_andesite")
         if level >= 3:
-            b(-1, 0, -1, 1, 0, 1, "snow_block")
+            put(0, 3, 0, "tnt" if path == "TOP" else "coal_block")
         if level == 4:
-            put(0, 6, 0, "light_blue_stained_glass")
-    elif tower_id == "mage":
-        b(-1, 0, -1, 1, 0, 1, "nether_bricks")
-        b(-1, 3, -1, 1, 3, 1, "nether_bricks")
+            put(0, 4, 0, "stone_button[face=floor,facing=north]")
+    elif tower_id == "ice":
+        # Squat windowed stone casing, not a tall ice spike.
+        b(-1, 0, -1, 1, 0, 1, "stone_bricks")
         for x in (-1, 1):
             for z in (-1, 1):
-                b(x, 1, z, x, 2, z, "nether_brick_fence")
-                put(x, 4, z, "nether_brick_slab[type=bottom]")
-        b(0, 1, 0, 0, 2, 0, "orange_stained_glass")
+                put(x, 1, z, "cobblestone")
+                put(x, 2, z, "chiseled_stone_bricks")
+        for x,z,_ in sides:
+            put(x, 1, z, "light_gray_terracotta")
+            put(x, 2, z, "stone_brick_slab[type=bottom]")
+        put(0, 1, 0, "packed_ice")
+        put(0, 2, 0, "packed_ice")
+        if level >= 2:
+            for x,z,_ in sides:
+                put(x, 2, z, "stone_bricks")
+        if level >= 3:
+            put(0, 2, 0, "packed_ice" if path == "TOP" else "light_blue_stained_glass")
+            cornice(1, 0, "stone_brick", "top")
+        if level == 4:
+            put(0, 3, 0, "stone_slab[type=bottom]")
+    elif tower_id == "mage":
+        b(-1, 0, -1, 1, 0, 1, "nether_bricks")
+        cornice(1, 1, "nether_brick")
+        for x in (-1, 1):
+            for z in (-1, 1):
+                fence(x, 2, z, "nether_brick", east=z!=0, west=z!=0, north=x!=0, south=x!=0)
         put(0, 1, 0, "glowstone")
-        put(0, 4, 0, "magma_block" if level >= 3 else "orange_stained_glass")
+        put(0, 2, 0, "orange_stained_glass")
+        cornice(1, 3, "nether_brick", "top")
+        put(0, 3, 0, "nether_bricks")
+        for x in (-1, 1):
+            fence(x, 4, 0, "nether_brick")
+        put(0, 4, 0, "orange_stained_glass")
         if level >= 2:
             put(0, 0, 0, "obsidian")
+        if level >= 3:
+            put(0, 4, 0, "magma_block" if path == "TOP" else "glowstone")
         if level == 4:
-            put(0, 5, 0, "orange_stained_glass")
+            put(0, 5, 0, "orange_stained_glass_pane[east=true,west=true]")
     elif tower_id == "poison":
         b(-1, 0, -1, 1, 0, 1, "spruce_planks")
         for x in (-1, 1):
             for z in (-1, 1):
-                b(x, 0, z, x, 3, z, "green_terracotta")
-        b(0, 0, 0, 0, 2, 0, "lime_stained_glass")
+                b(x, 0, z, x, 2, z, "green_terracotta")
+        for x,z,_ in sides:
+            put(x, 1, z, "white_terracotta")
+            put(x, 0, z, "spruce_planks")
         put(0, 1, 0, "glowstone")
-        for x, z in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-            put(x, 3, z, "spruce_stairs[facing=" + ({(-1,0):"east",(1,0):"west",(0,-1):"south",(0,1):"north"}[x,z]) + "]")
+        cornice(1, 3, "spruce")
+        put(0, 3, 0, "lime_stained_glass")
         if level >= 2:
-            put(0, 3, 0, "lime_stained_glass")
+            put(0, 2, 0, "lime_stained_glass")
         if level >= 3:
-            put(0, 3, 0, "emerald_block" if path == "TOP" else "purple_stained_glass")
+            put(0, 3, 0, "lime_stained_glass" if path == "TOP" else "purple_stained_glass")
+            for x,z,_ in sides:
+                put(x, 2, z, "spruce_slab[type=top]")
         if level == 4:
-            for x in (-1, 1):
-                put(x, 4, 0, "lime_stained_glass_pane" if path == "TOP" else "purple_stained_glass_pane")
+            put(0, 4, 0, "lime_stained_glass_pane[east=true,west=true]" if path == "TOP" else "purple_stained_glass_pane[east=true,west=true]")
     elif tower_id == "quake":
-        b(0, 0, 0, 0, 2, 0, "cobblestone")
-        for y in (1, 3):
-            b(-1, y, -1, 1, y, 1, "stone_brick_slab[type=bottom]")
-        for x, z in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-            put(x, 2, z, "stone_brick_stairs[facing=" + ({(-1,0):"east",(1,0):"west",(0,-1):"south",(0,1):"north"}[x,z]) + ",half=top]")
-        put(0, 4, 0, "anvil[facing=north]")
+        # Sculpted stone arms and a broad anvil head, grounded in the official GIF.
+        for x in (-1, 1):
+            for z in (-1, 1):
+                put(x, 0, z, "stone_brick_slab[type=bottom]")
+        put(0, 0, 0, "cobblestone")
+        put(0, 1, 0, "cobblestone")
+        for x,z,facing in sides:
+            put(x, 0, z, f"stone_brick_stairs[facing={facing},half=top]")
+            put(x, 2, z, f"stone_brick_stairs[facing={facing}]")
+        put(0, 2, 0, "stone_bricks")
+        put(0, 3, 0, "anvil[facing=north]")
         if level >= 2:
-            put(0, 0, 0, "stone_bricks")
+            for x,z,facing in sides:
+                put(x, 3, z, "stone_brick_slab[type=bottom]")
         if level >= 3:
             for x in (-1, 1):
-                put(x, 0, 0, "stone_brick_slab[type=bottom]")
+                put(x, 1, 0, "stone_bricks" if path == "TOP" else "cobblestone")
         if level == 4:
-            b(-1, 3, -1, 1, 3, 1, "stone_bricks")
+            for x,z,facing in sides:
+                put(x, 3, z, f"stone_brick_stairs[facing={facing},half=top]")
+            put(0, 4, 0, "anvil[facing=north]")
     elif tower_id == "sorcerer":
+        # Bookshelves wrap a rising oak staircase and raised enchanting table.
         b(-1, 0, -1, 1, 0, 1, "oak_planks")
-        for z in (-1, 0, 1):
-            put(-1, 1, z, "bookshelf")
-        put(0, 1, 1, "bookshelf")
+        for x in (-1, 0):
+            b(x, 1, -1, x, 2, -1, "bookshelf")
+        b(-1, 1, 0, -1, 2, 1, "bookshelf")
         b(0, 1, 0, 0, 2, 0, "oak_log[axis=y]")
+        put(1, 1, 1, "oak_stairs[facing=north]")
+        put(1, 2, 0, "oak_stairs[facing=north]")
+        put(1, 3, -1, "oak_stairs[facing=west]")
         put(0, 3, 0, "enchanting_table")
-        put(1, 1, 0, "anvil[facing=north]")
+        put(0, 1, 1, "anvil[facing=east]")
         if level >= 2:
-            put(-1, 2, 0, "bookshelf")
+            put(-1, 3, -1, "bookshelf")
         if level >= 3:
-            put(1, 2, 1, "bookshelf")
-            for x in (-1, 1):
-                b(x, 3, -1, x, 4, -1, "purple_stained_glass_pane[north=true,south=true]")
+            put(-1, 3, 0, "bookshelf")
+            put(0, 2, 1, "bookshelf" if path == "TOP" else "oak_log[axis=y]")
         if level == 4:
-            put(0, 4, -1, "magenta_stained_glass" if path == "TOP" else "purple_stained_glass")
+            put(-1, 3, 1, "bookshelf")
+            put(1, 3, 1, "oak_slab[type=bottom]")
     elif tower_id == "zeus":
+        # Four blue supports carry the heavy quartz-pillar monument.
         for x in (-1, 1):
             for z in (-1, 1):
                 b(x, 0, z, x, 1, z, "blue_terracotta")
-                put(x, 2, z, "quartz_slab[type=bottom]")
-        b(0, 0, 0, 0, 0, 0, "quartz_block")
-        b(0, 2, 0, 0, 4, 0, "quartz_pillar[axis=y]")
-        for x, z in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-            put(x, 3, z, "quartz_slab[type=bottom]")
-        put(0, 5, 0, "light_blue_stained_glass_pane")
+                b(x, 2, z, x, 3, z, "quartz_pillar[axis=y]")
+        put(0, 0, 0, "quartz_stairs[facing=north]")
+        put(0, 1, 0, "quartz_block")
+        for x,z,_ in sides:
+            put(x, 2, z, "quartz_slab[type=bottom]")
+            put(x, 3, z, "quartz_pillar[axis=y]")
+        put(0, 3, 0, "quartz_block")
+        put(0, 4, 0, "light_blue_stained_glass_pane[north=true,south=true]")
         if level >= 2:
-            put(0, 1, 0, "glowstone")
+            put(0, 2, 0, "glowstone")
         if level >= 3:
-            put(0, 4, 0, "quartz_block" if path == "BOTTOM" else "diamond_block")
+            put(0, 3, 0, "quartz_block" if path == "BOTTOM" else "light_blue_stained_glass")
         if level == 4:
-            put(0, 5, 0, "quartz_slab[type=bottom]" if path == "BOTTOM" else "light_blue_stained_glass")
+            put(0, 4, 0, "quartz_slab[type=bottom]" if path == "BOTTOM" else "light_blue_stained_glass")
     elif tower_id == "necromancer":
         b(-2, 0, -2, 2, 0, 2, "nether_bricks")
-        b(-1, 0, -1, 1, 0, 1, "obsidian")
-        for x in (-2, 2):
-            for z in (-2, 2):
-                b(x, 1, z, x, 3, z, "nether_bricks")
         for y in (1, 4):
-            for x in range(-2, 3):
-                for z in range(-2, 3):
-                    if max(abs(x), abs(z)) == 2:
-                        put(x, y, z, "nether_brick_stairs[facing=north]" if y == 1 else "nether_bricks")
-        for x in (-2, 0, 2):
-            for z in (-2, 2):
-                put(x, 5, z, "nether_brick_slab[type=bottom]")
+            cornice(2, y, "nether_brick", "bottom" if y == 1 else "top")
+        for x in (-1, 1):
+            for z in (-1, 1):
+                b(x, 1, z, x, 4, z, "nether_bricks")
+        for x,z,_ in sides:
+            put(x, 2, z, "nether_brick_stairs[facing=" + ("east" if x == -1 else "west" if x == 1 else "south" if z == -1 else "north") + ",half=top]")
+        ring(1, 4, "nether_bricks")
+        ring(2, 5, "nether_brick_slab[type=bottom]")
+        b(-1, 0, 0, 1, 0, 0, "obsidian")
+        put(0, 1, -1, "obsidian")
         if level >= 2:
-            for x in (-1, 1):
-                put(x, 0, 0, "bone_block[axis=y]")
+            for x in (-2, 2):
+                put(x, 1, 0, "nether_bricks")
+                put(x, 4, 0, "nether_bricks")
         if level == 3:
             put(0, 1, 0, "purpur_block" if path == "TOP" else "snow_block")
     elif tower_id == "turret":
         b(-2, 0, -2, 2, 0, 2, "stone_bricks")
         for x in (-2, 2):
             for z in (-2, 2):
-                b(x, 1, z, x, 3, z, "stone_bricks")
                 put(x, 0, z, "chiseled_stone_bricks")
-        for x in range(-2, 3):
-            for z in range(-2, 3):
-                if max(abs(x), abs(z)) == 2:
-                    put(x, 3, z, "chiseled_stone_bricks" if (x+z)%2 == 0 else "stone_brick_slab[type=bottom]")
+                b(x, 1, z, x, 2, z, "stone_bricks")
+                put(x, 3, z, "chiseled_stone_bricks")
+        # Arched windows with cobbled insets on every facade.
+        for x,z,facing in sides:
+            for t in (-1, 1):
+                xx,zz = (x*2,t) if x else (t,z*2)
+                put(xx, 1, zz, f"stone_brick_stairs[facing={facing}]")
+                put(xx, 2, zz, "cobblestone_wall[north=low,south=low]" if x else "cobblestone_wall[east=low,west=low]")
+            put(x*2, 2, z*2, "stone_brick_stairs[facing="+facing+",half=top]")
+            put(x*2, 3, z*2, "chiseled_stone_bricks")
+        cornice(2, 4, "stone_brick")
+        put(0, 1, 0, "oak_log[axis=y]")
         b(-1, 4, -1, 1, 4, 1, "oak_planks")
-        b(0, 4, -2, 0, 4, 0, "coal_block")
-        put(0, 5, 0, "lever[face=floor,facing=north]")
+        b(0, 5, -1, 0, 5, 1, "oak_planks")
+        for x in (-1, 1):
+            b(x, 5, -2, x, 5, 0, "coal_block")
+        put(0, 6, 0, "lever[face=floor,facing=north]")
         if level >= 2:
-            put(0, 1, 0, "oak_log[axis=y]")
-            put(1, 4, -1, "coal_block" if path == "TOP" else "lapis_block")
+            for z in (-1, 1):
+                put(0, 4, z, "oak_log[axis=z]")
         if level == 3:
-            put(-1, 4, -1, "coal_block" if path == "TOP" else "lapis_block")
+            put(0, 4, 0, "polished_andesite" if path == "TOP" else "lapis_block")
     elif tower_id == "leach":
-        b(-2, 0, -2, 2, 0, 2, "quartz_block")
-        b(-1, 0, -1, 1, 0, 1, "obsidian")
-        for x in (-2, 2):
-            for z in (-2, 2):
-                b(x, 1, z, x, 3, z, "quartz_pillar[axis=y]")
-                put(x, 4, z, "quartz_slab[type=bottom]")
-        b(0, 1, 0, 0, 3+level, 0, "purple_stained_glass")
-        put(0, 2, 0, "glowstone")
-        put(0, 4+level, 0, "beacon")
-        for x, z in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-            put(x, 3+level, z, "quartz_stairs[facing=north,half=top]")
+        # Official 2016 gameplay GIF shows green prismarine and interlocking
+        # white quartz bands, not the earlier guessed purple beacon column.
+        b(-2, 0, -2, 2, 0, 2, "dark_prismarine")
+        cornice(2, 1, "prismarine_brick")
+        for x,z,_ in sides:
+            put(x*2, 1, z*2, "quartz_block")
+        for x in (-1, 1):
+            for z in (-1, 1):
+                b(x, 1, z, x, 4, z, "prismarine_bricks")
+                put(x, 2, z, "quartz_block")
+                put(x, 4, z, "quartz_stairs[facing=" + ("east" if x == -1 else "west") + "]")
+        for x,z,facing in sides:
+            put(x, 3, z, f"quartz_stairs[facing={facing},half=top]")
+            put(x, 5, z, f"quartz_stairs[facing={facing}]")
+        b(0, 1, 0, 0, 5, 0, "prismarine_bricks")
+        put(0, 6, 0, "quartz_block")
+        put(0, 7, 0, "quartz_slab[type=bottom]")
+        if level >= 2:
+            put(0, 4, 0, "sea_lantern")
+        if level == 3:
+            put(0, 6, 0, "quartz_pillar[axis=y]" if path == "TOP" else "quartz_block")
+            for x,z,_ in sides:
+                put(x, 2, z, "sea_lantern" if path == "TOP" else "prismarine_bricks")
     else:
         raise ValueError(tower_id)
     return v
@@ -286,7 +362,7 @@ def build_towers(root, source):
                 name = f"{tower_id}-{path.lower()}-{level}.json"
                 model = {"format-version": 1, "tower-id": tower_id, "level": level, "path": path,
                          "evidence-status": "COMMUNITY_RECONSTRUCTION",
-                         "evidence-refs": [TOWER_REF, MATURE_REF] + ([QUAKE_REF] if tower_id == "quake" else []),
+                         "evidence-refs": [TOWER_REF, MATURE_REF] + ([QUAKE_REF] if tower_id == "quake" else [LEACH_REF] if tower_id == "leach" else []),
                          "reconstruction": "Historical silhouette; unseen surfaces, materials and tier details inferred. Not original extraction.",
                          "original-client-fidelity-certified": False,
                          "blocks": [{"x": x, "y": y, "z": z, "block-data": state}

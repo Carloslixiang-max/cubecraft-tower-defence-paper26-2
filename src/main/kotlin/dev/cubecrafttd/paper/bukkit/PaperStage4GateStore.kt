@@ -300,6 +300,7 @@ class PaperStage4GateStore(
         }
 
         checkStep("menu-production-item-projection-roundtrip") {
+            BukkitSnapshotItemCodec.verify()
             BukkitMenuProjectionSmoke.run()
         }
 

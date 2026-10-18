@@ -5,7 +5,9 @@ import gzip
 import json
 from pathlib import Path
 import runpy
-from PIL import Image, ImageDraw, ImageFont
+import io
+import zipfile
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 
 ROOT=Path(__file__).resolve().parent.parent
 build=runpy.run_path(str(ROOT/"scripts/build-reconstruction-assets.py"))
@@ -44,7 +46,44 @@ def color(state):
     return (141,133,124)
 
 
-def render(blocks,width,height,margin=30):
+class ClientTextures:
+    """Optional local client-JAR textures; no game assets are copied into builds."""
+    def __init__(self, path):
+        self.jar = zipfile.ZipFile(path)
+        self.cache = {}
+
+    def face(self, state, top):
+        key = state.removeprefix("minecraft:").split("[")[0]
+        cache_key = (key, top)
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+        def read(model):
+            model = model.removeprefix("minecraft:")
+            data = json.loads(self.jar.read("assets/minecraft/models/" + model + ".json"))
+            textures = read(data["parent"]) if "parent" in data else {}
+            return textures | data.get("textures", {})
+        try:
+            block = json.loads(self.jar.read(f"assets/minecraft/blockstates/{key}.json"))
+            variant = next(iter(block["variants"].values())) if "variants" in block else block["multipart"][0]["apply"]
+            if isinstance(variant, list): variant = variant[0]
+            textures = read(variant["model"])
+            tex = next(textures[t] for t in (("top", "end", "all", "side", "texture", "particle") if top else
+                                           ("side", "all", "texture", "particle", "top", "end")) if t in textures)
+            if isinstance(tex, dict): tex = tex.get("sprite", tex.get("texture"))
+            for _ in range(12):
+                if not isinstance(tex, str): raise ValueError("Unsupported texture reference")
+                if not tex.startswith("#"): break
+                tex = textures[tex[1:]]
+            name = "assets/minecraft/textures/" + tex.removeprefix("minecraft:") + ".png"
+            im = Image.open(io.BytesIO(self.jar.read(name))).convert("RGBA")
+            im = im.crop((0, 0, im.width, im.width)) # first frame of animated textures
+        except (KeyError, StopIteration, ValueError):
+            im = None
+        self.cache[cache_key] = im
+        return im
+
+
+def render(blocks,width,height,margin=30,textures=None):
     blocks={p:s for p,s in blocks.items() if s!="minecraft:air"}
     def proj(x,y,z):return x-z,(x+z)*.5-y*1.2
     points=[proj(x,y,z) for x,y,z in blocks]
@@ -62,9 +101,18 @@ def render(blocks,width,height,margin=30):
         if key.endswith("_slab"):
             return [(0,.5 if "type=top" in state else 0,0,1,1 if "type=top" in state else .5,1)]
         if key.endswith("_pane"):
-            return [(.44,0,0,.56,1,1),(0,0,.44,1,1,.56)]
+            parts=[(.44,0,.44,.56,1,.56)]
+            for direction,box in {"north":(.44,0,0,.56,1,.5),"south":(.44,0,.5,.56,1,1),
+                                  "west":(0,0,.44,.5,1,.56),"east":(.5,0,.44,1,1,.56)}.items():
+                if direction+"=true" in state:parts.append(box)
+            return parts
         if key.endswith("_fence"):
-            return [(.375,0,.375,.625,1,.625),(0,.4,.44,1,.6,.56),(0,.75,.44,1,.95,.56),(.44,.4,0,.56,.6,1),(.44,.75,0,.56,.95,1)]
+            parts=[(.375,0,.375,.625,1,.625)]
+            for low,high in ((.4,.6),(.75,.95)):
+                for direction,box in {"north":(.44,low,0,.56,high,.5),"south":(.44,low,.5,.56,high,1),
+                                      "west":(0,low,.44,.5,high,.56),"east":(.5,low,.44,1,high,.56)}.items():
+                    if direction+"=true" in state:parts.append(box)
+            return parts
         if key.endswith("_wall"):
             return [(.25,0,.25,.75,1,.75)]
         if key.endswith("_stairs"):
@@ -75,11 +123,21 @@ def render(blocks,width,height,margin=30):
             elif "facing=west" in state:step=(0,y0,0,.5,y1,1)
             elif "facing=south" in state:step=(0,y0,.5,1,y1,1)
             else:step=(0,y0,0,1,y1,.5)
+            if "shape=outer_" in state:
+                x0,a,z0,x1,b,z1=step
+                right="shape=outer_right" in state
+                if "facing=east" in state:z0,z1=(.5,1) if right else (0,.5)
+                elif "facing=west" in state:z0,z1=(0,.5) if right else (.5,1)
+                elif "facing=south" in state:x0,x1=(0,.5) if right else (.5,1)
+                else:x0,x1=(.5,1) if right else (0,.5)
+                step=(x0,a,z0,x1,b,z1)
             return [base,step]
         if key.endswith("anvil"):
             return [(0,0,0,1,.25,1),(.3,.25,.25,.7,.7,.75),(0,.7,.15,1,1,.85)]
         if key.endswith("enchanting_table"):
             return [(0,0,0,1,.75,1),(.25,.75,.25,.75,.9,.75)]
+        if key.endswith("button"):
+            return [(.35,0,.35,.65,.12,.65)]
         if key.endswith("lever") or key.endswith("pressure_plate"):
             return [(.2,0,.2,.8,.15,.8)]
         return [(0,0,0,1,1,1)]
@@ -93,6 +151,25 @@ def render(blocks,width,height,margin=30):
                 polygon=[pixel((x+(x1 if a else x0),y+(y1 if b else y0),z+(z1 if c else z0))) for a,b,c in corners]
                 fill=tuple(min(255,int(c*light)) for c in rgb)
                 draw.polygon(polygon,fill=fill)
+                texture = textures.face(state, bool(dy)) if textures else None
+                if texture is not None:
+                    # Affine project the texture onto this actual prism face.
+                    ax,ay=polygon[0]; ux,uy=polygon[1][0]-ax,polygon[1][1]-ay
+                    vx,vy=polygon[3][0]-ax,polygon[3][1]-ay
+                    det=ux*vy-uy*vx
+                    if abs(det) < .001: continue
+                    left,top=int(min(p[0] for p in polygon)),int(min(p[1] for p in polygon))
+                    right,bottom=int(max(p[0] for p in polygon))+1,int(max(p[1] for p in polygon))+1
+                    n=texture.width
+                    affine=(n*vy/det,-n*vx/det,n*((left-ax)*vy-(top-ay)*vx)/det,
+                            -n*uy/det,n*ux/det,n*(-(left-ax)*uy+(top-ay)*ux)/det)
+                    face=ImageEnhance.Brightness(texture).enhance(light).transform(
+                        (right-left,bottom-top),Image.Transform.AFFINE,affine,Image.Resampling.NEAREST)
+                    mask=Image.new("L",face.size);ImageDraw.Draw(mask).polygon([(x-left,y-top) for x,y in polygon],fill=255)
+                    # Glass retains a solid tinted background for this QA view.
+                    if face.getextrema()[3][0] < 255:
+                        backing=Image.new("RGBA",face.size,fill+(255,));backing.alpha_composite(face);face=backing
+                    im.paste(face,(left,top),mask)
     return im
 
 
@@ -101,6 +178,7 @@ def main():
     p.add_argument("--assets",type=Path,required=True)
     p.add_argument("--farm",type=Path,required=True)
     p.add_argument("--output",type=Path,required=True)
+    p.add_argument("--client-jar",type=Path,help="Optional official local client JAR for textured tower QA renders")
     args=p.parse_args();args.output.mkdir(parents=True,exist_ok=True)
     track=read_nbt(gzip.decompress(args.farm.read_bytes()))
     scene=build["compose_track"](build["build_scene"](),track)
@@ -108,8 +186,9 @@ def main():
     render(scene.blocks,2400,2100).save(args.output/"Farm-preview.png")
     font=ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",16)
     atlas=Image.new("RGB",(1850,2400),(20,29,42));draw=ImageDraw.Draw(atlas)
+    textures=ClientTextures(args.client_jar) if args.client_jar else None
     families=["archer","artillery","ice","mage","poison","quake","sorcerer","zeus","turret","necromancer","leach"]
-    draw.text((20,12),"Actual voxel reconstruction | TOP I-IV, BOTTOM I-IV | 82 model entries",font=font,fill="white")
+    draw.text((20,12),"CPU voxel QA | TOP I-IV, BOTTOM I-IV | 82 entries" + (" | Minecraft client textures" if textures else ""),font=font,fill="white")
     for row,family in enumerate(families):
         for col,(path,level) in enumerate((p,l) for p in ("top","bottom") for l in range(1,5)):
             file=args.assets/"reconstruction/tower-models"/f"{family}-{path}-{level}.json"
@@ -117,7 +196,7 @@ def main():
             model=json.loads(file.read_text())
             blocks={(b["x"],b["y"],b["z"]):b["block-data"] for b in model["blocks"]}
             x=10+col*230;y=45+row*210
-            atlas.paste(render(blocks,220,175,12),(x,y))
+            atlas.paste(render(blocks,220,175,12,textures),(x,y))
             draw.text((x+3,y+175),f"{family} {path[0].upper()}{level}",font=font,fill="white")
     atlas.save(args.output/"Tower-models-preview.png")
     (args.output/"reconstruction-audit.json").write_text(json.dumps(report,indent=2))
