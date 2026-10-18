@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v118 live-match snapshot ownership with v117 historical tower models**
+- Current shell lineage: **v119 playable-match recovery and tower menu feedback with historical tower models**
 - Pure-domain suite: **590 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 

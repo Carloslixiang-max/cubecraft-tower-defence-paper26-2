@@ -122,6 +122,8 @@ class BukkitNormalArenaController(
     private val lifetimeWinStore:
         BukkitLifetimeWinStore
 ) {
+    private val chunkLeases = BukkitArenaChunkLeases(plugin)
+
     private val matchHud=
         BukkitMatchHudService(
             plugin
@@ -674,6 +676,7 @@ class BukkitNormalArenaController(
         }
 
         try {
+            chunkLeases.acquire(arenaId, world, preflight.mapRuntime)
             arenaService.register(
                 context
             )
@@ -1012,6 +1015,7 @@ class BukkitNormalArenaController(
             }.onFailure {
                 t.addSuppressed(it)
             }
+            runCatching { chunkLeases.release(arenaId) }.onFailure(t::addSuppressed)
             throw t
         }
     }
@@ -1105,6 +1109,9 @@ class BukkitNormalArenaController(
                 }
             }
         } catch(t:Throwable) {
+            // A missing entity may be unloaded and therefore invisible to a
+            // live-only teardown presence check. Never certify that as clean.
+            runCatching { farmReuseGate.markWorldIntegrityUnknown() }.onFailure(t::addSuppressed)
             plugin.logger.severe(
                 "Arena ${arenaId.value} tick failed: " +
                     t.stackTraceToString()
@@ -2519,12 +2526,12 @@ class BukkitNormalArenaController(
             )
             report
         } finally {
-            arenaService.close(
-                arenaId
-            ) {}
-            isolationRegistry.release(
-                arenaId
-            )
+            try {
+                arenaService.close(arenaId) {}
+            } finally {
+                try { isolationRegistry.release(arenaId) }
+                finally { chunkLeases.release(arenaId) }
+            }
         }
     }
 
@@ -2533,5 +2540,6 @@ class BukkitNormalArenaController(
             .forEach {
                 stop(it.value)
             }
+        chunkLeases.close()
     }
 }

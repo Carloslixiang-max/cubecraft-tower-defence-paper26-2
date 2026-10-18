@@ -155,3 +155,25 @@ remain recoverable; an explicit restart probe is held until the next process.
 Six domain regressions cover ownership transitions, delayed execution, probe
 holding and fail-closed ownership errors. This fixes cross-dimension add-on
 playability without removing crash journals or disabling recovery sweeps.
+
+## v119 observed tower-menu feedback
+
+Real network clicks placed an Archer, selected its path and upgraded it. The
+old menu stayed titled Archer Tower I after its level became II, and the
+rangefinder still said Enable after pinning. Upgrade now reopens the current
+level title, rangefinder refreshes its actual pinned state in place, and Sell
+closes the removed tower's menu. No historical slot/lore semantics are invented.
+The existing-server guide no longer hardcodes an obsolete JAR version or
+fixture count; the supplied artifact/manifest identifies the current build.
+
+The same match then reproduced a real chunk-unload failure at normal 20 TPS:
+`BukkitEntityRuntimeAdapter.move` could no longer find a sent Zombie. The exact
+UUID was recovered from the saved entity Anvil region at chunk (0,10), position
+(14,88,160.1), proving unload rather than normal core death. Live gameplay
+chunks (routes, plots, guards and spawns with padding, excluding decorative
+scene-only bounds) now hold reference-counted plugin tickets from before guard
+spawn through teardown. Failed start, normal end and shutdown release them;
+shared boundaries and pre-existing tickets retain their ownership. Both Paper
+boots exercise real ticket reference/release behavior. An unexpected runtime
+tick failure also marks Farm integrity unknown before teardown, so an unloaded
+entity cannot cause a false clean-reuse result.

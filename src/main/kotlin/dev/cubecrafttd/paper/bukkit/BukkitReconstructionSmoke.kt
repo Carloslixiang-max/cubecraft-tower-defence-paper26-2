@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin
 /** Loads every supplied state and exercises real world placement/upgrade/restore. */
 object BukkitReconstructionSmoke {
     fun run(plugin: JavaPlugin, world: org.bukkit.World) {
+        BukkitArenaChunkLeaseSmoke.run(plugin, world)
         val models = BukkitTowerBodyCatalogLoader.loadBundled(plugin, true)
         check(models.loadedCount() == 82 && models.missingStages().isEmpty())
         check("facing=east" in BukkitTowerBlockRotation.rotate("minecraft:oak_stairs[facing=north]", QuarterTurn.R90))

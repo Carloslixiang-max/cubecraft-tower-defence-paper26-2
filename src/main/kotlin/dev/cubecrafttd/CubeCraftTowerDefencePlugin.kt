@@ -267,6 +267,25 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                         " purchased."
                                 )
                             }
+                            is dev.cubecrafttd.ui.TowerManagementActionResult.Upgraded -> {
+                                // The inventory title contains the tower's level.
+                                // Reopen after upgrading so it cannot keep saying I.
+                                menuBridge.open(invocation.playerUuid,
+                                    liveArenaController.towerManagementMenu(invocation.playerUuid,
+                                        result.receipt.towerInstanceId).toLiveView())
+                                player?.sendMessage("Tower upgraded.")
+                            }
+                            is dev.cubecrafttd.ui.TowerManagementActionResult.RangefinderToggled -> {
+                                val view = liveArenaController.towerManagementMenu(invocation.playerUuid,
+                                    result.towerInstanceId).toLiveView()
+                                if (!menuBridge.refreshIfOpen(invocation.playerUuid, view)) {
+                                    menuBridge.open(invocation.playerUuid, view)
+                                }
+                            }
+                            is dev.cubecrafttd.ui.TowerManagementActionResult.Sold -> {
+                                player?.closeInventory()
+                                player?.sendMessage("Tower sold.")
+                            }
                             else -> {
                                 val refreshKind=
                                     when {
@@ -584,7 +603,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v118 enabled; " +
+            "CubeCraftTowerDefence shell v119 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -657,7 +676,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v118 disabled; " +
+            "CubeCraftTowerDefence shell v119 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -691,7 +710,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v118, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v119, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +

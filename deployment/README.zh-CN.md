@@ -6,7 +6,7 @@
 
 正常关闭现有服务器后：
 
-1. 把单独提供的 `CubeCraftTowerDefence-0.116.0-SNAPSHOT.jar` 放进服务器的 `plugins/`。如果以前安装过塔防插件，移走旧的塔防 JAR，只保留一个版本。其他插件保持原样。
+1. 把单独提供的 `CubeCraftTowerDefence-<版本>.jar`（本次单独下载的 JAR） 放进服务器的 `plugins/`。如果以前安装过塔防插件，移走旧的塔防 JAR，只保留一个版本。其他插件保持原样。
 2. 解压配套数据 ZIP，把里面的 `plugins/` 文件夹合并进服务器根目录。最终应有 `plugins/CubeCraftTowerDefence/maps/ImprovedFarm.schem`，不要多套一层文件夹。
 
 ZIP 没有 `server.properties`、启动脚本、`eula.txt`、主世界或 `config.yml`，不会要求替换大服的这些文件。已有塔防的 `recovery/`、玩家进度、背包布局和证据文件必须保留。塔模型全部内置在 JAR 中，无须另装模型插件或资源包。
@@ -67,6 +67,6 @@ ctdpreflight
 
 `optional-schematics/Farm-Reconstructed.schem` 是额外提供的完整场景 schematic，供自行编辑或导出时使用，**本安装流程不需要手动粘贴它**；插件会组合已校验路线和内置场景，避免偏移或重复粘贴。没有需要在主世界刷出的实体模型。
 
-CI 证据包括编译、584 个领域用例、两次真实 Paper 启动和独立世界创建/重启加载检查；多人游玩与服务器上的其他插件兼容性仍需在你的大服实际确认。
+CI 证据包括编译、全部领域用例（数量见随包 build-manifest）、两次真实 Paper 启动和独立世界创建/重启加载检查；多人游玩与服务器上的其他插件兼容性仍需在你的大服实际确认。
 
 普通开服只做不会改动地图的启动检查；方块放置、容器回滚等破坏性回归测试仅在 CI 专用测试维度中运行。
