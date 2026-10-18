@@ -4,6 +4,7 @@ import dev.cubecrafttd.player.PlayerSnapshotComparator
 import dev.cubecrafttd.player.PlayerSnapshotComparison
 import dev.cubecrafttd.player.PlayerStateAdapter
 import dev.cubecrafttd.recovery.JournaledPlayerRecoveryOrchestrator
+import dev.cubecrafttd.recovery.AutomaticRecoveryGuard
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
@@ -20,7 +21,8 @@ class BukkitRecoveryListener(
     private val restartEvidence:
         (UUID,PlayerSnapshotComparison?)->Unit,
     private val recoverySuccessEvidence:
-        (UUID)->Unit = {}
+        (UUID)->Unit = {},
+    activeMatchOwnsSnapshot: (UUID)->Boolean
 ) : Listener {
     companion object {
         private const val
@@ -30,6 +32,10 @@ class BukkitRecoveryListener(
         private const val
             SWEEP_PERIOD_TICKS=20L
     }
+
+    private val guard = AutomaticRecoveryGuard(activeMatchOwnsSnapshot)
+
+    fun deferUntilNextProcess(uuid: UUID) = guard.deferUntilNextProcess(uuid)
 
     private val loadedFromPreviousProcess=
         recovery.recoverJournalIntoMemory()
@@ -140,6 +146,7 @@ class BukkitRecoveryListener(
         if(
             uuid !in
                 recovery.pending() ||
+            !guard.permitsRestore(uuid) ||
             !scheduledRestores.add(uuid)
         ) {
             return
@@ -170,6 +177,10 @@ class BukkitRecoveryListener(
                     ) {
                         return@Runnable
                     }
+
+                    // A sweep may have queued this before a new match captured
+                    // ownership. Never consume a live match's recovery journal.
+                    if (!guard.permitsRestore(uuid)) return@Runnable
 
                     val fromPreviousProcess=
                         uuid in

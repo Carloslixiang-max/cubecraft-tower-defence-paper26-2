@@ -25,6 +25,7 @@ object DomainFixtureSuite {
         addAll(LifetimeWinProgressFixture.run())
         addAll(PregameQueueHudFixture.run())
         addAll(PlayerRecoveryFixture.run())
+        addAll(AutomaticRecoveryGuardFixture.run())
         addAll(PlayerRecoveryJournalFixture.run())
         addAll(KillAttributionFixture.run())
         addAll(GoldmineFixture.run())

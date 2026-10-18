@@ -108,7 +108,10 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             .recordSuccessfulPendingRecovery(
                                 uuid
                             )
-                    }
+                    },
+                activeMatchOwnsSnapshot = { uuid ->
+                    ::liveArenaController.isInitialized && liveArenaController.isActivePlayer(uuid)
+                }
             )
         recoveryListener.recoverAlreadyOnline()
         val recoveryJournalLoadFailures=
@@ -581,7 +584,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v117 enabled; " +
+            "CubeCraftTowerDefence shell v118 enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +
@@ -654,7 +657,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v117 disabled; " +
+            "CubeCraftTowerDefence shell v118 disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -688,7 +691,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v117, " +
+                "CubeCraft TD: stage=engineering-playtest-shell-v118, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +
@@ -1512,6 +1515,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         47L
                     )
             }.onSuccess {
+                recoveryListener.deferUntilNextProcess(uuid)
                 stage4Gate
                     .beginRestartRecoveryProbe()
                 sender.sendMessage(

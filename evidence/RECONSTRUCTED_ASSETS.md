@@ -143,3 +143,15 @@ Build assets: `python3 scripts/build-reconstruction-assets.py --output <dir>`.
 Package from a green artifact with `scripts/package-playtest.py
 --reconstructed-scene`; optional `--visual-previews` includes the inspected
 Farm/tower PNGs. Generator output is bundled in the JAR and CI artifact.
+
+## v118 network-match recovery correction
+
+After fixing empty-item capture, the real two-client test started a match but
+the once-per-second recovery sweep immediately restored both active players to
+the hub. A durable in-match snapshot is not an orphaned recovery record. The
+automatic restore guard now checks active match ownership both before scheduling
+and again inside the delayed callback. Departed players and old-process records
+remain recoverable; an explicit restart probe is held until the next process.
+Six domain regressions cover ownership transitions, delayed execution, probe
+holding and fail-closed ownership errors. This fixes cross-dimension add-on
+playability without removing crash journals or disabling recovery sweeps.
