@@ -434,11 +434,13 @@ class BukkitNormalArenaController(
             )
         val entityAdapter=
             BukkitEntityRuntimeAdapter(
-                plugin.server
+                plugin.server,
+                BukkitFarmMobCoordinates::feet
             )
         val mobSpawnPort=
             BukkitMobEntitySpawnPort(
-                world
+                world,
+                BukkitFarmMobCoordinates::feet
             )
         val lineOfSight=
             BukkitLineOfSightPort(

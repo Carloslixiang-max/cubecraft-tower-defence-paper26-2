@@ -2,6 +2,7 @@ package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.mob.RecommendedMatureMobFormResolver
 import dev.cubecrafttd.troop.*
+import dev.cubecrafttd.map.Vec3
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.*
@@ -9,7 +10,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent
 import java.util.UUID
 
 class BukkitMobEntitySpawnPort(
-    private val world: World
+    private val world: World,
+    private val projectPosition: (Vec3) -> Vec3 = { it }
 ) : MobEntitySpawnPort {
     override fun spawn(
         request: MobEntitySpawnRequest
@@ -21,7 +23,7 @@ class BukkitMobEntitySpawnPort(
                     request.level
                 )
                 .formId
-        val p=request.spawnPosition
+        val p=projectPosition(request.spawnPosition)
         val location=
             Location(
                 world,p.x,p.y,p.z
@@ -117,6 +119,8 @@ class BukkitMobEntitySpawnPort(
             CreatureSpawnEvent
                 .SpawnReason.CUSTOM
         ) { spawned ->
+            // Core owns vertical movement, including while paused at a castle.
+            spawned.setGravity(false)
             BukkitTrackedEntityTag.mark(
                 spawned
             )

@@ -10,7 +10,8 @@ import org.bukkit.Server
 import java.util.UUID
 
 class BukkitEntityRuntimeAdapter(
-    private val server: Server
+    private val server: Server,
+    private val projectPosition: (Vec3) -> Vec3 = { it }
 ) : PaperEntityAdapter,
     LiveEntityPositionPort,
     LiveEntityTeleportPort,
@@ -54,22 +55,23 @@ class BukkitEntityRuntimeAdapter(
         val entity = server.getEntity(entityUuid)
             ?: error("Entity $entityUuid is not live")
         val current = entity.location
+        val destination = projectPosition(position)
         val yaw=
             BukkitMovementFacingResolver
                 .yawDegrees(
                     current.x,
                     current.z,
-                    position.x,
-                    position.z,
+                    destination.x,
+                    destination.z,
                     current.yaw
                 )
         check(
             entity.teleport(
                 Location(
                     current.world,
-                    position.x,
-                    position.y,
-                    position.z,
+                    destination.x,
+                    destination.y,
+                    destination.z,
                     yaw,
                     current.pitch
                 )

@@ -177,3 +177,18 @@ shared boundaries and pre-existing tickets retain their ownership. Both Paper
 boots exercise real ticket reference/release behavior. An unexpected runtime
 tick failure also marks Farm integrity unknown before teardown, so an unloaded
 entity cannot cause a false clean-reuse result.
+
+## v120 measured Farm surface projection
+
+The v119 network match confirmed a tracked Zombie's feet occupied the actual
+jungle-plank route block at Y=88. Measured waypoints identify path block
+coordinates. The live Farm boundary now projects these to centered entity feet
+(+0.5 X/Z, +1 Y) for both spawn and movement; core route lengths, distances,
+hashes and balance remain unchanged. Runtime-controlled troops have gravity
+disabled so pausing at a castle cannot sink them back into the floor. Generic
+adapter callers retain identity projection. Both owned-world Paper smoke boots
+check real spawn, fractional movement, air at the feet and cleanup.
+
+The interrupted local v119 network test did not reach natural match end.
+Full-match, second-round reuse and cross-restart recovery are still unverified;
+passing startup smoke must not be substituted for these results.
