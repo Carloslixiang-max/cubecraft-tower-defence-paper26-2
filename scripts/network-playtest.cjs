@@ -85,7 +85,18 @@ async function close(bot) {
 async function wave(bot) {
   await close(bot)
   bot.setQuickBarSlot(2)
-  bot.activateItem()
+  await sleep(150)
+  await consoleCommand('execute as ' + bot.username +
+    ' if items entity @s weapon.mainhand minecraft:chest run say CTD_SUMMONER_HELD_' + bot.username,
+    'CTD_SUMMONER_HELD_' + bot.username)
+  emit({ type: 'client-held-replica', player: bot.username, slot: bot.quickBarSlot,
+    item: bot.heldItem?.name ?? null })
+  await bot.lookAt(bot.entity.position.offset(0, 4, 0), true)
+  const { toNotchianYaw, toNotchianPitch } = require('mineflayer/lib/conversions')
+  // Submit the real use-item packet after verifying the server holds the chest.
+  // The test client's container-close replica may temporarily report an empty hand.
+  bot._client.write('use_item', { hand: 0, sequence: bot._nextSequence(),
+    rotation: { x: toNotchianYaw(bot.entity.yaw), y: toNotchianPitch(bot.entity.pitch) } })
   await window(bot, 27)
   const start = bot.receipts.length
   await click(bot, 0, 1)

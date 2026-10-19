@@ -179,6 +179,8 @@ def main():
         print("NETWORK_MATCH_REUSE_RESTART_PASS", flush=True)
     except BaseException as error:
         report.update(status="FAIL", error=str(error))
+        if server is not None:
+            print("".join(server.lines[-140:]), flush=True)
         raise
     finally:
         if server is not None:
