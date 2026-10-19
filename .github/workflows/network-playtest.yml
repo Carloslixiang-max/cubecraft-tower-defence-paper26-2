@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: ctd-network-main
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   network:

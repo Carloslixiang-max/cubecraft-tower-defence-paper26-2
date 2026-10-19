@@ -154,7 +154,9 @@ def main():
         server.command("ctdinstall create 1", "Managed Farm configured for 1v1")
         server.stop(); server = None
         server = deployment.PaperProcess(java, paper, root, 2)
+        server.command("tick rate 100", "Set the target tick rate")
         server.wait("Managed Farm READY:", timeout=240)
+        server.command("tick rate 20", "Set the target tick rate")
         server.command("ctdpreflight", "Composition preflight PASS:")
         run_clients(server, root, "matches", report["events"])
         assert len([x for x in report["events"] if x.get("type") == "round"]) == 2
