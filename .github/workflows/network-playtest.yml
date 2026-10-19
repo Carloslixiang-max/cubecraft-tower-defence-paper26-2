@@ -1,0 +1,90 @@
+name: Paper 26.2 Full Network Playtest
+
+on:
+  workflow_run:
+    workflows: ["Java 25 / Paper 26.2 Build"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ctd-network-main
+  cancel-in-progress: false
+
+jobs:
+  network:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v8
+        with:
+          name: CubeCraftTowerDefence-Paper26.2-Java25
+          path: build/green-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Install isolated protocol test clients
+        run: |
+          npm install --no-save --ignore-scripts mineflayer@4.39.0 minecraft-protocol@1.68.0
+          node --check scripts/network-playtest.cjs
+          python3 -m py_compile scripts/verify-network-playtest.py
+      - name: Two natural matches, Farm reuse and lossless restart recovery
+        run: |
+          python3 scripts/verify-network-playtest.py \
+            --artifact-dir build/green-artifact \
+            --work-dir build/network-server \
+            --source-head '${{ github.event.workflow_run.head_sha }}'
+      - name: Package existing-server add-on
+        if: success()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root = Path("build/green-artifact")
+          with zipfile.ZipFile("build/green-artifact.zip", "w", zipfile.ZIP_DEFLATED) as archive:
+              for path in root.rglob("*"):
+                  if path.is_file():
+                      archive.write(path, path.relative_to(root))
+          Path("build/add-on").mkdir()
+          PY
+          python3 scripts/package-playtest.py \
+            --artifact build/green-artifact.zip \
+            --farm build/network-server/plugins/CubeCraftTowerDefence/maps/ImprovedFarm.schem \
+            --head '${{ github.event.workflow_run.head_sha }}' \
+            --run '${{ github.event.workflow_run.id }}' \
+            --reconstructed-scene --existing-server \
+            --output build/add-on/CubeCraftTD-Existing-Server-Data.zip
+          cp build/green-artifact/libs/*.jar build/add-on/
+          cp build/network-server/network-report.json build/add-on/
+          cp deployment/README.zh-CN.md build/add-on/
+      - name: Upload install files
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: CubeCraftTD-Existing-Server-Add-On
+          path: build/add-on/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload network evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Paper26.2-Network-Playtest-Evidence
+          path: |
+            build/network-server/network-report.json
+            build/network-server/deployment-boot-*.log
+            build/network-server/network-clients-*.jsonl
+          if-no-files-found: warn
+          retention-days: 14
