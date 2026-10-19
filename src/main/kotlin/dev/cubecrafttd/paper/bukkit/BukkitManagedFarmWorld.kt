@@ -52,6 +52,7 @@ class BukkitManagedFarmWorld(
             val world = plugin.server.getWorld(worldName) ?: creator().createWorld() ?: error("Paper could not load $worldName")
             check(world.worldPath.toFile().canonicalFile == directory.canonicalFile) { "Managed dimension path mismatch" }
             check(world.uid.toString() == s.getString("uuid")) { "Managed-world UUID mismatch" }
+            keepTerrainStable(world)
             loadError = null
             plugin.logger.info("Managed Farm world loaded: $worldName uuid=${world.uid} phase=$phase")
             world
@@ -59,6 +60,13 @@ class BukkitManagedFarmWorld(
             loadError = it.message ?: it.javaClass.simpleName
             plugin.logger.severe("Managed Farm world BLOCKED: $loadError")
             null
+        }
+    }
+
+    /** Only invoked after ownership/path/UUID validation, or on our newly created world. */
+    private fun keepTerrainStable(world: World) {
+        check(world.setGameRule(org.bukkit.GameRules.RANDOM_TICK_SPEED, 0)) {
+            "Cannot freeze random block updates in the managed Farm dimension"
         }
     }
 
@@ -82,6 +90,7 @@ class BukkitManagedFarmWorld(
         }
         // Only this new dedicated world receives environment settings.
         world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false)
+        keepTerrainStable(world)
         // Paper 26.2 NORMAL dimensions share a default world clock. Do not set time or freeze it.
         world.save()
         persist()
@@ -227,6 +236,7 @@ class BukkitManagedFarmWorld(
             if (!java.lang.Boolean.getBoolean("cubecrafttd.install-smoke")) return null
             val primary = plugin.server.worlds.first()
             val primaryRule = primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS)
+            val primaryRandomTicks = primary.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED)
             val primarySpawn = primary.spawnLocation.clone()
             val primaryClock = primary.fullTime
             val manager = BukkitManagedFarmWorld(plugin, "ctd_install_smoke", "managed-farm-smoke.yml")
@@ -236,13 +246,21 @@ class BukkitManagedFarmWorld(
             check(world.getBlockAt(800, 80, 800).type.isAir) { "Void generator created terrain" }
             if (reload) check(world.getBlockAt(0, 80, 0).type == Material.EMERALD_BLOCK) { "Owned world did not survive restart" }
             else world.getBlockAt(0, 80, 0).setType(Material.EMERALD_BLOCK, false)
+            check(world.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED) == 0)
+            // An owned world's reload also re-establishes stable terrain.
+            check(world.setGameRule(org.bukkit.GameRules.RANDOM_TICK_SPEED, 7))
+            check(manager.loadExisting() == world)
+            check(world.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED) == 0)
             world.save()
             check(runCatching { manager.createEmpty() }.isFailure) { "Installer recreated a managed world" }
             val collision = BukkitManagedFarmWorld(plugin, "ctd_install_smoke", "unclaimed-smoke.yml")
             check(runCatching { collision.createEmpty() }.isFailure) { "Installer adopted an existing unclaimed world" }
             check(primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS) == primaryRule && primary.spawnLocation == primarySpawn)
+            check(primary.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED) == primaryRandomTicks) {
+                "Managed world changed the primary world's random block ticks"
+            }
             check(primary.fullTime == primaryClock) { "Installer changed the shared world clock" }
-            plugin.logger.info("Managed Farm install smoke PASS: ${if (reload) "RELOADED" else "CREATED"}; world UUID, void generation, collision refusal and primary-world settings checked")
+            plugin.logger.info("Managed Farm install smoke PASS: ${if (reload) "RELOADED" else "CREATED"}; world UUID, void generation, collision refusal, isolated random block ticks and primary-world settings checked")
             return world
         }
     }

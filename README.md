@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v120 centered Farm mob projection, playable-match recovery and historical tower models**
+- Current shell lineage: **v121 stable reconstructed Farm terrain with natural-match/reuse/restart network verification**
 - Pure-domain suite: **590 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 

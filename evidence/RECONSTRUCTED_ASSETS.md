@@ -192,3 +192,20 @@ check real spawn, fractional movement, air at the feet and cleanup.
 The interrupted local v119 network test did not reach natural match end.
 Full-match, second-round reuse and cross-restart recovery are still unverified;
 passing startup smoke must not be substituted for these results.
+
+## v121 observed natural terrain drift
+
+The exact v120 source 626568306c0c9a0e235bcbc87b03856c0790162e completed two
+paid-wave, naturally concluded network matches (12 batches each), consecutive
+reuse, hub state restoration and a lossless held-probe cross-process recovery.
+The full saved 5,725,650-cell / 288-chunk comparison then failed: 1,699 terrain
+cells changed, with initial examples showing dirt becoming grass. These were
+vanilla random block ticks, rather than tower-ledger residue.
+
+Newly created and UUID/token-validated managed Farm worlds now set random block
+tick speed to zero. This setting is confined to that owned dimension; it does
+not freeze shared world time or change the primary world's gamerules. Both real
+Paper boot smokes test the setting, deliberately change it in the owned world,
+reload and check it is restored, while asserting the primary setting is intact.
+Existing terrain edits are not automatically overwritten. The network gate must
+be rerun on this version before the whole-volume cleanup result is PASS.
