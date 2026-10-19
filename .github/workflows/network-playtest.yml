@@ -46,6 +46,16 @@ jobs:
             --artifact-dir build/green-artifact \
             --work-dir build/network-server \
             --source-head '${{ github.event.workflow_run.head_sha }}'
+      - name: Render actual Farm and tower geometry
+        if: success()
+        run: |
+          python3 -m pip install Pillow==11.3.0
+          python3 scripts/fetch-preview-textures.py
+          python3 scripts/render-reconstruction-preview.py \
+            --assets build/green-artifact/generated/reconstruction-assets \
+            --farm build/network-server/plugins/CubeCraftTowerDefence/maps/ImprovedFarm.schem \
+            --client-jar build/preview-client-26.2.jar \
+            --output build/asset-previews
       - name: Package existing-server add-on
         if: success()
         run: |
@@ -65,10 +75,13 @@ jobs:
             --head '${{ github.event.workflow_run.head_sha }}' \
             --run '${{ github.event.workflow_run.id }}' \
             --reconstructed-scene --existing-server \
+            --network-evidence build/network-server/network-report.json \
+            --visual-previews build/asset-previews \
             --output build/add-on/CubeCraftTD-Existing-Server-Data.zip
           cp build/green-artifact/libs/*.jar build/add-on/
           cp build/network-server/network-report.json build/add-on/
           cp deployment/README.zh-CN.md build/add-on/
+          cp build/asset-previews/*.png build/add-on/
       - name: Upload install files
         if: success()
         uses: actions/upload-artifact@v7

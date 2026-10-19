@@ -21,18 +21,19 @@ def canonical(name, properties):
     return name + ("[" + ",".join(f"{k}={v}" for k, v in sorted(properties.items())) + "]" if properties else "")
 
 
-def compare_saved_volume(farm, world, origin=(0, 80, 0)):
+def compare_saved_volume(farm, world, origin=(0, 80, 0), *,
+                         schematic=None, region_path=None, explicit_properties_only=False):
     audit, _ = pack.audit_farm(farm)
-    source = pack.read_nbt(gzip.decompress(farm))
+    source = pack.read_nbt(gzip.decompress(schematic if schematic is not None else farm))
     assert all(v < 128 for v in source["BlockData"]), "Expected verified one-byte palette IDs"
     expected = {}
     for state, block_id in source["Palette"].items():
         name, _, raw = state.partition("[")
         properties = dict(p.split("=", 1) for p in raw.rstrip("]").split(",")) if raw else {}
         expected[block_id] = canonical(name, properties)
-    region_path = world / "dimensions/minecraft/overworld/region"
+    region_path = region_path if region_path is not None else world / "dimensions/minecraft/overworld/region"
     if not region_path.is_dir():
-        raise ValueError("Expected Paper 26.2 overworld region directory; stop/save the server first")
+        raise ValueError("Expected saved Paper 26.2 region directory; stop/save the server first")
     regions, chunks = {}, {}
 
     def chunk_at(cx, cz):
@@ -87,12 +88,20 @@ def compare_saved_volume(farm, world, origin=(0, 80, 0)):
         z, x = divmod(plane, width)
         target = (origin[0] + x, origin[1] + y, origin[2] + z)
         actual = block_at(*target)
-        if actual != expected[block_id]:
+        expected_state = expected[block_id]
+        matches = actual == expected_state
+        if explicit_properties_only:
+            expected_name, _, expected_raw = expected_state.partition("[")
+            actual_name, _, actual_raw = actual.partition("[")
+            expected_props = dict(p.split("=", 1) for p in expected_raw.rstrip("]").split(",")) if expected_raw else {}
+            actual_props = dict(p.split("=", 1) for p in actual_raw.rstrip("]").split(",")) if actual_raw else {}
+            matches = actual_name == expected_name and all(actual_props.get(k) == v for k, v in expected_props.items())
+        if not matches:
             mismatches += 1
             if len(examples) < 10:
                 examples.append({"position": target, "expected": expected[block_id], "actual": actual})
     return {"status": "PASS" if mismatches == 0 else "FAIL", "farm_sha256": audit["sha256"],
-            "scope": "SAVED_BLOCK_STATES_ONLY", "checked_cells": len(source["BlockData"]),
+            "scope": "SAVED_MATERIALS_AND_EXPLICIT_PROPERTIES" if explicit_properties_only else "SAVED_BLOCK_STATES_ONLY", "checked_cells": len(source["BlockData"]),
             "chunks_read": len(chunks), "origin": origin, "mismatches": mismatches, "examples": examples,
             "human_match_certified": False, "verified_reset_certified": False, "full_original_map": False}
 

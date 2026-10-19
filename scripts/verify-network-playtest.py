@@ -21,6 +21,7 @@ def module(name, filename):
     return result
 
 deployment = module("deployment", "verify-farm-deployment.py")
+full_farm = module("full_farm", "verify-full-farm.py")
 pack = module("pack", "package-playtest.py")
 
 def download(url, target, checksum):
@@ -170,6 +171,7 @@ def main():
         assert not any("tick failed:" in log or "Player snapshot round-trip FAIL" in log for log in logs)
         assert "Cross-restart recovery PASS" in logs[-1], "Missing lossless server restart comparison"
         assert len(list(journal.glob("*.snapshot"))) == 0
+        report["saved_world_cleanup"] = full_farm.verify(root, farm.read_bytes())
         report.update(status="PASS", natural_matches=2, consecutive_reuse=True,
             cross_restart_lossless=True, clean_shutdowns=3)
         print("NETWORK_MATCH_REUSE_RESTART_PASS", flush=True)

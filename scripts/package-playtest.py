@@ -142,6 +142,7 @@ def main():
     parser.add_argument("--deployment-evidence", type=Path, help="Optional successful console deployment directory for the identical plugin bytes")
     parser.add_argument("--reconstructed-scene", action="store_true", help="Include the generated full Farm approximation and complete tower catalog")
     parser.add_argument("--existing-server", action="store_true", help="Data-only add-on ZIP for an existing server; plugin is delivered separately, with no config/world overwrites")
+    parser.add_argument("--network-evidence", type=Path, help="Optional successful two-match/restart report for the identical source and JAR")
     parser.add_argument("--visual-previews", type=Path, help="Optional directory with actual voxel preview PNGs")
     args = parser.parse_args()
     if args.existing_server and not args.reconstructed_scene:
@@ -186,6 +187,20 @@ def main():
                 "certification": "CI_BOOT_ONLY_HUMAN_MATCH_PENDING", "full_original_map": False,
                 "plugin_sha256": digest(plugin), "farm_sha256": FARM_SHA,
                 "ci_artifact_sha256": digest(args.artifact.read_bytes())}
+    network_report = None
+    if args.network_evidence:
+        network_report = args.network_evidence.read_bytes()
+        network = json.loads(network_report)
+        if not (network.get("status") == "PASS" and network.get("source_head") == args.head
+                and network.get("plugin_sha256") == digest(plugin)
+                and network.get("natural_matches", 0) >= 2
+                and network.get("consecutive_reuse") is True
+                and network.get("cross_restart_lossless") is True
+                and network.get("human_match_certified") is False):
+            raise ValueError("Network report must pass two natural matches/reuse/restart for this exact source/JAR")
+        manifest["certification"] = "AUTOMATED_NETWORK_MATCHES_HUMAN_VISUAL_PENDING"
+        manifest["automated_network_matches"] = network["natural_matches"]
+        manifest["human_match_certified"] = False
     template = Path(__file__).resolve().parent.parent / "playtest"
     entries = {
         "plugins/CubeCraftTowerDefence.jar": plugin,
@@ -197,6 +212,8 @@ def main():
         **({"README.zh-CN.md": (template.parent / "deployment/README.zh-CN.md").read_bytes()} if args.existing_server else
            {name: (template / name).read_bytes() for name in ("README.zh-CN.md", "start.sh", "start.bat", "server.properties")}),
     }
+    if network_report is not None:
+        entries["evidence/network-report.json"] = network_report
     if args.existing_server:
         del entries["plugins/CubeCraftTowerDefence.jar"]
         for i, token in ((1, "CREATED"), (2, "RELOADED")):
