@@ -65,7 +65,7 @@ async function chat(bot, command, expected) {
 }
 async function window(bot, size, title) {
   await until(() => bot.currentWindow && bot.currentWindow.inventoryStart === size &&
-    (!title || String(bot.currentWindow.title).includes(title)), 'window ' + size + ' ' + title)
+    (!title || JSON.stringify(bot.currentWindow.title).includes(title)), 'window ' + size + ' ' + title)
 }
 async function click(bot, slot, mode = 0) {
   assert(bot.currentWindow, 'Click requires an open custom GUI')
