@@ -36,7 +36,9 @@ COLORS.update({"dark_oak_planks":(66,45,28),"stripped_spruce_log":(113,86,54),
     "polished_basalt":(80,81,80),"deepslate_bricks":(66,66,70),"deepslate_tiles":(52,52,57),
     "polished_deepslate":(74,74,78),"chiseled_deepslate":(63,63,67),
     "polished_blackstone_bricks":(45,39,47),"chiseled_polished_blackstone":(48,41,48),
-    "polished_blackstone":(49,43,51),"blue_ice":(112,165,232),"amethyst_block":(143,105,191),
+    "polished_blackstone":(49,43,51),"polished_blackstone_brick":(45,39,47),
+    "tuff_brick":(105,113,104),"deepslate_tile":(52,52,57),"iron_bars":(170,174,169),
+    "blue_ice":(112,165,232),"amethyst_block":(143,105,191),
     "amethyst_cluster":(175,133,222),"tinted_glass":(63,52,73),"crying_obsidian":(67,35,99),
     "sea_lantern":(183,220,204),"shroomlight":(235,151,72),"verdant_froglight":(192,218,167),
     "pearlescent_froglight":(224,194,221),"lantern":(224,166,71),"soul_lantern":(90,213,221),
@@ -114,7 +116,7 @@ def render(blocks,width,height,margin=30,textures=None):
         key=state.split("[")[0]
         if key.endswith("_slab"):
             return [(0,.5 if "type=top" in state else 0,0,1,1 if "type=top" in state else .5,1)]
-        if key.endswith("_pane"):
+        if key.endswith("_pane") or key.endswith("iron_bars"):
             parts=[(.44,0,.44,.56,1,.56)]
             for direction,box in {"north":(.44,0,0,.56,1,.5),"south":(.44,0,.5,.56,1,1),
                                   "west":(0,0,.44,.5,1,.56),"east":(.5,0,.44,1,1,.56)}.items():
