@@ -399,6 +399,9 @@ def refine_tower(v, family, level, path):
         p(0, 4, 0, "polished_blackstone_wall[north=none,south=none,east=none,west=none,up=true]")
         if level >= 2:
             halo(1, 2, "waxed_exposed_copper_grate")
+        for x,z,facing in cardinal:
+            p(x, 1, z, f"polished_deepslate_stairs[facing={facing},half=top,shape=straight]")
+        corners(1, 2, "chiseled_deepslate")
         if branched:
             p(0, 3, 0, "magma_block" if top else "polished_basalt[axis=y]")
             halo(1, 3, "waxed_cut_copper_slab[type=top]" if top else "deepslate_tile_slab[type=top]")
@@ -413,6 +416,9 @@ def refine_tower(v, family, level, path):
         p(0, 2, 0, "blue_ice" if level >= 2 else "packed_ice")
         halo(1, 2, "light_blue_stained_glass_pane[north=true,south=true,east=true,west=true]")
         corners(1, 2, "calcite")
+        for x,z,facing in cardinal:
+            p(x, 1, z, f"polished_tuff_stairs[facing={facing},half=top,shape=straight]")
+        corners(1, 1, "tuff_brick_wall[up=true]")
         if level >= 2:
             corners(1, 3, "tuff_brick_slab[type=bottom]")
             p(0, 3, 0, "blue_ice")
@@ -443,6 +449,9 @@ def refine_tower(v, family, level, path):
                  "spruce_slab": "dark_oak_slab", "glowstone": "verdant_froglight"})
         p(0, 2, 0, "lime_stained_glass")
         corners(1, 0, "waxed_oxidized_cut_copper")
+        for x,z,_ in cardinal:
+            p(x, 1, z, "lime_stained_glass_pane[north=true,south=true]" if x else
+              "lime_stained_glass_pane[east=true,west=true]")
         if level >= 2:
             halo(1, 2, "waxed_oxidized_copper_grate")
         if branched:
