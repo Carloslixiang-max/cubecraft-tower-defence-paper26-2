@@ -31,7 +31,7 @@ object BukkitMobAppearanceProjection {
                     5 -> Material.DIAMOND_HELMET
                     else -> Material.AIR
                 }
-                equipment.helmet = ItemStack(helmet).apply {
+                equipment.setHelmet(ItemStack(helmet).apply {
                     if (helmet != Material.AIR) editMeta {
                         it.isUnbreakable = true
                         // Explicit modifiers replace the material's armor stats.
@@ -40,7 +40,7 @@ object BukkitMobAppearanceProjection {
                         it.addAttributeModifier(Attribute.ARMOR, AttributeModifier(visualHelmetKey,
                             0.0, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.HEAD))
                     }
-                }
+                })
                 equipment.helmetDropChance = 0.0f
             }
         }
