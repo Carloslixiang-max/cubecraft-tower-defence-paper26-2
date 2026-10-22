@@ -10,7 +10,7 @@ import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.Server
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Slime
+import org.bukkit.entity.AbstractCubeMob
 import org.bukkit.entity.Zombie
 import org.bukkit.inventory.ItemStack
 
@@ -59,15 +59,15 @@ object BukkitMobAppearanceProjection {
     }
 
     internal fun projectForm(entity: LivingEntity, form: MobFormState) {
-        if (entity !is Slime || form.formId !in setOf("slime", "magma_cube")) return
+        if (entity !is AbstractCubeMob || form.formId !in setOf("slime", "magma_cube")) return
         // The 2021 shrink mechanic is direct evidence. Exact original sizes are
         // unknown: 4 -> 2 -> 1 is an explicit visual approximation, not a new
         // phase cap or balance rule. Further configured phases remain size 1.
         val size = when (form.phaseIndex) { 0 -> 4; 1 -> 2; else -> 1 }
         if (entity.size == size) return
-        // Bukkit setSize resets health and three attributes, even when used for
+        // Bukkit setSize resets health and size-derived attributes (including MagmaCube armor), even when used for
         // appearance. Preserve them so projection cannot heal or rebalance it.
-        val attributes = listOf(Attribute.MAX_HEALTH, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_DAMAGE)
+        val attributes = listOf(Attribute.MAX_HEALTH, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_DAMAGE, Attribute.ARMOR)
             .mapNotNull { entity.getAttribute(it) }.associateWith { it.baseValue }
         val health = entity.health
         entity.size = size

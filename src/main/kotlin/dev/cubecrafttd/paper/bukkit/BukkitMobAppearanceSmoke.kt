@@ -9,7 +9,7 @@ import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Slime
+import org.bukkit.entity.AbstractCubeMob
 import org.bukkit.entity.Zombie
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.UUID
@@ -46,13 +46,13 @@ object BukkitMobAppearanceSmoke {
                     check(roundtrip.itemMeta.attributeModifiers==modifiers)
                 }
             }
-            // Level 1 is Slime; level 4 is MagmaCube (a Slime subinterface).
+            // Paper 26.2 Slime and MagmaCube share AbstractCubeMob, not Slime.
             for (level in listOf(1, 4)) {
-                val entity=spawn("slime", level) as Slime
+                val entity=spawn("slime", level) as AbstractCubeMob
                 check(entity.size == 4)
-                val attributes=listOf(Attribute.MAX_HEALTH, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_DAMAGE)
+                val attributes=listOf(Attribute.MAX_HEALTH, Attribute.MOVEMENT_SPEED, Attribute.ATTACK_DAMAGE, Attribute.ARMOR)
                     .map { entity.getAttribute(it)!! }
-                attributes.zip(listOf(37.0, 0.31, 7.0)).forEach { (attribute, value) -> attribute.baseValue=value }
+                attributes.zip(listOf(37.0, 0.31, 7.0, 13.0)).forEach { (attribute, value) -> attribute.baseValue=value }
                 entity.health=11.0
                 val values=attributes.map { it.baseValue }
                 val mob=MobRuntimeState(MobIdentity(MobInstanceId(122500L + level), entity.uniqueId,

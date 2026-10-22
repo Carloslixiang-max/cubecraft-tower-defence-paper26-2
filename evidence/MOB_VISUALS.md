@@ -18,7 +18,9 @@
   logical troop's phase into its existing Slime/MagmaCube entity. Sizes
   **4 → 2 → 1** are an explicit visual approximation, not recovered original
   sizes, a new phase cap or a change to core health/speed/damage.
-- Paper's `Slime.setSize` resets three attributes and heals the entity.
+- Paper 26.2 Slime/MagmaCube share `AbstractCubeMob`; MagmaCube no longer
+  extends Slime. `setSize` resets attributes and heals the entity (MagmaCube
+  additionally resets armor).
   Projection preserves their base values and current vanilla health, changes
   size only when needed, and never writes core combat state.
 
