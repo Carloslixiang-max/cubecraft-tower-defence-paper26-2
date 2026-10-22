@@ -26,7 +26,9 @@ object BukkitMobAppearanceSmoke {
                 MobInstanceId(122000L + spawned.size), UUID(0, 122000), TeamId.RED,
                 id, level, "appearance-smoke", position))
             spawned += uuid
-            return plugin.server.getEntity(uuid) as LivingEntity
+            return (plugin.server.getEntity(uuid) ?: world.getEntity(uuid)) as? LivingEntity
+                ?: error("Appearance spawn $id L$level not indexed: uuid=$uuid position=$position " +
+                    "chunkLoaded=${world.isChunkLoaded(position.x.toInt() shr 4,position.z.toInt() shr 4)} difficulty=${world.difficulty}")
         }
         try {
             val helmets=listOf(Material.AIR, Material.LEATHER_HELMET, Material.CHAINMAIL_HELMET,

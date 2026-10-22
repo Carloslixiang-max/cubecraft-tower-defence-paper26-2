@@ -1,6 +1,7 @@
 package dev.cubecrafttd.paper.bukkit
 
 import dev.cubecrafttd.map.BlockPos
+import dev.cubecrafttd.arena.ArenaId
 import dev.cubecrafttd.map.schematic.*
 import dev.cubecrafttd.tower.RecommendedMatureTowerDefinitions
 import dev.cubecrafttd.tower.lifecycle.TowerBodyMutationService
@@ -12,6 +13,15 @@ import org.bukkit.plugin.java.JavaPlugin
 object BukkitReconstructionSmoke {
     fun run(plugin: JavaPlugin, world: org.bukkit.World) {
         BukkitArenaChunkLeaseSmoke.run(plugin, world)
+        // Production matches acquire their gameplay chunks before spawning.
+        // A reloaded void world need not have adjacent entity chunks available
+        // synchronously during onEnable; exercise the same ownership contract.
+        val leases=BukkitArenaChunkLeases(plugin)
+        val firstX=world.spawnLocation.blockX shr 4
+        val firstZ=world.spawnLocation.blockZ shr 4
+        leases.acquireChunks(ArenaId("reconstruction-projection-smoke"), world,
+            (0..3).flatMap { dx -> (0..3).map { dz -> firstX+dx to firstZ+dz } }.toSet())
+        try {
         BukkitFarmMobCoordinatesSmoke.run(plugin, world)
         BukkitMobAppearanceSmoke.run(plugin, world)
         BukkitTowerSummonSmoke.run(plugin, world)
@@ -80,6 +90,7 @@ object BukkitReconstructionSmoke {
                 mutations.remove(towerId)
             }
         }
+        } finally { leases.close() }
         plugin.logger.info("Reconstruction assets PASS: 11 tower families, 82 stages in all four rotations, zero placeholders; scene composition, model restore and self-body/external-wall raytrace checked")
     }
 }
