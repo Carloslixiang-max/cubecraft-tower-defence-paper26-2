@@ -30,11 +30,25 @@ COLORS={"air":(20,29,42),"dirt":(117,83,52),"coarse_dirt":(119,86,56),"podzol":(
         "obsidian":(39,32,53),"coal_block":(35,35,35),"anvil":(76,77,74),"tnt":(192,62,49),
         "beacon":(127,218,216),"red_stained_glass":(207,76,61),"blue_stained_glass":(70,107,205),
         "red_wool":(175,47,39),"blue_wool":(56,81,162),"light_blue_stained_glass":(115,184,213)}
+COLORS.update({"dark_oak_planks":(66,45,28),"stripped_spruce_log":(113,86,54),
+    "stripped_dark_oak_log":(68,48,29),"calcite":(224,224,213),"tuff_bricks":(105,113,104),
+    "polished_tuff":(112,119,110),"chiseled_tuff_bricks":(100,108,99),
+    "polished_basalt":(80,81,80),"deepslate_bricks":(66,66,70),"deepslate_tiles":(52,52,57),
+    "polished_deepslate":(74,74,78),"chiseled_deepslate":(63,63,67),
+    "polished_blackstone_bricks":(45,39,47),"chiseled_polished_blackstone":(48,41,48),
+    "polished_blackstone":(49,43,51),"blue_ice":(112,165,232),"amethyst_block":(143,105,191),
+    "amethyst_cluster":(175,133,222),"tinted_glass":(63,52,73),"crying_obsidian":(67,35,99),
+    "sea_lantern":(183,220,204),"shroomlight":(235,151,72),"verdant_froglight":(192,218,167),
+    "pearlescent_froglight":(224,194,221),"lantern":(224,166,71),"soul_lantern":(90,213,221),
+    "end_rod":(231,223,191),"lightning_rod":(185,105,78),"mossy_stone_bricks":(106,120,82),
+    "red_nether_bricks":(77,24,29),"chiseled_quartz_block":(225,221,208),"soul_soil":(78,59,50)})
 
 
 def color(state):
     key=state.removeprefix("minecraft:").split("[")[0]
     if key in COLORS:return COLORS[key]
+    if "copper" in key:
+        return (72,145,121) if "oxidized" in key else (153,116,86) if "exposed" in key else (189,110,78)
     for suffix,base in (("_slab",""),("_stairs",""),("_fence","_planks"),("_wall","")):
         if key.endswith(suffix):
             key=key.removesuffix(suffix)+base
@@ -138,6 +152,13 @@ def render(blocks,width,height,margin=30,textures=None):
             return [(0,0,0,1,.75,1),(.25,.75,.25,.75,.9,.75)]
         if key.endswith("button"):
             return [(.35,0,.35,.65,.12,.65)]
+        if key.endswith("lantern"):
+            return [(.3,.1,.3,.7,.65,.7),(.25,.08,.25,.75,.18,.75),
+                    (.25,.65,.25,.75,.73,.75),(.43,.73,.43,.57,1,.57)]
+        if key.endswith("end_rod") or key.endswith("lightning_rod"):
+            return [(.38,0,.38,.62,.12,.62),(.44,.12,.44,.56,1,.56)]
+        if key.endswith("amethyst_cluster"):
+            return [(.15,0,.2,.38,.5,.45),(.4,0,.35,.65,.9,.65),(.68,0,.5,.88,.65,.78)]
         if key.endswith("lever") or key.endswith("pressure_plate"):
             return [(.2,0,.2,.8,.15,.8)]
         return [(0,0,0,1,1,1)]

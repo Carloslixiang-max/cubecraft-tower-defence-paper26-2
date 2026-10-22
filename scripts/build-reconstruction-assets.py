@@ -82,7 +82,7 @@ class Voxels:
 
 
 def tower(tower_id, level, path):
-    """Historical silhouettes within the gameplay footprint; hidden/tier details inferred."""
+    """Recognizable silhouettes with modern authored details inside the gameplay footprint."""
     v = Voxels()
     b, put = v.box, v.put
     sides = [(-1, 0, "east"), (1, 0, "west"), (0, -1, "south"), (0, 1, "north")]
@@ -340,7 +340,205 @@ def tower(tower_id, level, path):
                 put(x, 2, z, "sea_lantern" if path == "TOP" else "prismarine_bricks")
     else:
         raise ValueError(tower_id)
+    refine_tower(v, tower_id, level, path)
     return v
+
+
+def refine_tower(v, family, level, path):
+    """Modern material/geometry pass, inside the original 3x3 or 5x5 footprint.
+
+    These are authored reinterpretations, not recovered CubeCraft models. Waxed
+    copper, non-ticking light blocks and explicitly connected trim keep the
+    result stable when the runtime pastes with block physics disabled.
+    """
+    p, b = v.put, v.box
+    cardinal = [(-1, 0, "east"), (1, 0, "west"), (0, -1, "south"), (0, 1, "north")]
+    top = path == "TOP"
+    branched = path in {"TOP", "BOTTOM"}
+
+    def replace(mapping):
+        for xyz, state in list(v.blocks.items()):
+            name, _, props = state.removeprefix("minecraft:").partition("[")
+            if name in mapping:
+                v.put(*xyz, mapping[name] + ("[" + props if props else ""))
+
+    def corners(radius, y, material):
+        for x in (-radius, radius):
+            for z in (-radius, radius):
+                p(x, y, z, material)
+
+    def halo(radius, y, material):
+        for x, z, _ in cardinal:
+            p(x * radius, y, z * radius, material)
+
+    if family == "archer":
+        replace({"oak_planks": "spruce_planks", "oak_log": "stripped_spruce_log",
+                 "oak_fence": "dark_oak_fence", "oak_stairs": "dark_oak_stairs",
+                 "spruce_stairs": "dark_oak_stairs"})
+        corners(1, 0, "stripped_spruce_log[axis=y]")
+        p(0, 3, 0, "lantern[hanging=true]")
+        p(0, 5, 0, "waxed_exposed_cut_copper_slab[type=bottom]")
+        if level >= 2:
+            corners(1, 2, "stripped_dark_oak_log[axis=y]")
+            p(0, 5, 0, "waxed_cut_copper_slab[type=bottom]")
+        if branched:
+            # Silver bow sight versus a red/copper reinforced roof.
+            p(0, 4, 0, "polished_andesite" if top else "red_terracotta")
+            p(0, 5, 0, "iron_bars[east=true,west=true]" if top else
+              "waxed_cut_copper_stairs[facing=north,half=bottom,shape=straight]")
+            if level == 4:
+                p(0, 6, 0, "end_rod[facing=up]" if top else "lantern[hanging=false]")
+    elif family == "artillery":
+        replace({"stone_bricks": "deepslate_bricks", "gray_terracotta": "polished_deepslate",
+                 "chiseled_stone_bricks": "chiseled_deepslate", "cobblestone": "tuff_bricks",
+                 "stone_brick_slab": "polished_deepslate_slab"})
+        corners(1, 0, "waxed_exposed_cut_copper")
+        p(0, 2, 0, "waxed_chiseled_copper")
+        # Vertical mortar with an open-looking black muzzle and copper carriage.
+        p(0, 3, 0, "polished_basalt[axis=y]")
+        p(0, 4, 0, "polished_blackstone_wall[north=none,south=none,east=none,west=none,up=true]")
+        if level >= 2:
+            halo(1, 2, "waxed_exposed_copper_grate")
+        if branched:
+            p(0, 3, 0, "magma_block" if top else "polished_basalt[axis=y]")
+            halo(1, 3, "waxed_cut_copper_slab[type=top]" if top else "deepslate_tile_slab[type=top]")
+        if level == 4:
+            corners(1, 3, "waxed_cut_copper_slab[type=bottom]")
+            p(0, 5, 0, "polished_blackstone_button[face=floor,facing=north]")
+    elif family == "ice":
+        replace({"stone_bricks": "polished_tuff", "cobblestone": "tuff_bricks",
+                 "chiseled_stone_bricks": "chiseled_tuff_bricks", "light_gray_terracotta": "calcite",
+                 "stone_brick_slab": "tuff_brick_slab", "stone_brick_stairs": "tuff_brick_stairs"})
+        p(0, 1, 0, "sea_lantern")
+        p(0, 2, 0, "blue_ice" if level >= 2 else "packed_ice")
+        halo(1, 2, "light_blue_stained_glass_pane[north=true,south=true,east=true,west=true]")
+        corners(1, 2, "calcite")
+        if level >= 2:
+            corners(1, 3, "tuff_brick_slab[type=bottom]")
+            p(0, 3, 0, "blue_ice")
+        if branched:
+            p(0, 3, 0, "blue_ice" if top else "amethyst_block")
+            p(0, 4, 0, "end_rod[facing=up]" if top else "amethyst_cluster[facing=up]")
+        if level == 4:
+            halo(1, 3, "packed_ice" if top else "light_blue_stained_glass")
+    elif family == "mage":
+        replace({"nether_bricks": "polished_blackstone_bricks",
+                 "nether_brick_stairs": "polished_blackstone_brick_stairs",
+                 "glowstone": "shroomlight"})
+        corners(1, 0, "chiseled_polished_blackstone")
+        p(0, 2, 0, "magma_block")
+        halo(1, 3, "polished_blackstone_brick_slab[type=top]")
+        p(0, 4, 0, "shroomlight")
+        if level >= 2:
+            corners(1, 3, "red_nether_brick_slab[type=top]")
+            p(0, 5, 0, "orange_stained_glass")
+        if branched:
+            p(0, 4, 0, "magma_block" if top else "pearlescent_froglight")
+            p(0, 5, 0, "orange_stained_glass" if top else "tinted_glass")
+        if level == 4:
+            p(0, 6, 0, "end_rod[facing=up]")
+    elif family == "poison":
+        replace({"green_terracotta": "mossy_stone_bricks", "white_terracotta": "calcite",
+                 "spruce_planks": "dark_oak_planks", "spruce_stairs": "dark_oak_stairs",
+                 "spruce_slab": "dark_oak_slab", "glowstone": "verdant_froglight"})
+        p(0, 2, 0, "lime_stained_glass")
+        corners(1, 0, "waxed_oxidized_cut_copper")
+        if level >= 2:
+            halo(1, 2, "waxed_oxidized_copper_grate")
+        if branched:
+            p(0, 3, 0, "verdant_froglight" if top else "amethyst_block")
+            p(0, 4, 0, "lime_stained_glass" if top else "purple_stained_glass")
+        if level == 4:
+            corners(1, 3, "waxed_oxidized_cut_copper_slab[type=bottom]")
+            p(0, 5, 0, "end_rod[facing=up]" if top else "amethyst_cluster[facing=up]")
+    elif family == "quake":
+        replace({"cobblestone": "polished_basalt", "stone_bricks": "tuff_bricks",
+                 "stone_brick_stairs": "tuff_brick_stairs", "stone_brick_slab": "tuff_brick_slab"})
+        p(0, 0, 0, "chiseled_tuff_bricks")
+        p(0, 1, 0, "polished_basalt[axis=y]")
+        corners(1, 0, "polished_deepslate_slab[type=bottom]")
+        if level >= 2:
+            halo(1, 1, "waxed_exposed_copper_grate")
+        if branched:
+            p(0, 2, 0, "chiseled_tuff_bricks" if top else "chiseled_deepslate")
+        if level == 4:
+            corners(1, 2, "tuff_brick_slab[type=top]" if top else "deepslate_tile_slab[type=top]")
+    elif family == "sorcerer":
+        replace({"oak_planks": "dark_oak_planks", "oak_log": "stripped_dark_oak_log",
+                 "oak_stairs": "dark_oak_stairs", "oak_slab": "dark_oak_slab"})
+        corners(1, 0, "polished_tuff")
+        p(-1, 3, 1, "lantern[hanging=false]")
+        if level >= 2:
+            p(-1, 3, -1, "amethyst_block")
+            p(-1, 4, -1, "amethyst_cluster[facing=up]")
+        if branched:
+            p(0, 2, 1, "bookshelf" if top else "chiseled_tuff_bricks")
+            p(1, 3, 1, "end_rod[facing=up]" if top else "soul_lantern[hanging=false]")
+        if level == 4:
+            p(-1, 4, 1, "dark_oak_slab[type=bottom]")
+    elif family == "zeus":
+        replace({"blue_terracotta": "waxed_oxidized_cut_copper", "glowstone": "sea_lantern"})
+        p(0, 1, 0, "chiseled_quartz_block")
+        p(0, 3, 0, "sea_lantern")
+        for x,z,facing in cardinal:
+            p(x, 3, z, f"quartz_stairs[facing={facing},half=top,shape=straight]")
+        p(0, 4, 0, "waxed_copper_grate")
+        p(0, 5, 0, "lightning_rod[facing=up,powered=false]")
+        if level >= 2:
+            corners(1, 4, "quartz_slab[type=bottom]")
+        if branched:
+            p(0, 4, 0, "waxed_exposed_copper_grate" if top else "quartz_pillar[axis=y]")
+        if level == 4:
+            halo(1, 4, "light_blue_stained_glass" if top else "quartz_slab[type=bottom]")
+            p(0, 6, 0, "end_rod[facing=up]")
+    elif family == "necromancer":
+        replace({"nether_bricks": "deepslate_tiles", "nether_brick_stairs": "deepslate_tile_stairs",
+                 "nether_brick_slab": "deepslate_tile_slab", "obsidian": "crying_obsidian"})
+        corners(2, 0, "chiseled_deepslate")
+        for x in (-2, 2):
+            p(x, 2, 0, "soul_lantern[hanging=true]")
+        halo(2, 5, "polished_blackstone_brick_slab[type=top]")
+        if level >= 2:
+            corners(1, 5, "deepslate_tile_wall[up=true]")
+            p(0, 4, 0, "tinted_glass")
+        if branched:
+            p(0, 1, 0, "amethyst_block" if top else "soul_soil")
+            p(0, 5, 0, "amethyst_cluster[facing=up]" if top else "soul_lantern[hanging=false]")
+        if level == 3:
+            corners(2, 5, "polished_blackstone_brick_wall[up=true]")
+    elif family == "turret":
+        replace({"stone_bricks": "tuff_bricks", "chiseled_stone_bricks": "chiseled_tuff_bricks",
+                 "stone_brick_stairs": "tuff_brick_stairs", "cobblestone_wall": "polished_tuff_wall",
+                 "oak_planks": "waxed_exposed_cut_copper", "oak_log": "polished_basalt"})
+        corners(2, 0, "polished_deepslate")
+        corners(2, 3, "waxed_exposed_chiseled_copper")
+        for x in (-1, 1):
+            for z in (-2, -1, 0):
+                p(x, 5, z, "polished_basalt[axis=z]")
+            p(x, 5, -2, "polished_blackstone_wall[up=true]")
+        p(0, 5, 1, "waxed_copper_grate")
+        if level >= 2:
+            halo(2, 3, "waxed_exposed_copper_grate")
+            p(0, 6, 1, "lightning_rod[facing=up,powered=false]")
+        if branched:
+            p(0, 4, 0, "waxed_chiseled_copper" if top else "blue_ice")
+        if level == 3:
+            for x in (-1, 1):
+                p(x, 6, 0, "waxed_cut_copper_slab[type=bottom]" if top else "deepslate_tile_slab[type=bottom]")
+    elif family == "leach":
+        # Keep its distinctive green prismarine + white interlocking bands.
+        corners(2, 0, "waxed_oxidized_cut_copper")
+        for x,z,facing in cardinal:
+            p(x * 2, 2, z * 2, f"prismarine_brick_stairs[facing={facing},half=top,shape=straight]")
+        p(0, 3, 0, "sea_lantern")
+        p(0, 6, 0, "chiseled_quartz_block")
+        if level >= 2:
+            corners(1, 5, "waxed_oxidized_cut_copper_slab[type=bottom]")
+            p(0, 7, 0, "sea_lantern")
+            p(0, 8, 0, "quartz_slab[type=bottom]")
+        if branched:
+            p(0, 7, 0, "sea_lantern" if top else "verdant_froglight")
+            p(0, 8, 0, "end_rod[facing=up]" if top else "waxed_oxidized_cut_copper_slab[type=bottom]")
 
 
 def build_towers(root, source):
@@ -363,7 +561,8 @@ def build_towers(root, source):
                 model = {"format-version": 1, "tower-id": tower_id, "level": level, "path": path,
                          "evidence-status": "COMMUNITY_RECONSTRUCTION",
                          "evidence-refs": [TOWER_REF, MATURE_REF] + ([QUAKE_REF] if tower_id == "quake" else [LEACH_REF] if tower_id == "leach" else []),
-                         "reconstruction": "Historical silhouette; unseen surfaces, materials and tier details inferred. Not original extraction.",
+                         "reconstruction": "Modern authored reinterpretation of historical silhouette; waxed copper, tuff, deepslate, crystal and light details. Not original extraction.",
+                         "visual-style": "MODERN_HERITAGE_V123",
                          "original-client-fidelity-certified": False,
                          "blocks": [{"x": x, "y": y, "z": z, "block-data": state}
                                     for (x,y,z), state in sorted(voxels.blocks.items())]}
