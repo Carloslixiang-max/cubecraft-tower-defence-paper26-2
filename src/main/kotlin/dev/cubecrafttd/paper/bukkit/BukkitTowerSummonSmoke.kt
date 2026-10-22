@@ -16,7 +16,7 @@ import org.bukkit.entity.Mob
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.entity.Snowman
 import org.bukkit.Location
-import org.bukkit.event.entity.EntityBlockFormEvent
+import org.bukkit.event.block.EntityBlockFormEvent
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.UUID

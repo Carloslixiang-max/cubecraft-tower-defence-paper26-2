@@ -6,7 +6,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityCombustEvent
-import org.bukkit.event.entity.EntityBlockFormEvent
+import org.bukkit.event.block.EntityBlockFormEvent
 import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.plugin.Plugin
