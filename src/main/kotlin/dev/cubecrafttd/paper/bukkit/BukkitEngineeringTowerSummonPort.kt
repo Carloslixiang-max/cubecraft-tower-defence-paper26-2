@@ -86,7 +86,10 @@ class BukkitEngineeringTowerSummonPort(
         val grouped = command.request.kind == SummonKind.SORCERER_ANIMAL
         val dx = if (!grouped) 0.0 else if (command.ordinal % 2 == 0) -0.65 else 0.65
         val dz = if (!grouped) 0.0 else if (command.ordinal / 2 == 0) -0.65 else 0.65
-        return Location(world, p.x + dx, p.y, p.z + dz)
+        // Shulkers snap to block-aligned feet in native spawn/teleport. Use the
+        // first air block above the roof so update does not fight that snapping.
+        val y=if(command.request.kind==SummonKind.SHULKER) kotlin.math.floor(p.y) else p.y
+        return Location(world, p.x + dx, y, p.z + dz)
     }
 
     private fun <T:LivingEntity> spawn(

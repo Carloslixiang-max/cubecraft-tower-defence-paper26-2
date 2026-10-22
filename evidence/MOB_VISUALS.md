@@ -48,6 +48,9 @@ speed, unverified sound or invented extra combat is introduced.
    vanilla gravity/collision/pickup/damage/AI. ArmorStand equipment is locked.
    Placement/spacing is engineering presentation, not recovered original
    child pathing. Unresolved child identities retain their explicit fallback.
+6. TD-marked entity block-formation/change events are cancelled so Snowman
+   children cannot leave snow outside the body ledger. Unmarked survival
+   entities retain their event permissions; no host mobGriefing rule changes.
 
 ## Verification
 
@@ -58,6 +61,7 @@ The total domain suite is 599 fixtures.
 Both opt-in owned-world Paper boots run production-port checks for five Zombie
 helmets, Slime and MagmaCube shrink on the same UUID, attribute/health
 preservation, dead-form exclusion, all six child kinds and model-height refresh.
+Native block events check TD child cancellation and unmarked-entity isolation.
 They additionally place actual bundled tower bodies, tick real children through
 Necromancer/Zeus upgrades and Sorcerer sale, then verify match-end cleanup with
 zero remaining child UUIDs. These checks are not run in the host's main world.

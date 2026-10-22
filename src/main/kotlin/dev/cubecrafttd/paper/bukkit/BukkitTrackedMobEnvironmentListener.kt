@@ -6,6 +6,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityCombustEvent
+import org.bukkit.event.entity.EntityBlockFormEvent
+import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.plugin.Plugin
 
@@ -29,6 +31,20 @@ class BukkitTrackedMobEnvironmentListener(
                 this,
                 plugin
             )
+    }
+
+    // Child Snowmen can form snow, and other owned mobs can request vanilla
+    // block changes outside deterministic tower-body mutations. Match ownership
+    // is the persistent TD marker, so children are protected too. Never change
+    // a host world's mobGriefing rule or affect unmarked survival entities.
+    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=false)
+    fun onOwnedBlockForm(event: EntityBlockFormEvent) {
+        if (BukkitTrackedEntityTag.TAG in event.entity.scoreboardTags) event.isCancelled=true
+    }
+
+    @EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=false)
+    fun onOwnedBlockChange(event: EntityChangeBlockEvent) {
+        if (BukkitTrackedEntityTag.TAG in event.entity.scoreboardTags) event.isCancelled=true
     }
 
     @EventHandler(
