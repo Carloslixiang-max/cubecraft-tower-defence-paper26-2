@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v122 tower-child lifecycle repairs and live mob appearance projection**
+- Current shell lineage: **v123 modern tower detail pass, retaining v122 lifecycle and appearance repairs**
 - Pure-domain suite: **599 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
@@ -327,3 +327,17 @@ Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
   preserves vanilla attributes/health and does not change core balance.
 - Add nine domain regressions and real production-port/teardown checks on both
   owned-world Paper boots. [Evidence and limits](evidence/MOB_VISUALS.md).
+
+## v123 tower art refinement
+
+- Refine all 11 families / 82 catalog entries with waxed copper, carved tuff,
+  deepslate, amethyst, framed glass and modern light sources. Keep the recognizable
+  watchtower, mortar, ice core, quartz monument and green/white Leach silhouettes.
+- Add recessed facades, smaller supports, roof trim and distinct intermediate
+  upgrades. Shared gameplay stages remain shared; real branches have different
+  final details. These are authored reinterpretations, not original assets.
+- Keep the 3x3 / 5x5 footprints and all economy/combat declarations unchanged.
+  No new decorative entities, client mod or resource pack is required. Existing
+  READY Farm worlds need no reimport; remove a backed-up external tower catalog
+  to select the new bundled catalog. Paper checks every state in all rotations,
+  upgrade/removal restoration, firing lines and summoned-child placement.

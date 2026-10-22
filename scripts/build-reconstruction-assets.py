@@ -514,6 +514,7 @@ def refine_tower(v, family, level, path):
                  "nether_brick_slab": "deepslate_tile_slab", "obsidian": "crying_obsidian"})
         corners(2, 0, "chiseled_deepslate")
         for x in (-2, 2):
+            p(x, 3, 0, "chiseled_polished_blackstone")
             p(x, 2, 0, "soul_lantern[hanging=true]")
         halo(2, 5, "polished_blackstone_brick_slab[type=top]")
         if level >= 2:
@@ -575,6 +576,9 @@ def build_towers(root, source):
                 radius = 2 if tower_id in {"leach", "necromancer", "turret"} else 1
                 assert 16 <= len(voxels.blocks) <= 1600
                 assert all(-radius <= x <= radius and 0 <= y <= 63 and -radius <= z <= radius for x,y,z in voxels.blocks)
+                for (x,y,z), state in voxels.blocks.items():
+                    if "lantern[hanging=true]" in state:
+                        assert (x,y+1,z) in voxels.blocks, (tower_id,level,path,"unanchored lantern")
                 name = f"{tower_id}-{path.lower()}-{level}.json"
                 model = {"format-version": 1, "tower-id": tower_id, "level": level, "path": path,
                          "evidence-status": "COMMUNITY_RECONSTRUCTION",
