@@ -388,6 +388,9 @@ def refine_tower(v, family, level, path):
               "waxed_cut_copper_stairs[facing=north,half=bottom,shape=straight]")
             if level == 4:
                 p(0, 6, 0, "end_rod[facing=up]" if top else "lantern[hanging=false]")
+        if level >= 3:
+            for x,z,facing in cardinal:
+                p(x, 4, z, f"waxed_exposed_cut_copper_stairs[facing={facing},half=bottom,shape=straight]")
     elif family == "artillery":
         replace({"stone_bricks": "deepslate_bricks", "gray_terracotta": "polished_deepslate",
                  "chiseled_stone_bricks": "chiseled_deepslate", "cobblestone": "tuff_bricks",
@@ -441,6 +444,10 @@ def refine_tower(v, family, level, path):
         if branched:
             p(0, 4, 0, "magma_block" if top else "pearlescent_froglight")
             p(0, 5, 0, "orange_stained_glass" if top else "tinted_glass")
+        if level >= 3:
+            corners(1, 0, "red_nether_bricks")
+            for x in (-1, 1):
+                p(x, 4, 0, "polished_blackstone_brick_wall[up=true]")
         if level == 4:
             p(0, 6, 0, "end_rod[facing=up]")
     elif family == "poison":
@@ -470,6 +477,8 @@ def refine_tower(v, family, level, path):
             halo(1, 1, "waxed_exposed_copper_grate")
         if branched:
             p(0, 2, 0, "chiseled_tuff_bricks" if top else "chiseled_deepslate")
+        if level >= 3:
+            corners(1, 1, "tuff_brick_slab[type=top]" if top else "polished_deepslate_slab[type=top]")
         if level == 4:
             corners(1, 2, "tuff_brick_slab[type=top]" if top else "deepslate_tile_slab[type=top]")
     elif family == "sorcerer":
