@@ -11,8 +11,8 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v121 stable reconstructed Farm terrain with natural-match/reuse/restart network verification**
-- Pure-domain suite: **590 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
+- Current shell lineage: **v122 tower-child lifecycle repairs and live mob appearance projection**
+- Pure-domain suite: **599 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
 The implementation deliberately separates:
@@ -25,7 +25,7 @@ Unknown original values are not silently invented.
 
 ### Map and tower assets
 
-**v114 includes an approximate full Farm scene and models for all 11 tower families.**
+**The current build includes an approximate full Farm scene and v117 remodeled bodies for all 11 tower families.**
 The user authorized reconstruction rather than exact original extraction on
 17 October 2026. The generated scene adds the giant barn, silos, apple trees,
 chickens/sheep/pigs, hay stacks, crops, fences, ground and a viewing lobby to the
@@ -312,3 +312,18 @@ Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
 - Menu ownership is tied to the concrete Paper inventory, not UUID/title/size alone. Foreign or older close events cannot remove replacement ownership, and click/drag/refresh require the owned view. A rejected open that leaves the previous view visible retains its protection and does not record a new menu observation.
 - Clicks are cancelled immediately but actions run next tick, as required for inventory-view changes. Dispatch rechecks inventory ownership and the raw-slot action; old-view queued clicks are discarded.
 - Quick-place explicitly cancels an older pending menu target. Domain cases verify cancelled paths and occupied-footprint failures do not spend coins/add towers or replace the last successful quick selection. Dual Paper boots check real inventory equality with simulated close/open/queued-delivery sequences; human packet/client certification remains pending.
+
+
+## v122 live forms and summon lifecycle
+
+- Fix ordinary Zeus stages aborting the arena, replace changed Necromancer
+  child kinds, and include every summon UUID in match-end cleanup. Failed
+  removal retains ownership for conservative cleanup and residue reporting.
+- Stage visual children above the current body, follow upgrades without
+  respawning, and suppress vanilla movement/pickup/damage and stand equipment
+  manipulation. Exact historical child models remain unresolved.
+- Restore historical Zombie helmet tiers and show Slime/MagmaCube shrink
+  phases on the same UUID. Size mapping is explicitly approximate; projection
+  preserves vanilla attributes/health and does not change core balance.
+- Add nine domain regressions and real production-port/teardown checks on both
+  owned-world Paper boots. [Evidence and limits](evidence/MOB_VISUALS.md).

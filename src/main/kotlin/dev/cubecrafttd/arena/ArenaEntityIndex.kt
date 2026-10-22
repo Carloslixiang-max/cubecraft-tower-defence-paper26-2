@@ -26,6 +26,7 @@ class ArenaEntityIndex {
     val guardsByTeam: MutableMap<TeamId, MutableSet<UUID>> = mutableMapOf(
         TeamId.RED to linkedSetOf(), TeamId.BLUE to linkedSetOf()
     )
+    val towerSummons: MutableSet<UUID> = linkedSetOf()
     val transientDisplays: MutableSet<UUID> = linkedSetOf()
     val projectiles: MutableSet<UUID> = linkedSetOf()
 
@@ -122,6 +123,7 @@ class ArenaEntityIndex {
         towersByTeam.values.all { it.isEmpty() } &&
         guardsByUuid.isEmpty() &&
         guardsByTeam.values.all { it.isEmpty() } &&
+        towerSummons.isEmpty() &&
         transientDisplays.isEmpty() &&
         projectiles.isEmpty()
 
@@ -133,6 +135,7 @@ class ArenaEntityIndex {
         towersByTeam.values.forEach { it.clear() }
         guardsByUuid.clear()
         guardsByTeam.values.forEach { it.clear() }
+        towerSummons.clear()
         transientDisplays.clear()
         projectiles.clear()
     }

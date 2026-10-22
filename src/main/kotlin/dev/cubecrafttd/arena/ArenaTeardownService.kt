@@ -101,6 +101,7 @@ class ArenaTeardownService(
                     context.entityIndex
                         .guardsByUuid.keys
                 )
+                addAll(context.entityIndex.towerSummons)
                 addAll(
                     context.entityIndex
                         .transientDisplays

@@ -89,6 +89,9 @@ fun interface TowerSummonSpawnPort {
     fun spawn(
         command: TowerSummonSpawnCommand
     ): UUID
+
+    /** Refresh the same visual after a tower upgrade; never performs combat. */
+    fun update(command: TowerSummonSpawnCommand, liveEntityUuid: UUID) {}
 }
 
 fun interface TowerSummonRemovalPort {
@@ -114,11 +117,7 @@ object RecommendedTowerSummonCountResolver {
             when(towerId) {
                 "necromancer" -> 1
                 "zeus" -> {
-                    check(
-                        "baby_zeus" in
-                            stage.abilityTags
-                    )
-                    1
+                    if ("baby_zeus" in stage.abilityTags) 1 else 0
                 }
                 "sorcerer" -> {
                     if(
@@ -221,7 +220,7 @@ class TowerSummonMaintenancePhase(
         (
             registry.towerIds() -
                 activeTowerIds
-        ).forEach(::removeAllForTower)
+        ).forEach { removeAllForTower(context, it) }
 
         summonTowers.forEach { tower ->
             val path=tower.upgrade.path
@@ -244,7 +243,7 @@ class TowerSummonMaintenancePhase(
                 )
             if(desired<=0) {
                 removeAllForTower(
-                    tower.identity.instanceId
+                    context, tower.identity.instanceId
                 )
                 return@forEach
             }
@@ -298,6 +297,13 @@ class TowerSummonMaintenancePhase(
                     error("Not a summon tower")
             }
 
+            // A count of one is unchanged when Necromancer becomes a Shulker
+            // or Snowman. Replace the old kind rather than retaining its UUID.
+            if (current.any { it.kind != request.kind }) {
+                removeAllForTower(context, tower.identity.instanceId)
+                current.clear()
+            }
+
             while(current.size < desired) {
                 val ordinal=current.size
                 val uuid=spawnPort.spawn(
@@ -305,6 +311,11 @@ class TowerSummonMaintenancePhase(
                         tower,request,ordinal
                     )
                 )
+                // Teardown must own the entity even if later registration or
+                // projection throws. A private phase registry is insufficient.
+                check(context.entityIndex.towerSummons.add(uuid)) {
+                    "Summon spawn returned an already-owned UUID: $uuid"
+                }
                 val state=
                     TowerSummonRuntimeState(
                         TowerSummonInstanceId(
@@ -322,31 +333,27 @@ class TowerSummonMaintenancePhase(
 
             while(current.size > desired) {
                 val state=current.removeLast()
-                removalPort.remove(
-                    state.liveEntityUuid
-                )
-                registry.unregister(
-                    state.summonInstanceId
-                )
-                metrics.removed++
+                remove(context, state)
+            }
+            current.forEachIndexed { ordinal, state ->
+                spawnPort.update(TowerSummonSpawnCommand(tower, request, ordinal), state.liveEntityUuid)
             }
         }
     }
 
-    private fun removeAllForTower(
-        towerId: TowerInstanceId
-    ) {
-        registry.forTower(towerId)
-            .asReversed()
-            .forEach { state ->
-                removalPort.remove(
-                    state.liveEntityUuid
-                )
-                registry.unregister(
-                    state.summonInstanceId
-                )
-                metrics.removed++
-            }
+    private fun removeAllForTower(context: ArenaContext, towerId: TowerInstanceId) {
+        registry.forTower(towerId).asReversed().forEach { remove(context, it) }
+    }
+
+    private fun remove(context: ArenaContext, state: TowerSummonRuntimeState) {
+        // On failure retain BOTH records: the arena failure path can retry and
+        // report residue instead of forgetting the entity and declaring clean.
+        check(removalPort.remove(state.liveEntityUuid)) {
+            "Failed to remove tower summon ${state.liveEntityUuid}"
+        }
+        registry.unregister(state.summonInstanceId)
+        context.entityIndex.towerSummons.remove(state.liveEntityUuid)
+        metrics.removed++
     }
 
     fun registrySize(): Int =

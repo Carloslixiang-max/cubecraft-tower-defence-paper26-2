@@ -526,7 +526,7 @@ class BukkitNormalArenaController(
                                 ),
                         summonSpawnPort=
                             BukkitEngineeringTowerSummonPort(
-                                world
+                                world, visualOrigins::origin
                             ),
                         summonRemovalPort=
                             TowerSummonRemovalPort {
@@ -1038,6 +1038,8 @@ class BukkitNormalArenaController(
         try {
             handle.composition.engine
                 .tick(context)
+
+            BukkitMobAppearanceProjection.project(plugin.server, context)
 
             handle.session
                 ?.let { session ->

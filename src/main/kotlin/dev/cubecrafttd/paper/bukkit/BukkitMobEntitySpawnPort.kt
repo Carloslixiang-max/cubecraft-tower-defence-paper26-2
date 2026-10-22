@@ -22,96 +22,41 @@ class BukkitMobEntitySpawnPort(
                     request.mobId,
                     request.level
                 )
-                .formId
         val p=projectPosition(request.spawnPosition)
         val location=
             Location(
                 world,p.x,p.y,p.z
             )
 
-        val entity: LivingEntity =
-            when(form) {
-                "zombie" ->
-                    spawn(location,Zombie::class.java)
-                "spider" ->
-                    spawn(location,Spider::class.java)
-                "cave_spider" ->
-                    spawn(
-                        location,
-                        CaveSpider::class.java
-                    )
-                "pigman" ->
-                    spawn(
-                        location,
-                        PigZombie::class.java
-                    )
-                "skeleton" ->
-                    spawn(
-                        location,
-                        Skeleton::class.java
-                    )
-                "wither_skeleton" ->
-                    spawn(
-                        location,
-                        WitherSkeleton::class.java
-                    )
-                "creeper" ->
-                    spawn(
-                        location,
-                        Creeper::class.java
-                    )
-                "silverfish" ->
-                    spawn(
-                        location,
-                        Silverfish::class.java
-                    )
-                "endermite" ->
-                    spawn(
-                        location,
-                        Endermite::class.java
-                    )
-                "witch" ->
-                    spawn(
-                        location,
-                        Witch::class.java
-                    )
-                "slime" ->
-                    spawn(
-                        location,
-                        Slime::class.java
-                    )
-                "magma_cube" ->
-                    spawn(
-                        location,
-                        MagmaCube::class.java
-                    )
-                "blaze" ->
-                    spawn(
-                        location,
-                        Blaze::class.java
-                    )
-                "giant" ->
-                    spawn(
-                        location,
-                        Giant::class.java
-                    )
-                "wither" ->
-                    spawn(
-                        location,
-                        Wither::class.java
-                    )
-                else ->
-                    error(
-                        "No Paper living-entity class mapping for form $form"
-                    )
-            }
+        val clazz: Class<out LivingEntity> = when(form.formId) {
+            "zombie" -> Zombie::class.java
+            "spider" -> Spider::class.java
+            "cave_spider" -> CaveSpider::class.java
+            "pigman" -> PigZombie::class.java
+            "skeleton" -> Skeleton::class.java
+            "wither_skeleton" -> WitherSkeleton::class.java
+            "creeper" -> Creeper::class.java
+            "silverfish" -> Silverfish::class.java
+            "endermite" -> Endermite::class.java
+            "witch" -> Witch::class.java
+            "slime" -> Slime::class.java
+            "magma_cube" -> MagmaCube::class.java
+            "blaze" -> Blaze::class.java
+            "giant" -> Giant::class.java
+            "wither" -> Wither::class.java
+            else -> error("No Paper living-entity class mapping for form ${form.formId}")
+        }
+        val entity = spawn(location, clazz) {
+            BukkitMobAppearanceProjection.initialize(it, request.mobId, request.level, form)
+        }
 
         return entity.uniqueId
     }
 
     private fun <T:LivingEntity> spawn(
         location: Location,
-        clazz: Class<T>
+        clazz: Class<T>,
+        initialize: (T) -> Unit
     ): T =
         world.spawn(
             location,
@@ -119,6 +64,7 @@ class BukkitMobEntitySpawnPort(
             CreatureSpawnEvent
                 .SpawnReason.CUSTOM
         ) { spawned ->
+            initialize(spawned)
             // Core owns vertical movement, including while paused at a castle.
             spawned.setGravity(false)
             BukkitTrackedEntityTag.mark(

@@ -114,6 +114,9 @@ object ArenaTeardownFixture {
             UUID.fromString(
                 "00000000-0000-0000-0000-000000007202"
             )
+        val summonUuid=UUID(0, 122800)
+        val failedSummonUuid=UUID(0, 122801)
+        context.entityIndex.towerSummons += setOf(summonUuid, failedSummonUuid)
         val stickyUuid=
             UUID.fromString(
                 "00000000-0000-0000-0000-000000007203"
@@ -161,7 +164,7 @@ object ArenaTeardownFixture {
                 bodyService,
                 TrackedEntityRemovalPort {
                     uuid ->
-                    if(uuid==failedEntity) false
+                    if(uuid==failedEntity || uuid==failedSummonUuid) false
                     else {
                         removed += uuid
                         true
@@ -197,6 +200,9 @@ object ArenaTeardownFixture {
             .byPlayer.getValue(bluePlayer)
 
         return listOf(
+            FixtureResult("teardown-removes-live-tower-summons", summonUuid in removed),
+            FixtureResult("teardown-reports-failed-tower-summon-removal",
+                failedSummonUuid in end.teardown.failedEntityRemovals && !end.teardown.fullyCleanNow),
             FixtureResult(
                 "teardown-closes-arena-and-core-indexes",
                 context.state==
@@ -217,7 +223,7 @@ object ArenaTeardownFixture {
                 "teardown-reports-paper-entity-residue",
                 end.teardown
                     .failedEntityRemovals ==
-                    setOf(failedEntity) &&
+                    setOf(failedEntity, failedSummonUuid) &&
                     end.teardown
                         .externalResiduePossible
             ),
