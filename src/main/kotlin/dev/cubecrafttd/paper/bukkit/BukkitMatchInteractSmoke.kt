@@ -19,6 +19,10 @@ import java.lang.reflect.Proxy
 /** Real Paper events/RegisteredListener delivery; synthetic actors, no client packet claim. */
 object BukkitMatchInteractSmoke {
     fun run(plugin: Plugin) {
+        val expected=java.util.UUID(0,124)
+        check(BukkitMatchInteractPolicy.matchesArenaWorld(expected,expected))
+        check(!BukkitMatchInteractPolicy.matchesArenaWorld(expected,java.util.UUID(0,125)))
+        check(!BukkitMatchInteractPolicy.matchesArenaWorld(null,expected))
         fun <T> actor(type: Class<T>): T = type.cast(Proxy.newProxyInstance(
             type.classLoader, arrayOf(type)
         ) { _, method, _ -> error("Unexpected synthetic actor call: ${method.name}") })

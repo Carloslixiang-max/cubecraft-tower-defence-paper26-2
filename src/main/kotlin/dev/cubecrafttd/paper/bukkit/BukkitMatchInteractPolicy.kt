@@ -11,6 +11,9 @@ import org.bukkit.inventory.EquipmentSlot
  * Scope/ownership checks still belong to each active-match controller operation.
  */
 object BukkitMatchInteractPolicy {
+    fun matchesArenaWorld(expected: java.util.UUID?, actual: java.util.UUID): Boolean =
+        expected != null && expected == actual
+
     fun acceptsRightClick(event: PlayerInteractEvent): Boolean {
         if (event.hand != EquipmentSlot.HAND) return false
         if (event.action != Action.RIGHT_CLICK_AIR && event.action != Action.RIGHT_CLICK_BLOCK) return false

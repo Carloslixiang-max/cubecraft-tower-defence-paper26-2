@@ -29,6 +29,8 @@ class BukkitManagedFarmWorld(
     } else null
     private var waitingForRestart = false
     private var activeInitialBuild = false
+    private var verifiedWorldId: java.util.UUID? = null
+    fun ownsWorld(worldId: java.util.UUID): Boolean = verifiedWorldId == worldId
     val phase: String? get() = state?.getString("phase")
     val installed: Boolean get() = state != null
 
@@ -53,6 +55,7 @@ class BukkitManagedFarmWorld(
             check(world.worldPath.toFile().canonicalFile == directory.canonicalFile) { "Managed dimension path mismatch" }
             check(world.uid.toString() == s.getString("uuid")) { "Managed-world UUID mismatch" }
             keepTerrainStable(world)
+            verifiedWorldId = world.uid
             loadError = null
             plugin.logger.info("Managed Farm world loaded: $worldName uuid=${world.uid} phase=$phase")
             world
@@ -65,6 +68,9 @@ class BukkitManagedFarmWorld(
 
     /** Only invoked after ownership/path/UUID validation, or on our newly created world. */
     private fun keepTerrainStable(world: World) {
+        check(world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false)) {
+            "Cannot disable natural mobs in the managed Farm dimension"
+        }
         check(world.setGameRule(org.bukkit.GameRules.RANDOM_TICK_SPEED, 0)) {
             "Cannot freeze random block updates in the managed Farm dimension"
         }
@@ -88,6 +94,7 @@ class BukkitManagedFarmWorld(
             it.set("owner", token)
             it.set("phase", "CREATED")
         }
+        verifiedWorldId = world.uid
         // Only this new dedicated world receives environment settings.
         world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, false)
         keepTerrainStable(world)
@@ -249,12 +256,16 @@ class BukkitManagedFarmWorld(
             check(world.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED) == 0)
             // An owned world's reload also re-establishes stable terrain.
             check(world.setGameRule(org.bukkit.GameRules.RANDOM_TICK_SPEED, 7))
+            check(world.setGameRule(org.bukkit.GameRules.SPAWN_MOBS, true))
             check(manager.loadExisting() == world)
             check(world.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED) == 0)
+            check(world.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS) == false)
+            check(manager.ownsWorld(world.uid) && !manager.ownsWorld(primary.uid))
             world.save()
             check(runCatching { manager.createEmpty() }.isFailure) { "Installer recreated a managed world" }
             val collision = BukkitManagedFarmWorld(plugin, "ctd_install_smoke", "unclaimed-smoke.yml")
             check(runCatching { collision.createEmpty() }.isFailure) { "Installer adopted an existing unclaimed world" }
+            check(!collision.ownsWorld(world.uid)) { "Same name without verified ownership acquired world protection" }
             check(primary.getGameRuleValue(org.bukkit.GameRules.SPAWN_MOBS) == primaryRule && primary.spawnLocation == primarySpawn)
             check(primary.getGameRuleValue(org.bukkit.GameRules.RANDOM_TICK_SPEED) == primaryRandomTicks) {
                 "Managed world changed the primary world's random block ticks"

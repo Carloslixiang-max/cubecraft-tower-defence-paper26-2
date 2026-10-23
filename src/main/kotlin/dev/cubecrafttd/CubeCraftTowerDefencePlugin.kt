@@ -55,6 +55,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             if (::liveArenaController.isInitialized) liveArenaController.blockFarmReuseAfterFailedInstallation()
         })
         managedFarm.loadExisting()
+        server.pluginManager.registerEvents(BukkitManagedFarmProtection(managedFarm::ownsWorld), this)
         stage4Gate = PaperStage4GateStore(this)
         fallbackConfig = BukkitRuntimeFallbackLoader.load(config)
         fallbackMissing = RuntimeFallbackValidator.validateForNormal(fallbackConfig)
@@ -84,7 +85,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 passed
                             )
                         if(passed) {
-                            logger.info(
+            logger.info(
                                 "Cross-restart recovery PASS for " +
                                     uuid
                             )
@@ -591,6 +592,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         stage4Gate.recordDomainFixtures(true)
 
         val smokeWorld = BukkitManagedFarmWorld.runInstallSmoke(this)
+        if (smokeWorld != null) BukkitManagedFarmProtectionSmoke.run(this,smokeWorld)
         val adapterSmokeFailures =
             stage4Gate.runAndRecordAdapterSmoke(smokeWorld)
         check(adapterSmokeFailures.isEmpty()) {
@@ -603,7 +605,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             recoveryListener.pendingCount()
         val readiness = readinessService.inspect()
         logger.info(
-            "CubeCraftTowerDefence shell v122 enabled; " +
+            "CubeCraftTowerDefence ${pluginMeta.version} enabled; " +
                 "domainFixtures=${domain.size}; " +
                 "pendingRecoverySnapshots=${recoveryListener.pendingCount()}; " +
                 "activeArenas=${arenaService.contexts().size}; " +

@@ -1918,6 +1918,9 @@ class BukkitNormalArenaController(
     ): Boolean =
         handleForPlayer(playerUuid) != null
 
+    fun isPlayerInArenaWorld(playerUuid: UUID, worldUuid: UUID): Boolean =
+        BukkitMatchInteractPolicy.matchesArenaWorld(handleForPlayer(playerUuid)?.context?.worldId, worldUuid)
+
     fun markPlayerDeparted(
         playerUuid: UUID
     ): BukkitPlayerDepartureReport? {
@@ -2082,6 +2085,10 @@ class BukkitNormalArenaController(
             dev.cubecrafttd.ui
                 .MenuActionInvocation
     ): Any {
+        val player=plugin.server.getPlayer(invocation.playerUuid)
+        check(player != null && isPlayerInArenaWorld(invocation.playerUuid, player.world.uid)) {
+            "Player is outside their active Tower Defence world"
+        }
         val handle=
             handleForPlayer(
                 invocation.playerUuid

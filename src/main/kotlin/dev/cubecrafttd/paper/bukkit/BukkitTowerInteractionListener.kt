@@ -32,6 +32,7 @@ class BukkitTowerInteractionListener(
         val block=event.clickedBlock
             ?: return
         val player=event.player
+        if (!controller.isPlayerInArenaWorld(player.uniqueId, block.world.uid)) return
         val tower=
             controller.towerAt(
                 player.uniqueId,

@@ -204,6 +204,21 @@ async function main() {
     await chat(red, '/ctdsnapshotcheck', 'round-trip PASS')
     await play(red, blue, 1)
     await play(red, blue, 2)
+    // External hub/world plugins must not strand an active participant with a
+    // cleared inventory or let same-coordinate gestures operate on the arena.
+    await chat(red, '/ctdjoin')
+    await chat(blue, '/ctdjoin')
+    await until(() => red.game.gameMode === 'adventure' && blue.game.gameMode === 'adventure',
+      'cross-world recovery match starts', 45000)
+    await checkpoint('active')
+    for (const bot of [red, blue]) {
+      await consoleCommand('execute in minecraft:overworld run tp ' + bot.username + ' 10.5 100 10.5')
+      await until(() => bot.game.gameMode === 'creative', 'external world teleport restores ' + bot.username)
+    }
+    await restored(red, blue)
+    await checkpoint('restored')
+    await consoleCommand('ctdpreflight', 'Composition preflight PASS:')
+    emit({ type: 'assertion', check: 'external_world_departure_restores_and_cleans_arena', status: 'PASS' })
     await chat(red, '/ctdsnapshotcheck restart-arm', 'probe ARMED')
     await sleep(2200) // Same-process recovery sweep must leave the held probe intact.
     await checkpoint('restart_armed')

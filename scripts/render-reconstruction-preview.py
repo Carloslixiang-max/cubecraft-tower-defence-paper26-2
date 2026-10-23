@@ -48,6 +48,8 @@ COLORS.update({"dark_oak_planks":(66,45,28),"stripped_spruce_log":(113,86,54),
 
 def color(state):
     key=state.removeprefix("minecraft:").split("[")[0]
+    if key.endswith("_glass_pane"):
+        key=key.removesuffix("_pane")
     if key in COLORS:return COLORS[key]
     if "copper" in key:
         return (72,145,121) if "oxidized" in key else (153,116,86) if "exposed" in key else (189,110,78)

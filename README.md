@@ -11,7 +11,7 @@ This repository is an active high-fidelity recreation, not a finished drop-in cl
 - Paper target: **26.2**
 - Java target: **25**
 - Kotlin/JVM plugin
-- Current shell lineage: **v123 modern tower detail pass, retaining v122 lifecycle and appearance repairs**
+- Current shell lineage: **v124 owned-world protection and cross-world departure recovery, retaining v123 modern tower models**
 - Pure-domain suite: **599 fixtures**; the latest successful Actions run and its Paper `ctdfixtures` output are the authoritative PASS result.
 - Java 25 / Paper 26.2 compile, fixture tests, shaded-JAR, and **two consecutive live boots + clean shutdowns PASS in GitHub Actions**
 
@@ -341,3 +341,19 @@ Source and limits: [official 2021 GUI evidence](evidence/GUI_FIDELITY_2021.md).
   READY Farm worlds need no reimport; remove a backed-up external tower catalog
   to select the new bundled catalog. Paper checks every state in all rotations,
   upgrade/removal restoration, firing lines and summoned-child placement.
+
+## v124 shared-server isolation repairs
+
+- Protect the ownership-verified Farm dimension from vanilla block breaking,
+  placement, containers/enchanting/lever interactions, fluids, physics, fire,
+  growth, pistons, redstone and explosions. Custom TD gestures run first;
+  item-use permissions are preserved. Direct model/import/reset API writes work.
+  Other worlds and unclaimed dimensions retain their existing event decisions.
+- Require the arena world UUID for world gestures, AoE targeting, menu actions
+  and rangefinder projection. External cross-world teleports trigger normal
+  departure and durable player-state restoration on the next tick; initial
+  match entry and ordinary restoration do not trigger a false departure.
+- Reapply the managed world's no-natural-mobs rule on reload. Use a cached UUID
+  verified during create/load for protection checks, with no filesystem I/O per
+  event. Regressions cover real event dispatch in the owned and host worlds,
+  plus two natural matches and an external-teleport recovery round.

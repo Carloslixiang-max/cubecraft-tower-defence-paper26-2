@@ -29,6 +29,7 @@ class BukkitMatchHotbarListener(
         if (!BukkitMatchInteractPolicy.acceptsRightClick(event)) return
 
         val player=event.player
+        if (!controller.isPlayerInArenaWorld(player.uniqueId, player.world.uid)) return
         val heldSlot=
             player.inventory
                 .heldItemSlot

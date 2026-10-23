@@ -30,6 +30,7 @@ class BukkitAoEPotionTargetListener(
         // Reject offhand/left/physical/denied input before looking up or arming stock.
         if (!BukkitMatchInteractPolicy.acceptsRightClick(event)) return
         val player=event.player
+        if (!controller.isPlayerInArenaWorld(player.uniqueId, player.world.uid)) return
         val potionId=
             controller.hotbarAoEPotionAt(
                 player.uniqueId,

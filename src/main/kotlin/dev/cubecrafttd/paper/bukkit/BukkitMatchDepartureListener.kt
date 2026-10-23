@@ -5,6 +5,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerKickEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.plugin.Plugin
 import java.util.UUID
 
@@ -109,5 +110,24 @@ class BukkitMatchDepartureListener(
                     }
                 )
         }
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR)
+    fun onChangedWorld(event: PlayerChangedWorldEvent) {
+        val uuid=event.player.uniqueId
+        // Initial match entry and restoration also change worlds. Recheck next
+        // tick, after their synchronous session transition has completed.
+        plugin.server.scheduler.runTask(plugin, Runnable {
+            val player=plugin.server.getPlayer(uuid) ?: return@Runnable
+            if (!controller.isActivePlayer(uuid) || controller.isPlayerInArenaWorld(uuid, player.world.uid)) return@Runnable
+            runCatching { controller.leaveActivePlayer(uuid) }.onSuccess { report ->
+                if (report != null) {
+                    player.sendMessage("You left Tower Defence after changing worlds.")
+                    plugin.logger.info("TD cross-world departure: player=$uuid restored=${report.restoredNow} cleaned=${report.arenaCleaned}")
+                }
+            }.onFailure {
+                plugin.logger.severe("TD cross-world recovery failed for $uuid: ${it.message}; durable recovery journal retained")
+            }
+        })
     }
 }

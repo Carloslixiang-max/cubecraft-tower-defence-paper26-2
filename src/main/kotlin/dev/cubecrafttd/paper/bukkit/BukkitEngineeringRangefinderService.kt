@@ -49,8 +49,8 @@ class BukkitEngineeringRangefinderService(
         plugin.server.onlinePlayers
             .forEach { player ->
                 if(
-                    !controller.isActivePlayer(
-                        player.uniqueId
+                    !controller.isPlayerInArenaWorld(
+                        player.uniqueId, player.world.uid
                     )
                 ) return@forEach
 
