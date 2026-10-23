@@ -211,6 +211,8 @@ async function main() {
     await until(() => red.game.gameMode === 'adventure' && blue.game.gameMode === 'adventure',
       'cross-world recovery match starts', 45000)
     await checkpoint('active')
+    await tower(red)
+    await wave(blue)
     for (const bot of [red, blue]) {
       await consoleCommand('execute in minecraft:overworld run tp ' + bot.username + ' 10.5 100 10.5')
       await until(() => bot.game.gameMode === 'creative', 'external world teleport restores ' + bot.username)
