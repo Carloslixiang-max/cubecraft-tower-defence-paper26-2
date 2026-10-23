@@ -207,6 +207,7 @@ async function main() {
     // External hub/world plugins must not strand an active participant with a
     // cleared inventory or let same-coordinate gestures operate on the arena.
     await chat(red, '/ctdjoin')
+    await chat(red, '/ctdvote pricing quick')
     await chat(blue, '/ctdjoin')
     await until(() => red.game.gameMode === 'adventure' && blue.game.gameMode === 'adventure',
       'cross-world recovery match starts', 45000)
