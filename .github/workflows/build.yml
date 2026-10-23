@@ -89,7 +89,8 @@ jobs:
             kill "$SERVER_PID" || true
             exit 1
           fi
-          grep -q "CubeCraftTowerDefence shell" /tmp/ctd-server-1.log
+          grep -Eq "CubeCraftTowerDefence [0-9][^ ]* enabled;" /tmp/ctd-server-1.log
+          grep -q "Managed Farm protection PASS:" /tmp/ctd-server-1.log
           grep -q "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED" /tmp/ctd-server-1.log
           grep -q "Managed Farm install smoke PASS: CREATED" /tmp/ctd-server-1.log
           echo "ctdstatus" >&3
@@ -129,7 +130,8 @@ jobs:
             kill "$SERVER_PID" || true
             exit 1
           fi
-          grep -q "CubeCraftTowerDefence shell" /tmp/ctd-server-2.log
+          grep -Eq "CubeCraftTowerDefence [0-9][^ ]* enabled;" /tmp/ctd-server-2.log
+          grep -q "Managed Farm protection PASS:" /tmp/ctd-server-2.log
           grep -q "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED" /tmp/ctd-server-2.log
           grep -q "Managed Farm install smoke PASS: RELOADED" /tmp/ctd-server-2.log
           echo "ctdstatus" >&3
