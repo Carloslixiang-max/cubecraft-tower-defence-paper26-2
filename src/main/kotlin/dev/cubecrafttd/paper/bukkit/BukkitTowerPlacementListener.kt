@@ -37,7 +37,8 @@ class BukkitTowerPlacementListener(
         if (!BukkitMatchInteractPolicy.acceptsBlockRightClick(event)) return
         val block=event.clickedBlock ?: return
         val player=event.player
-        if (!controller.isPlayerInArenaWorld(player.uniqueId, block.world.uid)) return
+        if (block.world.uid != player.world.uid ||
+            !controller.isPlayerInArenaWorld(player.uniqueId, player.world.uid)) return
         val pos=BlockPos(block.x,block.y,block.z)
 
         // Existing tower interaction is handled earlier by the tower listener.
