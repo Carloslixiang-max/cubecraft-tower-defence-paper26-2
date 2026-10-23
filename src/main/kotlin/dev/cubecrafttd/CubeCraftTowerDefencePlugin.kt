@@ -678,7 +678,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             stage4Gate.markCleanShutdown(clean)
         }
         logger.info(
-            "CubeCraftTowerDefence shell v122 disabled; " +
+            "CubeCraftTowerDefence ${pluginMeta.version} disabled; " +
                 "clean=$clean all arena contexts closed"
         )
     }
@@ -712,7 +712,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         "ctdstatus" -> {
             sender.sendMessage(
-                "CubeCraft TD: stage=engineering-playtest-shell-v122, " +
+                "CubeCraft TD: version=${pluginMeta.version}, stage=engineering-playtest, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
                     "queueTeamSize=${if(::teamQueue.isInitialized) teamQueue.teamSize else 0}, " +

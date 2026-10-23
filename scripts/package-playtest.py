@@ -169,7 +169,7 @@ def main():
     paper_builds = []
     for name, raw in logs.items():
         log = raw.decode()
-        if "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED" not in log or not re.search(r"shell v\d+ disabled; clean=true", log):
+        if "paperAdapters=LIVE_ADAPTER_SMOKE_PASSED" not in log or not re.search(r"(?:shell v\d+|\d+\.\d+\.\d+(?:[-+][\w.-]+)?) disabled; clean=true", log):
             raise ValueError(f"Missing clean Paper adapter smoke evidence in {name}")
         build = re.search(r"Loading Paper 26\.2-(\d+)-", log)
         if not build:
