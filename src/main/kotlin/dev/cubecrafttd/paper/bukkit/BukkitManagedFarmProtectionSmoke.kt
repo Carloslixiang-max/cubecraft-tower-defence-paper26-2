@@ -50,7 +50,7 @@ object BukkitManagedFarmProtectionSmoke {
                 val flow=BlockFromToEvent(block,block.getRelative(BlockFace.EAST))
                 plugin.server.pluginManager.callEvent(flow)
                 check(flow.isCancelled==blocked) { "Fluid isolation failed" }
-                val physics=BlockPhysicsEvent(block,Material.STONE)
+                val physics=BlockPhysicsEvent(block,Material.STONE.createBlockData())
                 plugin.server.pluginManager.callEvent(physics)
                 check(physics.isCancelled==blocked) { "Physics isolation failed" }
                 val burn=BlockBurnEvent(block,block)
