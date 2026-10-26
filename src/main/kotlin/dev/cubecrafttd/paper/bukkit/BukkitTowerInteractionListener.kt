@@ -57,11 +57,11 @@ class BukkitTowerInteractionListener(
                         tower
                     )
             }.onSuccess {
-                player.sendMessage(
+                player.sendTdMessage(
                     "Tower ${tower.value} upgraded."
                 )
             }.onFailure {
-                player.sendMessage(
+                player.sendTdMessage(
                     "Tower upgrade ERROR: " +
                         "${it.javaClass.simpleName}: ${it.message}"
                 )

@@ -13,6 +13,6 @@ class BukkitActionBarPort(
         text: String
     ) {
         server.getPlayer(playerUuid)
-            ?.sendActionBar(Component.text(text))
+            ?.sendActionBar(Component.text(BukkitTdText.text(text)))
     }
 }

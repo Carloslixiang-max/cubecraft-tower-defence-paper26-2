@@ -76,7 +76,10 @@ class BukkitPlayerStateAdapter(
         p.saturation = 20f
         p.exhaustion = 0f
         p.isFlying = false
-        p.allowFlight = false
+        // TD navigation supports double-jump flight in Adventure mode. The exact
+        // pre-match flight permission, active flag and speed remain in the snapshot.
+        p.allowFlight = true
+        p.flySpeed = 0.1f
         p.velocity = org.bukkit.util.Vector(0,0,0)
         p.level = 0
         p.exp = 0f

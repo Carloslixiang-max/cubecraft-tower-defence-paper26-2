@@ -12,7 +12,7 @@ class BukkitTowerVisualOrigins(private val models: TowerBodyDefinitionProvider) 
     fun origin(tower: TowerRuntimeState): Vec3 {
         val body = models.definition(tower.identity.towerId, tower.upgrade.level,
             tower.upgrade.path ?: TowerPath.TOP)
-        val height = heights.getOrPut(body.bodyRevision) { body.blocks.maxOf { it.pos.y } + 1.25 }
+        val height = heights.getOrPut(body.bodyRevision) { body.blocks.maxOf { it.pos.y } + 2.25 }
         val base = tower.geometry.baseOrigin
         return Vec3(base.x + 0.5, base.y + height, base.z + 0.5)
     }

@@ -13,11 +13,13 @@ object BukkitMenuItemProjection {
         item.editMeta { meta ->
             val style = menu.slotTextStyles[slot]
             menu.slotDisplayNames[slot]?.let { name ->
-                meta.displayName(BukkitMenuText.render(name, style?.nameColor, style?.nameBoldSpans.orEmpty()))
+                meta.displayName(BukkitMenuText.render(BukkitTdText.text(name), style?.nameColor,
+                    dev.cubecrafttd.ui.TdText.spans(name, style?.nameBoldSpans.orEmpty(), BukkitTdText.language)))
             }
             menu.slotLore[slot]?.let { lore ->
                 meta.lore(lore.mapIndexed { index, text ->
-                    BukkitMenuText.render(text, style?.loreColors?.get(index), style?.loreBoldSpans?.get(index).orEmpty())
+                    BukkitMenuText.render(BukkitTdText.text(text), style?.loreColors?.get(index),
+                        dev.cubecrafttd.ui.TdText.spans(text, style?.loreBoldSpans?.get(index).orEmpty(), BukkitTdText.language))
                 })
             }
         }

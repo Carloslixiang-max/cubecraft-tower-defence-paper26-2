@@ -27,6 +27,6 @@ object HistoricalMatchSidebarProjector {
             title="Tower Defence",
             coins=coins,
             exp=exp,
-            footer="play.cubecraft.net"
+            footer=""
         )
 }

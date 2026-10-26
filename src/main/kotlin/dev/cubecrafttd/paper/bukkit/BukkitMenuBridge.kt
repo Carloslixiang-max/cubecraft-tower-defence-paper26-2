@@ -122,7 +122,7 @@ class BukkitMenuBridge(
                 null,
                 menu.size,
                 Component.text(
-                    menu.title
+                    BukkitTdText.text(menu.title)
                 )
             )
         // Opening a replacement inventory closes the previous view and may fire

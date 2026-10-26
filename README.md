@@ -1,3 +1,9 @@
+## v125 player presentation and placement fixes
+
+Simplified Chinese is the default player language, including existing configurations without a `language` key. Set `language: en_US` and restart normally to retain English. Command tokens and internal action IDs remain unchanged. Console evidence remains English. The sidebar server address has been removed.
+
+Adventure-mode match preparation enables double-jump flight at the standard speed; the recovery snapshot restores the original flight permission, active flag and speed. Tower models now start one block above the validated placement surface, including upgrades, without moving the logical ground-level range origin.
+
 # CubeCraft Tower Defence — Paper 26.2 recreation
 
 An **unofficial, open-source reimplementation** of the classic CubeCraft Tower Defence gameplay loop for modern **Paper 26.2 / Java 25** servers.

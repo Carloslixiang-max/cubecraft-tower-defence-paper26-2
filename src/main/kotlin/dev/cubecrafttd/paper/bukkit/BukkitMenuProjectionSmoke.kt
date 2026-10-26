@@ -62,5 +62,20 @@ object BukkitMenuProjectionSmoke {
         check((plain.displayName() as TextComponent).content() == "Plain name")
         check(plain.displayName()!!.children().isEmpty())
         check((plain.lore()!![1] as TextComponent).content().isEmpty())
+        val previousLanguage = BukkitTdText.language
+        try {
+            BukkitTdText.configure("zh_CN")
+            val translated = BukkitMenuItemProjection.render(zeus, 15, renderer)
+            val saved = ItemStack.deserializeBytes(translated.serializeAsBytes()).itemMeta
+            val line = saved.lore()!![1]
+            check((line.children()[1] as TextComponent).content() == "小宙斯")
+            check(line.children()[1].decoration(TextDecoration.BOLD) == TextDecoration.State.TRUE)
+            val menu = TowerManagementMenus.mature2021(1, "Archer Tower", 3, false).toLiveView()
+            val range = BukkitMenuItemProjection.render(menu, 45, renderer).itemMeta.displayName()!!
+            check((range.children()[1] as TextComponent).content() == "开启")
+            check(range.children()[1].color() == net.kyori.adventure.text.format.NamedTextColor.GREEN)
+        } finally {
+            BukkitTdText.configure(previousLanguage.name)
+        }
     }
 }

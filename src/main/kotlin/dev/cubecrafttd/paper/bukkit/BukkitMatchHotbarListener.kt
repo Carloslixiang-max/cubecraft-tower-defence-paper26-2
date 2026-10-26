@@ -70,7 +70,7 @@ class BukkitMatchHotbarListener(
                     menuKind
                 )
         }.getOrElse {
-            player.sendMessage(
+            player.sendTdMessage(
                 "TD menu ERROR: ${it.message}"
             )
             return

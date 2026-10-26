@@ -113,9 +113,7 @@ class BukkitMatchLoadoutService(
             )
         item.editMeta {
             it.displayName(
-                Component.text(
-                    projection.displayName
-                )
+                BukkitMenuText.render(BukkitTdText.text(projection.displayName))
             )
             it.isUnbreakable=true
         }

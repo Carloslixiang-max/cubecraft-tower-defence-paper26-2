@@ -129,9 +129,12 @@ class TowerLifecycleService(
             resolvedCenter
         )
 
+        // Placement markers identify the solid floor, while model y=0 is the
+        // first visible foundation layer. Preserve the floor beneath the tower.
+        val bodyBase = resolvedCenter.copy(y = resolvedCenter.y + 1)
         // Body preflight is side-effect free and captures all target blocks.
         bodyMutation.preflightPlacement(
-            resolvedCenter,
+            bodyBase,
             command.bodyDefinition,
             command.rotation
         )
@@ -163,7 +166,7 @@ class TowerLifecycleService(
         try {
             bodyMutation.place(
                 command.towerInstanceId.value,
-                resolvedCenter,
+                bodyBase,
                 command.bodyDefinition,
                 command.rotation,
                 context.gameTick
@@ -265,7 +268,7 @@ class TowerLifecycleService(
         // No world mutation before debit.
         val base = BlockPos(
             tower.geometry.baseOrigin.x.toInt(),
-            tower.geometry.baseOrigin.y.toInt(),
+            tower.geometry.baseOrigin.y.toInt() + 1,
             tower.geometry.baseOrigin.z.toInt()
         )
 

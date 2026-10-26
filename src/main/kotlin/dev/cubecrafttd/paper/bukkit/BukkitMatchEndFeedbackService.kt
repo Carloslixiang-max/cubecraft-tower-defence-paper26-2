@@ -79,16 +79,16 @@ class BukkitMatchEndFeedbackService(
                     player.showTitle(
                         Title.title(
                             Component.text(
-                                view.title
+                                BukkitTdText.text(view.title)
                             ),
                             Component.text(
-                                view.subtitle
+                                BukkitTdText.text(view.subtitle)
                             )
                         )
                     )
                     player.sendMessage(
                         Component.text(
-                            view.chatLine
+                            BukkitTdText.text(view.chatLine)
                         )
                     )
                 }
@@ -99,8 +99,7 @@ class BukkitMatchEndFeedbackService(
                     )
                     player.sendMessage(
                         Component.text(
-                            historicalTopPlayers
-                                .heading,
+                            BukkitTdText.text(historicalTopPlayers.heading),
                             NamedTextColor.GREEN
                         )
                     )
@@ -126,7 +125,7 @@ class BukkitMatchEndFeedbackService(
 
                             val hover=
                                 Component.text(
-                                    "Towers placed: ",
+                                    BukkitTdText.text("Towers placed: "),
                                     NamedTextColor
                                         .LIGHT_PURPLE
                                 ).append(
@@ -139,7 +138,7 @@ class BukkitMatchEndFeedbackService(
                                     Component.newline()
                                 ).append(
                                     Component.text(
-                                        "Troops sent: ",
+                                        BukkitTdText.text("Troops sent: "),
                                         NamedTextColor
                                             .LIGHT_PURPLE
                                     )
@@ -153,7 +152,7 @@ class BukkitMatchEndFeedbackService(
                                     Component.newline()
                                 ).append(
                                     Component.text(
-                                        "Enemies killed: ",
+                                        BukkitTdText.text("Enemies killed: "),
                                         NamedTextColor
                                             .LIGHT_PURPLE
                                     )
@@ -169,7 +168,7 @@ class BukkitMatchEndFeedbackService(
                                     Component.newline()
                                 ).append(
                                     Component.text(
-                                        "Overall score: ",
+                                        BukkitTdText.text("Overall score: "),
                                         NamedTextColor
                                             .LIGHT_PURPLE
                                     )

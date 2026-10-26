@@ -15,8 +15,7 @@ object HistoricalMatchSidebarFixture {
             FixtureResult(
                 "historical-match-sidebar-title-and-footer",
                 view.title=="Tower Defence" &&
-                    view.footer==
-                        "play.cubecraft.net"
+                    view.footer.isEmpty()
             ),
             FixtureResult(
                 "historical-match-sidebar-coins-and-exp-lines",

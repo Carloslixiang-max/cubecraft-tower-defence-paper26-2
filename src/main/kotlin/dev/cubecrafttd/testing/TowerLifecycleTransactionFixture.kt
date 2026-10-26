@@ -144,6 +144,10 @@ object TowerLifecycleTransactionFixture {
                 correlationId = "tower-place-100"
             )
         )
+        val floorKey = BlockKey(explicitSpot.center.x, explicitSpot.center.y, explicitSpot.center.z)
+        val foundationKey = BlockKey(explicitSpot.center.x, explicitSpot.center.y + 1, explicitSpot.center.z)
+        val placedAboveFloor = world.snapshot(floorKey).blockData == "minecraft:air" &&
+            world.snapshot(foundationKey).blockData == "minecraft:stone"
         val balanceAfterPlace = ledger.balance(account)
         val placedTower =
             context.entityIndex.towersByInstanceId.getValue(
@@ -166,6 +170,8 @@ object TowerLifecycleTransactionFixture {
                 correlationId = "tower-upgrade-100-2"
             )
         )
+        val upgradedAboveFloor = world.snapshot(floorKey).blockData == "minecraft:air" &&
+            world.snapshot(foundationKey).blockData == "minecraft:cobblestone"
         val balanceAfterUpgrade = ledger.balance(account)
 
         val sell = service.sell(
@@ -268,6 +274,7 @@ object TowerLifecycleTransactionFixture {
         }
 
         return listOf(
+            FixtureResult("tower-foundation-above-surface-on-place-and-upgrade", placedAboveFloor && upgradedAboveFloor),
             FixtureResult(
                 "tower-place-debits-and-registers",
                 place.cost == 350L &&

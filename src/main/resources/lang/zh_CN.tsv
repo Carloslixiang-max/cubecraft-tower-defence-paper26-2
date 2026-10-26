@@ -1,0 +1,288 @@
+# UTF-8. Source<TAB>translation. {value} preserves user data; {value!} localizes a known UI label.
+Tower Defence	怪物塔防
+Tower builder	建造防御塔
+Select an upgrade path	选择升级路线
+Tower information	防御塔说明
+Archer Tower	弓箭塔
+Ice Tower	冰冻塔
+Mage Tower	法师塔
+Artillery Tower	火炮塔
+Sorcerer Tower	巫术塔
+Zeus Tower	宙斯塔
+Quake Tower	地震塔
+Poison Tower	毒液塔
+Necromancer Tower	死灵法师塔
+Turret Tower	炮台
+Leach Tower	汲取塔
+Tower	防御塔
+archer	弓箭塔
+ice	冰冻塔
+mage	法师塔
+artillery	火炮塔
+sorcerer	巫术塔
+zeus	宙斯
+quake	地震塔
+poison	毒液塔
+necromancer	死灵法师塔
+turret	炮台
+leach	汲取塔
+zombie	僵尸
+skeleton	骷髅
+spider	蜘蛛
+silverfish	蠹虫
+slime	史莱姆
+witch	女巫
+creeper	苦力怕
+blaze	烈焰人
+pigman	僵尸猪灵
+giant	巨人
+freeze	冰冻
+inferno	炼狱
+meteor	陨石
+speed	加速
+heal	治疗
+Mob Summoner	怪物召唤
+Troop upgrades	怪物升级
+Upgrade mobs	升级怪物
+Send selected troops	派出已选怪物
+Back to Mob Summoner	返回怪物召唤
+Bazaar	城堡商店
+Castle Bazaar	城堡商店
+Upgrade Goldmine	升级金矿
+Upgrade Sword	升级剑
+Upgrade Bow	升级弓
+Settings	设置
+Back to Settings	返回设置
+Armageddon vote (Engineering)	终局模式投票
+Edit hotbar layout	编辑快捷栏
+Change inventory layout	调整快捷栏布局
+Back to pregame voting	返回赛前投票
+Sword	剑
+Bow	弓
+SWORD	剑
+BOW	弓
+SUMMONER	怪物召唤
+CASTLE_BAZAAR	城堡商店
+SETTINGS	设置
+Tower statistics	防御塔属性
+Upgrade tower	升级防御塔
+Sell tower	出售防御塔
+Click to Disable this tower's rangefinder	点击关闭此塔的范围显示
+Click to Enable this tower's rangefinder	点击开启此塔的范围显示
+Enable	开启
+Disable	关闭
+Summons baby Zeus	召唤小宙斯
+baby Zeus	小宙斯
+Click to select path!	点击选择此路线！
+Automatically places your tower	自动将防御塔放置在
+in the centre of the selected area	所选区域的中心
+Click to enable	点击开启
+Click to disable	点击关闭
+ENABLED	已开启
+DISABLED	已关闭
+true	开启
+false	关闭
+All	全部
+Decreased	减少
+Minimal	最少
+ALL	全部
+DECREASED	减少
+MINIMAL	最少
+NONE	无
+TOP	路线 1
+BOTTOM	路线 2
+Random	随机
+RANDOM	随机
+Wither	凋零
+WITHER	凋零
+Lightning	雷电
+LIGHTNING	雷电
+Horde	怪物潮
+HORDE	怪物潮
+Normal	标准
+NORMAL	标准
+Double Income	双倍收入
+DOUBLE_INCOME	双倍收入
+DOUBLE INCOME	双倍收入
+Quick Start	快速开局
+QUICK_START	快速开局
+QUICK START	快速开局
+Random(default)	随机（默认）
+Normal(default)	标准（默认）
+Starting	即将开始
+Waiting	等待中
+RED	红队
+BLUE	蓝队
+Due to no votes.	无人投票，使用默认选项。
+Castle Health	城堡生命值
+Top players	本局最佳玩家
+Towers placed: 	建造防御塔：
+Troops sent: 	派出怪物：
+Enemies killed: 	击杀怪物：
+Overall score: 	总分：
+ENG VICTORY	胜利
+ENG DEFEAT	失败
+ENG DRAW	平局
+ENG MATCH ENDED	对局结束
+ENG match result: VICTORY	本局结果：胜利
+ENG match result: DEFEAT	本局结果：失败
+ENG match result: DRAW	本局结果：平局
+Enemy castle destroyed	敌方城堡已被摧毁
+Your castle was destroyed	己方城堡已被摧毁
+Castles finished level	双方城堡生命值相同
+40:00 timeout · higher castle health	40 分钟结束 · 己方城堡生命值更高
+40:00 timeout · lower castle health	40 分钟结束 · 己方城堡生命值更低
+Engineering test stopped	管理员已停止测试
+Engineering runtime stopped the match	运行异常，对局已停止
+No active players remained	所有玩家均已离开
+Match ended	对局结束
+Tower upgraded.	防御塔升级成功。
+Tower sold.	防御塔已出售。
+You left Tower Defence after changing worlds.	你已切换世界并退出塔防对局。
+You are not waiting for or playing a TD match.	你目前没有排队，也没有参加塔防对局。
+Left the TD start countdown; the remaining players returned to the front of the queue.	你已退出开局倒计时，其余玩家已返回队列前端。
+No arguments opens the safe pregame voting GUI.	直接输入 /ctdvote 打开赛前投票菜单。
+Armageddon: random|wither|lightning|horde	终局选项：random 随机 / wither 凋零 / lightning 雷电 / horde 怪物潮
+Pricing: normal|double|quick	经济选项：normal 标准 / double 双倍收入 / quick 快速开局
+Armageddon vote must be random/wither/lightning/horde	终局选项请输入 random、wither、lightning 或 horde。
+Pricing vote must be normal/double/quick	经济选项请输入 normal、double 或 quick。
+Vote category must be armageddon or pricing	投票类别请输入 armageddon（终局）或 pricing（经济）。
+ctdjoin requires a player	请在游戏内执行加入指令。
+ctdleave requires a player	请在游戏内执行退出指令。
+Visit requires an in-game player	请在游戏内执行参观指令。
+Leave your TD match before visiting	请先退出当前塔防对局，再参观地图。
+Wait for Managed Farm READY before visiting	Farm 地图尚未准备好。请用 /ctdinstall status 查看状态；配置后需正常重启服务器，导入完成后才能参观。
+MANAGED_FARM_NOT_READY	Farm 地图尚未就绪（MANAGED_FARM_NOT_READY），请检查 /ctdinstall status
+Farm installation requires a server restart	Farm 配置已保存，需要正常重启服务器。
+Farm is already configured; use /ctdinstall status	Farm 已配置，请用 /ctdinstall status 查看状态。
+A managed Farm already exists; use /ctdinstall status	Farm 已存在，请用 /ctdinstall status 查看状态。
+All TD arenas, queues and map operations must be idle before installation	请先让所有塔防对局、队列及地图操作结束，再执行安装。
+Verified ImprovedFarm.schem is missing or has the wrong SHA-256	缺少经过验证的 ImprovedFarm.schem，或文件校验值不符。
+Managed Farm safe build started; follow the server log	Farm 地图导入已开始，请查看服务器控制台进度。
+Only the new ctd_farm world and TD configuration were changed; config backup is in plugins/CubeCraftTowerDefence/.	Farm 世界和塔防配置已更新；原配置备份在 plugins/CubeCraftTowerDefence/。
+Preview teleport was rejected by another plugin	参观传送被其他插件拦截。
+Managed Farm is not loaded	Farm 世界尚未加载。
+NOT_INSTALLED	未安装
+CREATED	世界已创建，等待配置
+PREPARED	配置已保存，等待导入
+BUILDING	地图导入中
+BUILD_FAILED	地图导入失败
+READY	已就绪
+none	无
+Summoner draft is empty	尚未选择怪物，请先在召唤菜单里选择。
+Troop send cooldown active	派怪仍在冷却中，请稍后再试。
+Troop queue cannot accept batch	怪物队列空间不足，请稍后再试。
+Insufficient MATCH_COINS	金币不足。
+Insufficient MATCH_COINS for tower	金币不足，无法建造此塔。
+Insufficient MATCH_COINS for upgrade	金币不足，无法升级。
+Insufficient match EXP	对局经验不足。
+Tower is already max level	此塔已达到最高等级。
+No pending tower placement	建塔位置已失效，请重新右键地面。
+No tower selected	请先选择要建造的防御塔。
+No successfully placed tower is remembered for quick-place	请先成功建造一座塔，再使用潜行右键快捷建塔。
+Player not in match session	你当前没有参加塔防对局。
+Player has no active Engineering arena	你当前没有参加塔防对局。
+Actor may not upgrade this tower under current policy	你无权升级此塔。
+Actor may not sell this tower under current policy	你无权出售此塔。
+Player snapshot round-trip PASS: all captured fields restored losslessly.	玩家状态检查通过：背包、装备及其他已保存状态均已完整恢复。
+This live snapshot check must be run by an online player.	请在游戏内执行玩家状态检查。
+Snapshot check refused while you are in an active TD arena.	请先退出塔防对局，再执行玩家状态检查。
+Snapshot check refused because you already have a pending recovery snapshot.	你有尚未完成的状态恢复，请先完成恢复再测试。
+Snapshot check requires a living, awake player who is not inside a vehicle.	请保持存活、离开载具和床，再执行检查。
+Selected Normal gamemode! Due to no votes.	游戏模式：普通模式（无人投票，使用默认选项）。
+2021 control (action unresolved)	装饰按钮（暂无功能）
+2021 pane (action unresolved)	装饰玻璃板（暂无功能）
+2021 navigation control (action unresolved)	导航装饰（暂无功能）
+2021 tower-menu book (action unresolved)	说明装饰（暂无功能）
+2021 tower-menu barrier (action unresolved)	菜单装饰（暂无功能）
+# Structured templates. More-specific patterns precede generic suffixes.
+Managed Farm: world={world} phase={phase!} restart={restart!} error={error!}	Farm 安装状态：世界={world}；阶段={phase}；需要重启={restart}；错误={error}
+Managed Farm configured for {red}v{blue}. Restart this server normally; Farm builds automatically after restart. Check /ctdinstall status for READY.	Farm 已配置为 {red}v{blue}。请正常重启服务器，启动后会自动导入地图。使用 /ctdinstall status 确认已就绪。
+Already waiting for TD {mode}; position #{position}	你已在塔防 {mode} 队列中，当前位置：第 {position} 位。
+Joined TD {mode} queue at position #{position}. Start is currently blocked by {reason!}.	已加入塔防 {mode} 队列，当前位置：第 {position} 位。暂时无法开局：{reason}。
+Joined TD {mode} queue at position #{position}. Waiting players={count}. Use /ctdvote to open the pregame voting menu.	已加入塔防 {mode} 队列，当前位置：第 {position} 位，等待人数：{count}。输入 /ctdvote 打开赛前投票菜单。
+Left the TD {mode} waiting queue.	已退出塔防 {mode} 等待队列。
+Left the TD match; player state restored immediately, arenaCleaned={clean!}	已退出塔防对局，你的状态已恢复；场地清理完成：{clean}。
+Left the TD match; immediate player-state restore is still pending. Automatic online recovery retry is armed; durable journal remains authoritative. arenaCleaned={clean!}	已退出塔防，玩家状态尚在恢复中，系统会自动重试并保留恢复记录。场地清理完成：{clean}。
+Pregame Armageddon vote: {mode!} (start countdown is running)	已投票选择终局模式：{mode}（开局倒计时中）。
+Pregame Armageddon vote: {mode!} (queue position #{position})	已投票选择终局模式：{mode}（队列第 {position} 位）。
+Pregame Pricing vote: {mode!} (start countdown is running)	已投票选择经济模式：{mode}（开局倒计时中）。
+Pregame Pricing vote: {mode!} (queue position #{position})	已投票选择经济模式：{mode}（队列第 {position} 位）。
+Tower Defence is starting in {seconds} seconds.	塔防将在 {seconds} 秒后开始。
+Tower Defence is starting in {seconds} second.	塔防将在 {seconds} 秒后开始。
+Selected {mode!} armageddon mode! {reason!}	终局模式：{mode}。{reason}
+Selected {mode!} pricing! {reason!}	经济模式：{mode}。{reason}
+TD Engineering {mode} started: {arena}	塔防 {mode} 已开始！
+Tower placed: {tower!}	建造成功：{tower}。
+Tower {id} upgraded.	防御塔 #{id} 升级成功。
+AoE {potion!} purchased.	已购买范围药水：{potion}。
+AoE {potion!} committed: targets={count}, pulses={pulses}, cooldownReadyAt={tick}	已使用范围药水：{potion}，作用目标：{count} 个。
+Restart recovery evidence: passed={passed}, pendingFromPreviousProcess={previous}, pendingTotal={total}	重启恢复检查：passed={passed}，上次进程待恢复={previous}，待恢复总数={total}。
+{mob!} L{level} is not unlocked	尚未解锁 {mob} {level} 级。
+Team {team!} reached {tower!} limit {limit}	{team}的{tower}已达到数量上限（{limit}）。
+Insufficient {currency}: attempted balance {balance}	资源不足（{currency}）。
+No explicit {size} spot contains requested block	请选择己方符合尺寸的建塔区域（{size}）。
+Entire {size} footprint is not inside legal tower region	防御塔底座必须完整位于己方合法建塔区域（{size}）。
+Placement rejected: {reason!}	无法建造：{reason}
+Disable locked: requires {wins} wins	累计获胜 {wins} 场后可关闭自动居中
+Auto centre towers - {state!}	防御塔自动居中 - {state}
+Particles: {density!}	粒子数量：{density}
+Digital mob health: {state!}	显示怪物生命数值：{state}
+Damage indicators: {state!}	显示伤害数字：{state}
+In-game Point purchases: unavailable	对局内点数购买：暂不可用
+In-game Point purchases: {state!}	对局内点数购买：{state}
+Armageddon vote · {mode!}	终局投票 · {mode}
+{mode!} — {count} vote(s) (your vote) [LOCKED]	{mode} — {count} 票（你的选择）[已锁定]
+{mode!} — {count} vote(s) (your vote)	{mode} — {count} 票（你的选择）
+{mode!} — {count} vote(s) [LOCKED]	{mode} — {count} 票 [已锁定]
+{mode!} — {count} vote(s)	{mode} — {count} 票
+Tower Defence Voting · {state!}	塔防赛前投票 · {state}
+Queue #{position}	队列第 {position} 位
+Armageddon: {mode!} ✓ YOUR VOTE	终局模式：{mode} ✓ 你的选择
+Armageddon: {mode!}	终局模式：{mode}
+Pricing: {mode!} ✓ YOUR VOTE	经济模式：{mode} ✓ 你的选择
+Pricing: {mode!}	经济模式：{mode}
+TD starts in {seconds}s{roster} · A:{armageddon!} · P:{pricing!} · /ctdvote	{seconds} 秒后开始{roster} · 终局：{armageddon} · 经济：{pricing} · /ctdvote
+TD queue #{position}{roster} · A:{armageddon!} · P:{pricing!} · /ctdvote	塔防队列 #{position}{roster} · 终局：{armageddon} · 经济：{pricing} · /ctdvote
+ENG match ended: {reason!}	对局结束：{reason}
+{potion!} — buy {coins} Coins · owned {owned}	{potion} — 购买需 {coins} 金币 · 已拥有 {owned} 瓶
+{potion!} — unlock {exp} EXP	{potion} — 解锁需 {exp} 经验
+{potion!} AoE · owned {owned} (selected)	{potion}范围药水 · 已拥有 {owned} 瓶（已选择）
+{potion!} AoE · owned {owned}	{potion}范围药水 · 已拥有 {owned} 瓶
+{potion!} AoE (selected)	{potion}范围药水（已选择）
+{potion!} AoE	{potion}范围药水
+Empty hotbar slot {slot}	空快捷栏位 {slot}
+{item!} · slot {slot} (selected)	{item} · 栏位 {slot}（已选择）
+{item!} · slot {slot}	{item} · 栏位 {slot}
+{mob!} — MAX LEVEL	{mob} — 已满级
+{mob!} L{level} — {cost} EXP (available)	{mob} {level} 级 — {cost} 经验（可升级）
+{mob!} L{level} — {cost} EXP	{mob} {level} 级 — {cost} 经验
+{mob!} L{level}	{mob} {level} 级
+{mob!} rollback unavailable	{mob} 暂不可撤销升级
+{mob!} rollback	撤销{mob}升级
+{tower!} path 1	{tower} · 路线 1
+{tower!} path 2	{tower} · 路线 2
+Sword {tier}	剑 · {tier} 阶
+Bow {tier}	弓 · {tier} 阶
+{tower!} IV	{tower} IV
+{tower!} III	{tower} III
+{tower!} II	{tower} II
+{tower!} I	{tower} I
+# Context-limited error/command wrappers are intentionally last.
+Usage: {command}	用法：{command}
+ctdinstall ERROR: {reason!}	地图安装提示：{reason}
+ctdjoin ERROR: {reason!}	加入失败：{reason}
+ctdleave ERROR: {reason!}	退出失败：{reason}
+ctdvote ERROR: {reason!}	投票失败：{reason}
+Tower placement ERROR: {reason!}	建塔失败：{reason}
+Tower upgrade ERROR: {type}: {reason!}	升级失败：{reason}
+TD menu ERROR: {reason!}	菜单打开失败：{reason}
+TD navigation ERROR: {type}: {reason!}	菜单切换失败：{reason}
+TD action ERROR: {type}: {reason!}	操作失败：{reason}
+AoE target ERROR: {type}: {reason!}	药水使用失败：{reason}
+Coins	金币
+EXP	经验
+500/sec	每秒 500
+100/sec	每秒 100
+minimum	最少
+Restart recovery probe ARMED. Your exact state is durable in the TD recovery journal and you are now in temporary match-prepared state.	重启恢复测试已准备（probe ARMED），玩家状态已保存，请正常重启并重新进入服务器。

@@ -227,7 +227,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     }.onFailure { error ->
                         server.getPlayer(
                             invocation.playerUuid
-                        )?.sendMessage(
+                        )?.sendTdMessage(
                             "TD navigation ERROR: " +
                                 "${error.javaClass.simpleName}: ${error.message}"
                         )
@@ -256,13 +256,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 )
                             is dev.cubecrafttd.tower.lifecycle.TowerPlacementInteractionResult.Placed -> {
                                 player?.closeInventory()
-                                player?.sendMessage(
+                                player?.sendTdMessage(
                                     "Tower placed: ${result.result.selection.towerId}"
                                 )
                             }
                             is dev.cubecrafttd.ui.MatchMenuActionResult.PotionUsePurchased -> {
                                 player?.closeInventory()
-                                player?.sendMessage(
+                                player?.sendTdMessage(
                                     "AoE " +
                                         result.token.potionId +
                                         " purchased."
@@ -274,7 +274,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 menuBridge.open(invocation.playerUuid,
                                     liveArenaController.towerManagementMenu(invocation.playerUuid,
                                         result.receipt.towerInstanceId).toLiveView())
-                                player?.sendMessage("Tower upgraded.")
+                                player?.sendTdMessage("Tower upgraded.")
                             }
                             is dev.cubecrafttd.ui.TowerManagementActionResult.RangefinderToggled -> {
                                 val view = liveArenaController.towerManagementMenu(invocation.playerUuid,
@@ -285,7 +285,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             }
                             is dev.cubecrafttd.ui.TowerManagementActionResult.Sold -> {
                                 player?.closeInventory()
-                                player?.sendMessage("Tower sold.")
+                                player?.sendTdMessage("Tower sold.")
                             }
                             else -> {
                                 val refreshKind=
@@ -347,7 +347,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                         }
                                     }
                                 }
-                                player?.sendMessage(
+                                player?.sendTdMessage(
                                     if(
                                         result is
                                             dev.cubecrafttd.match
@@ -361,7 +361,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                             result.snapshot.resolution +
                                             " (Engineering)"
                                     } else {
-                                        "TD action: $result"
+                                        BukkitTdText.action(result)
                                     }
                                 )
                             }
@@ -370,7 +370,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         error ->
                         server.getPlayer(
                             invocation.playerUuid
-                        )?.sendMessage(
+                        )?.sendTdMessage(
                             "TD action ERROR: " +
                                 "${error.javaClass.simpleName}: ${error.message}"
                         )
@@ -454,7 +454,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }.onFailure { error ->
                             server.getPlayer(
                                 invocation.playerUuid
-                            )?.sendMessage(
+                            )?.sendTdMessage(
                                 "Pregame menu ERROR: " +
                                     (
                                         error.message
@@ -476,13 +476,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 )
                             when(result) {
                                 is BukkitPregameArmageddonVoteReport ->
-                                    player?.sendMessage(
+                                    player?.sendTdMessage(
                                         "Pregame Armageddon vote: " +
                                             result.option
                                     )
 
                                 is BukkitPregamePricingVoteReport ->
-                                    player?.sendMessage(
+                                    player?.sendTdMessage(
                                         "Pregame Pricing vote: " +
                                             result.option
                                     )
@@ -522,7 +522,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }.onFailure { error ->
                             server.getPlayer(
                                 invocation.playerUuid
-                            )?.sendMessage(
+                            )?.sendTdMessage(
                                 "Pregame menu ERROR: " +
                                     (
                                         error.message
@@ -646,6 +646,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         }
             )
         }
+        val configuredLanguage = config.getString("language") ?: "zh_CN"
+        if (dev.cubecrafttd.ui.TdLanguage.parse(configuredLanguage) == null)
+            logger.warning("Unknown TD language '$configuredLanguage'; using zh_CN")
+        BukkitTdText.configure(configuredLanguage)
+        logger.info("TD player language=${BukkitTdText.language}")
         server.scheduler.runTask(this, Runnable {
             runCatching { managedFarm.startPendingBuild(mapOperations, mapBindingConfig) }
                 .onFailure { logger.severe("Managed Farm build BLOCKED: ${it.message}") }
@@ -711,7 +716,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
 
         "ctdstatus" -> {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "CubeCraft TD: version=${pluginMeta.version}, stage=engineering-playtest, " +
                     "enabled=$isEnabled, activeArenas=${arenaService.contexts().size}, " +
                     "queuedPlayers=${if(::teamQueue.isInitialized) teamQueue.queuedPlayerCount() else 0}, " +
@@ -763,17 +768,17 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         stage4
                     )
 
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "CubeCraft TD Stage-4 core: " +
                     stage4.summary()
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "CubeCraft TD full real-server certification: certified=" +
                     fullCertified +
                     " remaining=" +
                     remaining.size
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 " Queue evidence: join=" +
                     stage4.queueJoinObserved +
                     " hud=" +
@@ -787,13 +792,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     " activeLeave=" +
                     stage4.queueActiveLeaveObserved
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 " Departure evidence: reconnectRestore=" +
                     stage4.departureReconnectObserved +
                     " teammateTakeover=" +
                     stage4.departedOwnerTeammateTakeoverObserved
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 " UI evidence: builder=" +
                     stage4.uiTowerBuilderObserved +
                     " pathSelector=" +
@@ -805,7 +810,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     " inventoryLayout=" +
                     stage4.uiInventoryLayoutObserved
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 " Recovery/world evidence: snapshotRoundTrip=" +
                     stage4.playerSnapshotRoundTripPassed +
                     " restartRecovery=" +
@@ -821,7 +826,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "/2"
             )
             remaining.forEach {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     " LIVE-GATE PENDING: " +
                         it
                 )
@@ -837,14 +842,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     ignoreCase=true
                 )
             ) {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Usage: /ctdreuse status"
                 )
             } else {
                 val reuse=
                     liveArenaController
                         .farmReuseStatus()
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Farm reuse gate: " +
                         reuse.summary()
                 )
@@ -852,14 +857,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     reuse.hardTowerConflictKeys
                         .isNotEmpty()
                 ) {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Hard tower-body residue requires a verified map repair/reset before this gate may be cleared."
                     )
                 }
                 if(
                     reuse.uncleanRestartSuspectedResidue
                 ) {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Farm world integrity is unknown (for example after an unclean restart or failed start cleanup). Run the verified Farm reset; it will remove persistently-tagged TD entities in the Farm volume and then verify the schematic before reuse is unlocked."
                     )
                 }
@@ -867,7 +872,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     reuse.liveTrackedEntityResidue
                         .isNotEmpty()
                 ) {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Live tracked-entity residue UUIDs: " +
                             reuse.liveTrackedEntityResidue
                                 .joinToString()
@@ -968,7 +973,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             sender as?
                 org.bukkit.entity.Player
                 ?: run {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "ctdvote requires a player"
                     )
                     return
@@ -987,7 +992,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         menu.toLiveView()
                     )
             }.onFailure { error ->
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "ctdvote ERROR: " +
                         (
                             error.message
@@ -1000,16 +1005,16 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
 
         if(args.size!=2) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdvote [<armageddon|pricing> <option>]"
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "No arguments opens the safe pregame voting GUI."
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Armageddon: random|wither|lightning|horde"
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Pricing: normal|double|quick"
             )
             return
@@ -1024,7 +1029,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 args[1].uppercase()
                             )
                     }.getOrElse {
-                        sender.sendMessage(
+                        sender.sendTdMessage(
                             "Armageddon vote must be random/wither/lightning/horde"
                         )
                         return
@@ -1037,7 +1042,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             option
                         )
                 }.onSuccess { report ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Pregame Armageddon vote: " +
                             report.option +
                             if(report.countdownRunning)
@@ -1048,7 +1053,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     ")"
                     )
                 }.onFailure { error ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "ctdvote ERROR: " +
                             (
                                 error.message
@@ -1079,7 +1084,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             HistoricalPregamePricingVoteOption
                                 .QUICK_START
                         else -> {
-                            sender.sendMessage(
+                            sender.sendTdMessage(
                                 "Pricing vote must be normal/double/quick"
                             )
                             return
@@ -1093,7 +1098,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                             option
                         )
                 }.onSuccess { report ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Pregame Pricing vote: " +
                             report.option +
                             if(report.countdownRunning)
@@ -1104,7 +1109,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     ")"
                     )
                 }.onFailure { error ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "ctdvote ERROR: " +
                             (
                                 error.message
@@ -1116,7 +1121,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             }
 
             else -> {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Vote category must be armageddon or pricing"
                 )
             }
@@ -1128,7 +1133,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         args: List<String>
     ) {
         if(args.isNotEmpty()) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdjoin"
             )
             return
@@ -1138,7 +1143,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             sender as?
                 org.bukkit.entity.Player
                 ?: run {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "ctdjoin requires a player"
                     )
                     return
@@ -1151,13 +1156,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }.onSuccess { report ->
             when {
                 !report.added ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Already waiting for TD ${teamQueue.matchLabel}; position #" +
                             report.position
                     )
 
                 report.blockingCode!=null ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Joined TD ${teamQueue.matchLabel} queue at position #" +
                             report.position +
                             ". Start is currently blocked by " +
@@ -1166,7 +1171,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     )
 
                 else ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Joined TD ${teamQueue.matchLabel} queue at position #" +
                             report.position +
                             ". Waiting players=" +
@@ -1175,7 +1180,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     )
             }
         }.onFailure { error ->
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "ctdjoin ERROR: " +
                     (
                         error.message
@@ -1191,7 +1196,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         args: List<String>
     ) {
         if(args.isNotEmpty()) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdleave"
             )
             return
@@ -1201,7 +1206,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             sender as?
                 org.bukkit.entity.Player
                 ?: run {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "ctdleave requires a player"
                     )
                     return
@@ -1214,17 +1219,17 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }.onSuccess { report ->
             when {
                 report.removedFromWaiting ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Left the TD ${teamQueue.matchLabel} waiting queue."
                     )
 
                 report.cancelledStartCountdown ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Left the TD start countdown; the remaining players returned to the front of the queue."
                     )
 
                 report.leftActiveMatch ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         if(report.restoredNow) {
                             "Left the TD match; player state restored immediately, arenaCleaned=" +
                                 report.arenaCleaned
@@ -1237,12 +1242,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     )
 
                 else ->
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "You are not waiting for or playing a TD match."
                     )
             }
         }.onFailure { error ->
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "ctdleave ERROR: " +
                     (
                         error.message
@@ -1256,7 +1261,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     private fun runFarmMapCheck(sender: CommandSender) {
         val file = File(dataFolder, "maps/ImprovedFarm.schem")
         if (!file.isFile) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Missing ${file.path}. Put the verified ImprovedFarm.schem there; " +
                     "the plugin does not bundle or silently substitute a map asset."
             )
@@ -1283,7 +1288,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 results
             )
         } catch (t: Throwable) {
-            sender.sendMessage("Farm map check ERROR: ${t.javaClass.simpleName}: ${t.message}")
+            sender.sendTdMessage("Farm map check ERROR: ${t.javaClass.simpleName}: ${t.message}")
             logger.warning("Farm map check failed: ${t.stackTraceToString()}")
         }
     }
@@ -1302,14 +1307,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 ) == true
         ) {
             if(args.size>2) {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Usage: /ctdperf reset [arenaId]"
                 )
                 return
             }
             val arenaId=args.getOrNull(1)
             val count=liveArenaController.resetPerformance(arenaId)
-            sender.sendMessage("CubeCraft TD profiler reset: arenas=" + count)
+            sender.sendTdMessage("CubeCraft TD profiler reset: arenas=" + count)
             return
         }
 
@@ -1321,17 +1326,17 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 ) == true
         ) {
             if(args.size>2) {
-                sender.sendMessage("Usage: /ctdperf gate [arenaId]")
+                sender.sendTdMessage("Usage: /ctdperf gate [arenaId]")
                 return
             }
             val snapshots=liveArenaController.performanceSnapshots(args.getOrNull(1))
             if(snapshots.isEmpty()) {
-                sender.sendMessage("CubeCraft TD performance gate: no matching active arena.")
+                sender.sendTdMessage("CubeCraft TD performance gate: no matching active arena.")
                 return
             }
 
             val policy=EngineeringArenaPerformanceGate.DEFAULT_POLICY
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "TD Engineering 60+ tower gate: requires >=" +
                     policy.minimumTowerCount +
                     " towers, >=" +
@@ -1352,7 +1357,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             }
 
             results.forEach { (snapshot,result) ->
-                sender.sendMessage(
+                sender.sendTdMessage(
                     " TD stress " + snapshot.arenaId +
                         ": status=" + result.status +
                         " towers=" + result.towerCount +
@@ -1362,7 +1367,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         " slow>=50ms=" + result.slowTicksOver50ms
                 )
                 result.reasons.forEach { reason ->
-                    sender.sendMessage("  " + reason)
+                    sender.sendTdMessage("  " + reason)
                 }
             }
 
@@ -1372,17 +1377,17 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             when {
                 readyResults.any { it.status==ArenaPerformanceGateStatus.FAIL } -> {
                     stage4Gate.recordTowerStress60(false)
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "TD 60+ tower live evidence: FAIL recorded. Fix the regression, reset the profiler, then rerun a sustained real-server sample."
                     )
                 }
                 readyResults.any { it.status==ArenaPerformanceGateStatus.PASS } -> {
                     stage4Gate.recordTowerStress60(true)
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "TD 60+ tower live evidence: PASS recorded in Stage-4."
                     )
                 }
-                else -> sender.sendMessage(
+                else -> sender.sendTdMessage(
                     "TD 60+ tower live evidence: NOT READY; Stage-4 evidence was not changed."
                 )
             }
@@ -1390,7 +1395,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         }
 
         if(args.size>1) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdperf [arenaId|reset [arenaId]|gate [arenaId]]"
             )
             return
@@ -1398,7 +1403,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
 
         val snapshots=liveArenaController.performanceSnapshots(args.firstOrNull())
         if(snapshots.isEmpty()) {
-            sender.sendMessage("CubeCraft TD profiler: no matching active arena.")
+            sender.sendTdMessage("CubeCraft TD profiler: no matching active arena.")
             return
         }
 
@@ -1407,7 +1412,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         snapshots.forEach { snapshot ->
             val live=snapshot.liveTick
             val core=snapshot.coreTick
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "TD perf " + snapshot.arenaId +
                     ": tick=" + snapshot.gameTick +
                     " towers=" + snapshot.towerCount +
@@ -1416,14 +1421,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     " displays=" + snapshot.transientDisplayCount +
                     " projectiles=" + snapshot.projectileCount
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 " live us last/avg/max=" + micros(live.lastNanos) +
                     "/" + micros(live.averageNanos) +
                     "/" + micros(live.maxNanos) +
                     " slow>=50ms=" + live.slowTicksOver50ms +
                     "/" + live.ticks
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 " core us last/avg/max=" + micros(core.lastNanos) +
                     "/" + micros(core.averageNanos) +
                     "/" + micros(core.maxNanos) +
@@ -1431,7 +1436,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "/" + core.ticks
             )
             core.phases.forEach { (id,phase) ->
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "  " + id +
                         " us last/avg/max=" + micros(phase.lastNanos) +
                         "/" + micros(phase.averageNanos) +
@@ -1447,7 +1452,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         args: List<String>
     ) {
         if(args.size>1) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdsnapshotcheck [restart-arm|restart-status]"
             )
             return
@@ -1461,7 +1466,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         if(mode=="restart-status") {
             val status=
                 stage4Gate.status()
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Restart recovery evidence: passed=" +
                     status.restartRecoveryPassed +
                     ", pendingFromPreviousProcess=" +
@@ -1478,7 +1483,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             mode!="roundtrip" &&
             mode!="restart-arm"
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdsnapshotcheck [restart-arm|restart-status]"
             )
             return
@@ -1488,7 +1493,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             sender as?
                 org.bukkit.entity.Player
         if(player==null) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "This live snapshot check must be run by an online player."
             )
             return
@@ -1502,7 +1507,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             liveArenaController
                 .isActivePlayer(uuid)
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Snapshot check refused while you are in an active TD arena."
             )
             return
@@ -1512,7 +1517,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 recoveryCoordinator
                     .pending()
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Snapshot check refused because you already have a pending recovery snapshot."
             )
             return
@@ -1522,7 +1527,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             player.isInsideVehicle ||
             player.isSleeping
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Snapshot check requires a living, awake player who is not inside a vehicle."
             )
             return
@@ -1539,14 +1544,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 recoveryListener.deferUntilNextProcess(uuid)
                 stage4Gate
                     .beginRestartRecoveryProbe()
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Restart recovery probe ARMED. Your exact state is durable in the TD recovery journal and you are now in temporary match-prepared state."
                 )
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Restart the server now, then reconnect. The plugin restores and compares your state before deleting the journal. Check with /ctdsnapshotcheck restart-status."
                 )
             }.onFailure { error ->
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Restart recovery arm ERROR: " +
                         error.javaClass.simpleName +
                         ": " +
@@ -1569,11 +1574,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     report.passed
                 )
             if(report.passed) {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Player snapshot round-trip PASS: all captured fields restored losslessly."
                 )
             } else {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Player snapshot round-trip FAIL: " +
                         report.mismatches
                             .joinToString()
@@ -1584,7 +1589,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 .recordPlayerSnapshotRoundTrip(
                     false
                 )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Player snapshot round-trip ERROR: " +
                     error.javaClass.simpleName +
                     ": " +
@@ -1601,11 +1606,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         sender: CommandSender
     ) {
         val report=readinessService.inspect()
-        sender.sendMessage(
+        sender.sendTdMessage(
             "CubeCraft TD readiness: ${report.summary()}"
         )
         report.issues.forEach {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "${it.severity}: ${it.code} — ${it.detail}"
             )
         }
@@ -1616,7 +1621,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
     ) {
         try {
             val p=mapOperations.plan()
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm plan PASS: world=${p.worldName} " +
                     "uid=${p.worldUid} origin=${p.origin} " +
                     "dims=${p.dimensions} " +
@@ -1627,7 +1632,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "sha256=${p.sha256}"
             )
         } catch(t:Throwable) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm plan ERROR: ${t.javaClass.simpleName}: ${t.message}"
             )
         }
@@ -1641,7 +1646,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         args: List<String>
     ) {
         if(args.size!=1) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdarmageddonfallbacks <wither|lightning|horde>"
             )
             return
@@ -1653,7 +1658,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     args[0].uppercase()
                 )
             } catch(_: IllegalArgumentException) {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Armageddon type must be wither/lightning/horde"
                 )
                 return
@@ -1664,11 +1669,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 .validate(
                     type,fallbackConfig
                 )
-        sender.sendMessage(
+        sender.sendTdMessage(
             "$type Armageddon fallback: missing=${missing.size}"
         )
         missing.forEach {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "BLOCKING ${it.key} — ${it.reason}"
             )
         }
@@ -1693,19 +1698,19 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         .BLOCKS_MECHANIC
             }
 
-        sender.sendMessage(
+        sender.sendTdMessage(
             "CubeCraft TD fallback completeness: " +
                 "blocking=${blocking.size}, " +
                 "warnings=${warnings.size}"
         )
 
         blocking.forEach {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "BLOCKING ${it.key} — ${it.reason}"
             )
         }
         warnings.forEach {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "WARNING ${it.key} — ${it.reason}"
             )
         }
@@ -1721,11 +1726,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "PAPER_LIVE_GATE_NOT_CERTIFIED"
             }
         if(nonLiveBlockers.isNotEmpty()) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Composition preflight BLOCKED before construction:"
             )
             nonLiveBlockers.forEach {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "${it.code}: ${it.detail}"
                 )
             }
@@ -1739,7 +1744,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     mapBindingConfig,
                     fallbackConfig
                 ).run()
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Composition preflight PASS: " +
                     "world=${r.worldName}, " +
                     "map=${r.mapRuntime.mapId}, " +
@@ -1760,12 +1765,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     "chainPolicy=${r.gameplay.chainTargetPolicy.value}, " +
                     "towerPriority=${r.gameplay.towerDefaultTargetPriority.value}"
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Paper live certification is still separate: " +
                     stage4Gate.status().summary()
             )
         } catch(t:Throwable) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Composition preflight ERROR: " +
                     "${t.javaClass.simpleName}: ${t.message}"
             )
@@ -1785,14 +1790,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             args[0].lowercase()!=
                 expectedPrefix
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Safe paste requires the verified SHA prefix: " +
                     "/ctdpastefarm $expectedPrefix"
             )
             return
         }
         if(arenaService.contexts().isNotEmpty()) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Refusing map paste while any arena context exists."
             )
             return
@@ -1823,12 +1828,12 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     )
                 }
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm safe paste started. Destination must be entirely AIR; " +
                     "any preflight conflict aborts before mutation."
             )
         } catch(t:Throwable) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm paste ERROR: ${t.javaClass.simpleName}: ${t.message}"
             )
         }
@@ -1848,7 +1853,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             args[0].lowercase()!=
                 expectedPrefix
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Verified reset requires the Farm SHA prefix: /ctdresetfarm " +
                     expectedPrefix
             )
@@ -1859,7 +1864,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             arenaService.contexts()
                 .isNotEmpty()
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Refusing Farm reset while any TD arena context exists."
             )
             return
@@ -1869,14 +1874,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             mapOperations
                 .hasActivePaste()
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Refusing Farm reset while another Farm map operation is active."
             )
             return
         }
 
         runCatching { managedFarm.verifyBindingOwnership(mapBindingConfig) }.onFailure {
-            sender.sendMessage("Farm reset refused: ${it.message}")
+            sender.sendTdMessage("Farm reset refused: ${it.message}")
             return
         }
 
@@ -1885,7 +1890,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 .farmReuseStatus()
 
         if(!before.blocked) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm reuse gate is already clean; refusing an unnecessary overwrite reset."
             )
             return
@@ -1895,7 +1900,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             before.liveTrackedEntityResidue
                 .isNotEmpty()
         ) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm reset cannot clear live tracked entities. Wait for/remove residue first; remaining=" +
                     before.liveTrackedEntityResidue.size
             )
@@ -1915,7 +1920,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         if(evidenceArmed.isFailure) {
             val error=
                 evidenceArmed.exceptionOrNull()
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm reset refused because Stage-4 reset evidence could not be persisted: " +
                     error?.javaClass?.simpleName +
                     ": " +
@@ -1968,14 +1973,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     ": " +
                                     evidenceError?.message
                             )
-                            sender.sendMessage(
+                            sender.sendTdMessage(
                                 "Farm verified reset COMPLETE and reuse gate is clean, but Stage-4 reset evidence was not durably recorded; check the server log."
                             )
                         } else {
                             logger.info(
                                 "Farm verified reset complete; reuse gate cleared and Stage-4 reset evidence recorded"
                             )
-                            sender.sendMessage(
+                            sender.sendTdMessage(
                                 "Farm verified reset COMPLETE; reuse gate is clean and live reset evidence PASS was recorded."
                             )
                         }
@@ -2002,13 +2007,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 ": " +
                                 error.message
                         )
-                        sender.sendMessage(
+                        sender.sendTdMessage(
                             "Farm verified reset FAILED; reuse gate remains locked. Retry /ctdresetfarm after checking the server log."
                         )
                     }
                 )
 
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm verified reset started: full scan -> apply differences -> full verify. " +
                     "The persistent reuse gate stays locked until verification completes."
             )
@@ -2017,7 +2022,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 liveArenaController
                     .abortFarmVerifiedResetBeforeMutation()
             }
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Farm reset ERROR before scheduling: " +
                     t.javaClass.simpleName +
                     ": " +
@@ -2031,7 +2036,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         args: List<String>
     ) {
         if (args.isEmpty()) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdtest <fixtures|mapcheck|invariants|spawnmob|tower|armageddon|forceend> ..."
             )
             return
@@ -2044,24 +2049,24 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 AdminTestIntent.Invariants -> {
                     val contexts = arenaService.contexts()
                     if (contexts.isEmpty()) {
-                        sender.sendMessage("No active arenas; invariant report has nothing to inspect.")
+                        sender.sendTdMessage("No active arenas; invariant report has nothing to inspect.")
                     } else {
                         contexts.forEach { context ->
                             val r = dev.cubecrafttd.arena.ArenaRuntimeInvariantValidator.validate(context)
-                            sender.sendMessage(
+                            sender.sendTdMessage(
                                 "arena=${context.arenaId.value} invariants=${if(r.valid) "PASS" else "FAIL"} issues=${r.issues.size}"
                             )
-                            r.issues.forEach { sender.sendMessage("${it.code}: ${it.detail}") }
+                            r.issues.forEach { sender.sendTdMessage("${it.code}: ${it.detail}") }
                         }
                     }
                 }
-                else -> sender.sendMessage(
+                else -> sender.sendTdMessage(
                     "Parsed ${intent::class.simpleName}, but mutating test execution requires an active Paper arena composition root. " +
                         "The parser/binding is ready; live execution stays disabled until Stage-4 Java25/Paper26.2 gate passes."
                 )
             }
         } catch (t: Throwable) {
-            sender.sendMessage("ctdtest ERROR: ${t.message}")
+            sender.sendTdMessage("ctdtest ERROR: ${t.message}")
         }
     }
 
@@ -2073,7 +2078,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             when (args.firstOrNull()) {
                 "status" -> {
                     require(args.size == 1) { usage }
-                    sender.sendMessage(managedFarm.status())
+                    sender.sendTdMessage(managedFarm.status())
                 }
                 "visit" -> {
                     require(args.size == 1) { usage }
@@ -2088,7 +2093,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     if (args[0] == "build") {
                         require(args.size == 1) { usage }
                         managedFarm.retryBuild(mapOperations, mapBindingConfig)
-                        sender.sendMessage("Managed Farm safe build started; follow the server log")
+                        sender.sendTdMessage("Managed Farm safe build started; follow the server log")
                     } else {
                         require(args.size in 1..2) { usage }
                         val teamSize = if (args.size == 1) 6 else args[1].toIntOrNull() ?: error(usage)
@@ -2099,14 +2104,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         BukkitTowerBodyCatalogLoader.loadBundled(this, true)
                         if (args[0] == "create") managedFarm.createEmpty()
                         managedFarm.configure(teamSize)
-                        sender.sendMessage("Managed Farm configured for ${teamSize}v${teamSize}. Restart this server normally; Farm builds automatically after restart. Check /ctdinstall status for READY.")
-                        sender.sendMessage("Only the new ctd_farm world and TD configuration were changed; config backup is in plugins/CubeCraftTowerDefence/.")
+                        sender.sendTdMessage("Managed Farm configured for ${teamSize}v${teamSize}. Restart this server normally; Farm builds automatically after restart. Check /ctdinstall status for READY.")
+                        sender.sendTdMessage("Only the new ctd_farm world and TD configuration were changed; config backup is in plugins/CubeCraftTowerDefence/.")
                     }
                 }
-                else -> sender.sendMessage(usage)
+                else -> sender.sendTdMessage(usage)
             }
         } catch (t: Throwable) {
-            sender.sendMessage("ctdinstall ERROR: ${t.message}")
+            sender.sendTdMessage("ctdinstall ERROR: ${t.message}")
             logger.warning("Farm installation: ${t.javaClass.simpleName}: ${t.message}")
         }
     }
@@ -2118,21 +2123,21 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         val request=try {
             EngineeringPlaytestSetupRequest.parse(args)
         } catch(t: IllegalArgumentException) {
-            sender.sendMessage(t.message ?: EngineeringPlaytestSetupRequest.USAGE)
+            sender.sendTdMessage(t.message ?: EngineeringPlaytestSetupRequest.USAGE)
             return
         } catch(t: IllegalStateException) {
-            sender.sendMessage(t.message ?: EngineeringPlaytestSetupRequest.USAGE)
+            sender.sendTdMessage(t.message ?: EngineeringPlaytestSetupRequest.USAGE)
             return
         }
 
         if(arenaService.contexts().isNotEmpty() || teamQueue.queuedPlayerCount() > 0) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Stop all TD arenas and empty the TD queue before changing the playtest profile."
             )
             return
         }
         if(mapOperations.hasActivePaste()) {
-            sender.sendMessage("Wait for the active Farm paste/reset before changing the playtest profile.")
+            sender.sendTdMessage("Wait for the active Farm paste/reset before changing the playtest profile.")
             return
         }
 
@@ -2142,8 +2147,8 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                 EngineeringPlaytestSetupRequest.StandingPlayer -> {
                     val player=sender as? org.bukkit.entity.Player
                     if(player==null) {
-                        sender.sendMessage("Console setup requires an explicit world and schematic origin.")
-                        sender.sendMessage(EngineeringPlaytestSetupRequest.USAGE)
+                        sender.sendTdMessage("Console setup requires an explicit world and schematic origin.")
+                        sender.sendTdMessage(EngineeringPlaytestSetupRequest.USAGE)
                         return
                     }
                     configurator.apply(player)
@@ -2154,26 +2159,26 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     configurator.apply(world, request.origin)
                 }
             }
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Engineering playtest profile saved: " +
                     r.profileId
             )
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "world=" + r.worldName +
                     " origin=" + r.origin +
                     " redRoute=" + r.redRoute +
                     " blueRoute=" + r.blueRoute
             )
             r.configBackup?.let {
-                sender.sendMessage(
+                sender.sendTdMessage(
                     "Strict config backup: " + it
                 )
             }
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "RESTART THE SERVER now. Then run /ctdmapcheck, /ctdpastefarm 28d24136afe8, /ctdpreflight, and /ctdlivetest start <arenaId> <redPlayer> <bluePlayer> wither."
             )
         } catch(t:Throwable) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "ctdplaytestsetup ERROR: " +
                     t.javaClass.simpleName +
                     ": " + t.message
@@ -2193,14 +2198,14 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
             sender as?
                 org.bukkit.entity.Player
                 ?: run {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "ctdmenu requires a player"
                     )
                     return
                 }
 
         if(args.size!=1) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdmenu <builder3|builder5|summoner|progression|bazaar|settings|armageddon>"
             )
             return
@@ -2228,13 +2233,13 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                 args[0]
                             )
                     }.getOrElse {
-                        sender.sendMessage(
+                        sender.sendTdMessage(
                             "Dynamic menu ERROR: ${it.message}"
                         )
                         return
                     }
                 else -> {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Unknown menu. Use builder3, builder5, summoner, progression, bazaar, settings, or armageddon."
                     )
                     return
@@ -2252,7 +2257,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         args: List<String>
     ) {
         if(args.isEmpty()) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "Usage: /ctdlivetest <start <arenaId> <redPlayer> <bluePlayer> <wither|lightning|horde>|teamstart <arenaId> <red1,...,red6> <blue1,...,blue6> <wither|lightning|horde>|stop <arenaId>|status>"
             )
             return
@@ -2261,7 +2266,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         try {
             when(args[0].lowercase()) {
                 "status" -> {
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Live test arenas: " +
                             liveArenaController
                                 .activeArenaIds()
@@ -2307,7 +2312,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     args[4].uppercase()
                                 )
                             )
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Stage-4 live test arena started: ${id.value}. " +
                             "${args[4].uppercase()} is the Engineering default; players can vote " +
                             "for a runnable concrete Armageddon in Settings -> Armageddon vote. " +
@@ -2380,7 +2385,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                                     args[4].uppercase()
                                 )
                             )
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         "Engineering team certification arena started: " +
                             id.value +
                             " RED=" +
@@ -2393,7 +2398,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                         redPlayers.size>1 ||
                         bluePlayers.size>1
                     ) {
-                        sender.sendMessage(
+                        sender.sendTdMessage(
                             "Takeover certification path: have one player place a tower, disconnect that owner, let a still-active teammate upgrade or sell that tower, then reconnect the departed player and wait for snapshot recovery."
                         )
                     }
@@ -2406,7 +2411,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     val report=
                         liveArenaController
                             .stop(args[1])
-                    sender.sendMessage(
+                    sender.sendTdMessage(
                         if(report==null)
                             "No live test arena named ${args[1]}"
                         else
@@ -2422,7 +2427,7 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
                     )
             }
         } catch(t:Throwable) {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "ctdlivetest ERROR: " +
                     "${t.javaClass.simpleName}: ${t.message}"
             )
@@ -2439,11 +2444,11 @@ class CubeCraftTowerDefencePlugin : JavaPlugin() {
         results: List<FixtureResult>
     ) {
         val failed = results.filterNot { it.passed }
-        sender.sendMessage(
+        sender.sendTdMessage(
             "CubeCraft TD $name fixtures: ${results.size - failed.size}/${results.size} PASS"
         )
         failed.forEach {
-            sender.sendMessage(
+            sender.sendTdMessage(
                 "FAIL: ${it.id}" +
                     if (it.details.isEmpty()) "" else " — ${it.details.joinToString(" | ")}"
             )

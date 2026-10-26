@@ -66,7 +66,7 @@ class BukkitTowerPlacementListener(
                         result.menu.toLiveView()
                     )
                 is TowerPlacementInteractionResult.Placed ->
-                    player.sendMessage(
+                    player.sendTdMessage(
                         "Tower placed: ${result.result.selection.towerId}"
                     )
                 is TowerPlacementInteractionResult.OpenPathSelector ->
@@ -76,7 +76,7 @@ class BukkitTowerPlacementListener(
                     )
             }
         }.onFailure {
-            player.sendMessage(
+            player.sendTdMessage(
                 "Tower placement ERROR: ${it.message}"
             )
         }

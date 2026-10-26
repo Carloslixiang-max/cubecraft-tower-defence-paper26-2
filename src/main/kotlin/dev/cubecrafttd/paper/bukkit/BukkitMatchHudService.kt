@@ -111,13 +111,13 @@ class BukkitMatchHudService(
                                 playerUuid
                             ) {
                                 server.createBossBar(
-                                    castleHud.title,
+                                    BukkitTdText.text(castleHud.title),
                                     BarColor.GREEN,
                                     BarStyle.SOLID
                                 )
                             }
                     bar.setTitle(
-                        castleHud.title
+                        BukkitTdText.text(castleHud.title)
                     )
                     bar.setProgress(
                         castleHud.progress

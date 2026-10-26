@@ -89,7 +89,7 @@ class BukkitHistoricalSidebarService(
                     "ctd",
                     Criteria.DUMMY,
                     Component.text(
-                        view.title,
+                        BukkitTdText.text(view.title),
                         NamedTextColor.YELLOW
                     )
                 )
@@ -114,10 +114,8 @@ class BukkitHistoricalSidebarService(
 
         listOf(
             "§r " to 4,
-            "§f${view.coins} §aCoins" to 3,
-            "§f${view.exp} §bEXP" to 2,
-            "§r  " to 1,
-            "§e${view.footer}" to 0
+            "§f${view.coins} §a${BukkitTdText.text("Coins")}" to 3,
+            "§f${view.exp} §b${BukkitTdText.text("EXP")}" to 2
         ).forEach {
             (line,score) ->
             objective

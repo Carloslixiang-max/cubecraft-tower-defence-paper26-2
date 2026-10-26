@@ -77,7 +77,7 @@ class BukkitAoEPotionTargetListener(
                 target,
                 report.radiusBlocks
             )
-            player.sendMessage(
+            player.sendTdMessage(
                 "AoE " + report.potionId +
                     " committed: targets=" +
                     report.candidateCount +
@@ -87,7 +87,7 @@ class BukkitAoEPotionTargetListener(
                     report.cooldownReadyAtTick
             )
         }.onFailure { error ->
-            player.sendMessage(
+            player.sendTdMessage(
                 "AoE target ERROR: " +
                     error.javaClass.simpleName +
                     ": " +

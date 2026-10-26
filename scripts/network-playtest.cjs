@@ -43,6 +43,7 @@ async function connect(username) {
   })
   bot.receipts = []
   bot.testStateId = 0
+  bot._client.on('abilities', p => { bot.flightAllowed = (p.flags & 4) !== 0 })
   bot.on('messagestr', text => {
     bot.receipts.push(text)
     emit({ type: 'chat', player: username, text })
@@ -97,17 +98,17 @@ async function wave(bot) {
   await window(bot, 27)
   const start = bot.receipts.length
   await click(bot, 0, 1)
-  await until(() => bot.receipts.slice(start).some(x => x.includes('DraftChanged')), 'summoner draft')
+  await until(() => bot.receipts.slice(start).some(x => (x.includes('DraftChanged') || x.includes('已选怪物'))), 'summoner draft')
   const sendStart = bot.receipts.length
   await click(bot, 26)
-  await until(() => bot.receipts.slice(sendStart).some(x => x.includes('BatchSent')), 'paid batch send')
+  await until(() => bot.receipts.slice(sendStart).some(x => (x.includes('BatchSent') || x.includes('已派出'))), 'paid batch send')
   await close(bot)
 }
 function count(bot, name) { return bot.inventory.items().filter(x => x.name === name).reduce((n, x) => n + x.count, 0) }
 async function restored(red, blue) {
   await until(() => count(red, 'diamond') === 7 && count(blue, 'emerald') === 9 &&
     red.experience.level === 13 && red.game.gameMode === 'creative' &&
-    blue.game.gameMode === 'creative' && red.entity.position.distanceTo(new Vec3(0.5, 100, 0.5)) < 1 &&
+    blue.game.gameMode === 'survival' && red.flightAllowed === true && blue.flightAllowed === false && red.entity.position.distanceTo(new Vec3(0.5, 100, 0.5)) < 1 &&
     blue.entity.position.distanceTo(new Vec3(1.5, 100, 0.5)) < 1,
   'exact hub items / XP / modes / positions restored', 30000)
 }
@@ -120,25 +121,36 @@ async function tower(red) {
   assert(plot && plot.name !== 'air', 'Farm plot must be loaded')
   await red.activateBlock(plot)
   await window(red, 45)
+  const floor = []
+  for (let x = 19; x <= 21; x++) for (let z = 78; z <= 80; z++) {
+    const p = new Vec3(x, 88, z)
+    floor.push([p, red.blockAt(p).name])
+  }
+  function checkFoundation() {
+    for (const [p, name] of floor) assert.equal(red.blockAt(p).name, name, 'Tower must preserve floor')
+    assert.notEqual(red.blockAt(new Vec3(19, 89, 78)).name, 'air', 'Foundation must start above floor')
+  }
   await click(red, 2)
-  await window(red, 27, 'Select an upgrade path')
+  await window(red, 27, '选择升级路线')
   await click(red, 11)
   await until(() => !red.currentWindow, 'path selection places tower')
   await sleep(600)
+  checkFoundation()
   async function openManagement() {
     red.setQuickBarSlot(0)
     const body = red.blockAt(new Vec3(20, 89, 79))
     assert(body && body.name !== 'air', 'Archer model must exist')
     await red.activateBlock(body)
-    await window(red, 54, 'Archer Tower')
+    await window(red, 54, '弓箭塔')
   }
   await openManagement()
   await click(red, 13)
-  await window(red, 54, 'Archer Tower II')
+  await window(red, 54, '弓箭塔 II')
   await click(red, 45)
-  await until(() => JSON.stringify(red.currentWindow?.slots[45]).includes('Disable'), 'rangefinder Disable feedback')
+  await until(() => JSON.stringify(red.currentWindow?.slots[45]).includes('关闭'), 'rangefinder Disable feedback')
   await click(red, 13)
-  await window(red, 54, 'Archer Tower III')
+  await window(red, 54, '弓箭塔 III')
+  checkFoundation()
   await close(red)
   emit({ type: 'assertion', check: 'builder_path_model_upgrade_rangefinder', status: 'PASS' })
 }
@@ -150,6 +162,8 @@ async function play(red, blue, round) {
   await chat(blue, '/ctdjoin')
   await until(() => red.game.gameMode === 'adventure' && blue.game.gameMode === 'adventure' &&
     red.entity.position.y > 80 && blue.entity.position.y > 80, 'queued match bootstrap', 45000)
+  assert.equal(red.flightAllowed, true, 'Red may fly in Adventure mode')
+  assert.equal(blue.flightAllowed, true, 'Survival player may fly during match')
   await checkpoint('active')
   const endStart = red.receipts.length
   await wave(blue)
@@ -160,15 +174,15 @@ async function play(red, blue, round) {
   await consoleCommand('tick rate 100')
   const start = Date.now()
   let batches = 2
-  while (!red.receipts.slice(endStart).some(x => x.includes('Top players'))) {
+  while (!red.receipts.slice(endStart).some(x => (x.includes('Top players') || x.includes('本局最佳玩家')))) {
     if (Date.now() - start > 420000) throw Error('No natural match outcome within seven minutes')
     if (red.receipts.slice(endStart).some(x => /runtime|ERROR|stopped/i.test(x) && /failed|error|stopped/i.test(x))) {
       throw Error('Unexpected protective match end: ' + red.receipts.slice(endStart).join('\n'))
     }
     await sleep(3500)
-    if (red.receipts.slice(endStart).some(x => x.includes('Top players'))) break
+    if (red.receipts.slice(endStart).some(x => (x.includes('Top players') || x.includes('本局最佳玩家')))) break
     try { await wave(red) } catch (error) {
-      if (red.receipts.slice(endStart).some(x => x.includes('Top players'))) break
+      if (red.receipts.slice(endStart).some(x => (x.includes('Top players') || x.includes('本局最佳玩家')))) break
       throw error
     }
     batches++
@@ -193,7 +207,7 @@ async function main() {
   } else {
     await consoleCommand('fill -4 99 -4 4 99 4 minecraft:stone')
     for (const [bot, x, item, amount] of [[red, 0.5, 'diamond', 7], [blue, 1.5, 'emerald', 9]]) {
-      await consoleCommand('gamemode creative ' + bot.username)
+      await consoleCommand('gamemode ' + (bot === blue ? 'survival ' : 'creative ') + bot.username)
       await consoleCommand('execute in minecraft:overworld run tp ' + bot.username + ' ' + x + ' 100 0.5')
       await consoleCommand('clear ' + bot.username)
       await consoleCommand('give ' + bot.username + ' minecraft:' + item + ' ' + amount)
@@ -201,7 +215,7 @@ async function main() {
       await consoleCommand('effect give ' + bot.username + ' minecraft:instant_health 1 10')
     }
     await restored(red, blue)
-    await chat(red, '/ctdsnapshotcheck', 'round-trip PASS')
+    await chat(red, '/ctdsnapshotcheck', '玩家状态检查通过')
     await play(red, blue, 1)
     await play(red, blue, 2)
     // External hub/world plugins must not strand an active participant with a
@@ -216,7 +230,7 @@ async function main() {
     await wave(blue)
     for (const bot of [red, blue]) {
       await consoleCommand('execute in minecraft:overworld run tp ' + bot.username + ' 10.5 100 10.5')
-      await until(() => bot.game.gameMode === 'creative', 'external world teleport restores ' + bot.username)
+      await until(() => bot.game.gameMode === (bot === blue ? 'survival' : 'creative'), 'external world teleport restores ' + bot.username)
     }
     await restored(red, blue)
     await checkpoint('restored')

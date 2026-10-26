@@ -1,3 +1,7 @@
+# 玩家界面语言：zh_CN（简体中文）或 en_US（英文）。修改后正常重启服务器。
+# 已有配置未填写 language 时也默认使用简体中文。
+language: zh_CN
+
 # Strict-evidence defaults intentionally leave unresolved values as null.
 # For an explicit playable engineering profile, put the verified ImprovedFarm.schem
 # in plugins/CubeCraftTowerDefence/maps/ and run /ctdplaytestsetup apply as OP.

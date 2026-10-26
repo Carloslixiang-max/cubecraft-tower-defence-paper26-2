@@ -711,7 +711,7 @@ class BukkitTeamQueueService(
                 plugin.server
                     .getPlayer(uuid)
                     ?.let { player ->
-                        player.sendMessage(
+                        player.sendTdMessage(
                             "Tower Defence is starting in " +
                                 seconds +
                                 " " +
@@ -808,7 +808,7 @@ class BukkitTeamQueueService(
                     uuid ->
                     plugin.server
                         .getPlayer(uuid)
-                        ?.sendMessage(
+                        ?.sendTdMessage(
                             "TD queue start delayed: " +
                                 (
                                     t.message
@@ -894,7 +894,7 @@ class BukkitTeamQueueService(
                 plugin.server
                     .getPlayer(uuid)
                     ?.apply {
-                        sendMessage(
+                        sendTdMessage(
                             "Selected " +
                                 resolved.selection
                                     .type.name
@@ -905,16 +905,16 @@ class BukkitTeamQueueService(
                                 " armageddon mode! " +
                                 armageddonReason
                         )
-                        sendMessage(
+                        sendTdMessage(
                             "Selected " +
                                 pricingLabel +
                                 " pricing! " +
                                 pricingReason
                         )
-                        sendMessage(
+                        sendTdMessage(
                             "Selected Normal gamemode! Due to no votes."
                         )
-                        sendMessage(
+                        sendTdMessage(
                             "TD Engineering $matchLabel started: " +
                                 arenaId
                         )
@@ -963,7 +963,7 @@ class BukkitTeamQueueService(
             .forEach { uuid ->
                 plugin.server
                     .getPlayer(uuid)
-                    ?.sendMessage(reason)
+                    ?.sendTdMessage(reason)
             }
     }
 
@@ -1070,7 +1070,7 @@ class BukkitTeamQueueService(
         waitingPosition: Int?,
         countdownSeconds: Int?
     ): String =
-        PregameQueueHudProjection
+        BukkitTdText.text(PregameQueueHudProjection
             .text(
                 PregameQueueHudState(
                     waitingPosition=
@@ -1088,7 +1088,7 @@ class BukkitTeamQueueService(
                     teamSize=teamSize,
                     waitingPlayers=if (countdownSeconds != null) queue.requiredPlayers else minOf(queue.size(), queue.requiredPlayers)
                 )
-            )
+            ))
 
     private fun clearQueueHud(
         playerUuid: UUID

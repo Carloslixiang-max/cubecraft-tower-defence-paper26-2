@@ -122,7 +122,7 @@ class BukkitMatchDepartureListener(
             if (!controller.isActivePlayer(uuid) || controller.isPlayerInArenaWorld(uuid, player.world.uid)) return@Runnable
             runCatching { controller.leaveActivePlayer(uuid) }.onSuccess { report ->
                 if (report != null) {
-                    player.sendMessage("You left Tower Defence after changing worlds.")
+                    player.sendTdMessage("You left Tower Defence after changing worlds.")
                     plugin.logger.info("TD cross-world departure: player=$uuid restored=${report.restoredNow} cleaned=${report.arenaCleaned}")
                 }
             }.onFailure {
