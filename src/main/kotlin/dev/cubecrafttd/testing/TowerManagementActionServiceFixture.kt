@@ -127,7 +127,7 @@ object TowerManagementActionServiceFixture {
             )
         val found=
             lookup.towerAt(
-                placed.receipt.baseCenter
+                placed.receipt.baseCenter.copy(y = placed.receipt.baseCenter.y + 1)
             )
 
         val service=

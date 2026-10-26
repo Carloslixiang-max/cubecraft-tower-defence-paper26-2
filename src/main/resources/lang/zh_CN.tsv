@@ -116,6 +116,7 @@ BLUE	蓝队
 Due to no votes.	无人投票，使用默认选项。
 Castle Health	城堡生命值
 Top players	本局最佳玩家
+Top players:	本局最佳玩家：
 Towers placed: 	建造防御塔：
 Troops sent: 	派出怪物：
 Enemies killed: 	击杀怪物：
@@ -268,6 +269,13 @@ Bow {tier}	弓 · {tier} 阶
 {tower!} III	{tower} III
 {tower!} II	{tower} II
 {tower!} I	{tower} I
+Pregame Armageddon vote: {mode!}	已投票选择终局模式：{mode}。
+Pregame Pricing vote: {mode!}	已投票选择经济模式：{mode}。
+Armageddon vote: {mode!}; resolved={selected!}; rule={rule} (Engineering)	终局投票：{mode}；当前结果：{selected}。
+Join the TD queue before voting	请先输入 /ctdjoin 加入队列，再投票。
+That Armageddon mode is not runnable in the current server profile	当前服务器配置尚不能运行此终局模式。
+ENG {team!} | Castle {own} | Enemy {enemy} | {coins}C {exp}XP | {time} | ARM {mode!} in {remaining}	{team} | 己方城堡 {own} | 敌方城堡 {enemy} | {coins} 金币 {exp} 经验 | {time} | {mode}终局倒计时 {remaining}
+ENG {team!} | Castle {own} | Enemy {enemy} | {coins}C {exp}XP | {time} | ARM {mode!}	{team} | 己方城堡 {own} | 敌方城堡 {enemy} | {coins} 金币 {exp} 经验 | {time} | {mode}终局已开始
 # Context-limited error/command wrappers are intentionally last.
 Usage: {command}	用法：{command}
 ctdinstall ERROR: {reason!}	地图安装提示：{reason}
